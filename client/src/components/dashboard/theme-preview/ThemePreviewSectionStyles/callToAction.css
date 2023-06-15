@@ -1,0 +1,55 @@
+.callToAction {
+    position: relative;
+}
+
+.callToAction-container-styles {
+    width: 90%;
+}
+
+.callToAction-contents {
+    display: flex;
+}
+
+.callToAction-section-socail-links {
+    display: flex;
+    flex-direction: column;
+}
+
+.social-icon-item {
+    margin: 0.6vh;
+    font-size: 25px;
+}
+  
+.callToAction-section-school-info {
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .callToAction-section-school-info .callToAction-header {
+    font-weight: 800;
+    font-size: 3rem;
+  }
+  
+  .callToAction-section-school-info .callToAction-subtitle {
+    font-size: 25px;
+    font-weight: lighter;
+    text-transform: capitalize;
+    margin-top: 10px;
+  }
+  
+  .callToAction-section-school-info .callToAction-btn-link {
+    padding: 18px 38px;
+    margin-top: 2vh;
+    border: none;
+  }
+
+  @media screen and (max-width: 992px) {
+
+    .callToAction-section-school-info .callToAction-header {
+        font-size: 1.7rem;
+    }
+
+    .callToAction-section-school-info .callToAction-subtitle {
+        font-size: 16px;
+    }
+  }

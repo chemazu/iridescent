@@ -1,0 +1,29 @@
+.courses-course-item-details {
+    padding: 3vh 2vw;
+    border-radius: 2.4px;
+    width: 97%;
+    background-color: var(--site-theme-color);
+    color: var(--site-white-color);
+  }
+  .courses-course-item-cart-info {
+    padding: 2vh 1vw;
+    border-radius: 2.4px;
+    width: 97%;
+    background-color: var(--site-theme-color);
+    color: var(--site-white-color);
+  }
+  .courses-course-item-cart-info h3 {
+    color: var(--site-white-color);
+  }
+  .add-to-cart-cta {
+    background-color: var(--site-white-color);
+  }
+  .tuturly-courses-module-wrapper {
+    background-color: var(--site-background-color);
+    border: 0;
+    padding-left: 0;
+  }
+  .cart-page-contents {
+    /* background-color: var(--site-background-color); */
+  }
+  

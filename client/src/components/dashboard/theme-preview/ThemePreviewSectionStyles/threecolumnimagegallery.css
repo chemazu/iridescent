@@ -1,0 +1,22 @@
+.image-gallery {
+    padding: 5vh 1vw;
+    width: 100%;
+    position: relative;
+}
+
+.gallery-img-item {
+    width: 100%;
+    height: 50vh;
+}
+
+.gallery-img-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-gallery-title {
+    font-weight: 700;   
+    font-size: 20px;
+    text-transform: capitalize;
+}

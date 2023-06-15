@@ -1,0 +1,54 @@
+.progress-container {
+  display: flex;
+  align-items: center;
+  margin: 8px auto;
+  text-align: center;
+  justify-content: center;
+}
+
+.step-counter-number {
+  width: 55px;
+  height: 55px;
+  border-radius: 100%;
+  background-color: var(--site-white-color);
+  color: var(--site-dark-color);
+  text-align: center;
+  font-weight: 900;
+  font-size: 23px;
+  padding: 8px;
+}
+
+.step-counter-text {
+  color: var(--site-dark-color);
+  font-weight: 700;
+  font-size: 17px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+.step-counter-number__coloured {
+  background-color: var(--site-theme-color);
+  color: var(--site-white-color);
+}
+
+.field-suggest {
+  position: absolute;
+  z-index: 1;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.field-suggest .not-found-suggestion {
+  text-align: center;
+}
+
+.field-suggest .field-suggest-item {
+  transition: all 0.4s;
+}
+
+.field-suggest .field-suggest-item:hover {
+  background-color: var(--background-black);
+  color: var(--site-white-color);
+  cursor: pointer;
+}

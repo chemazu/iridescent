@@ -1,0 +1,108 @@
+.admin-editors__navbar {
+    width: 100%;
+    height: 55px;
+    background-color: var(--site-dark-color);
+    color: #fff;    
+    display: block;
+}
+
+.admin-editors__navbar .navbar {
+  padding: 0 !important;
+}
+
+.panel-control-contents {
+    width: 100%;
+    height: 55px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.preview-controller-container {
+    color: #ffffff;
+    display: flex;
+    min-width: fit-content;
+}
+
+.back-to-theme__select-button,
+.back-to-theme__select-button:hover,
+.back-to-theme__select-button:active
+{
+  background-color: transparent !important;
+  color: var(--site-white-color) !important;
+  border: none;
+  box-shadow: 0;
+}
+
+.preview-controller-container .switch {
+  position: relative;
+  display: inline-block;
+  width: 80px;
+  height: 24px;
+}
+
+/* Hide default HTML checkbox */
+.preview-controller-container .switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider */
+.preview-controller-container .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.preview-controller-container .slider:before {
+  position: absolute;
+  content: "";
+  height: 21px;
+  width: 21px;
+  left: 2px;
+  bottom: 2.4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.preview-controller-container input:checked + .slider {
+  background-color: #2196F3;
+}
+
+.preview-controller-container input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+.preview-controller-container input:checked + .slider:before {
+  -webkit-transform: translateX(54px);
+  -ms-transform: translateX(54px);
+  transform: translateX(54px);
+}
+
+/* Rounded sliders */
+.preview-controller-container .slider.round {
+  border-radius: 34px;
+}
+
+.preview-controller-container .slider.round:before {
+  border-radius: 50%;
+}
+
+@media screen and (max-width: 830px) { 
+  .admin-editors__navbar {
+    height: fit-content;
+  }
+
+  .panel-control-contents {
+    flex-direction: column;
+    height: fit-content;
+  }
+}

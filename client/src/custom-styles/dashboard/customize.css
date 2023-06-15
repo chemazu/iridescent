@@ -1,0 +1,308 @@
+.customize-page .customize-page-title {
+  font-weight: 800;
+  font-size: 24px;
+  color: var(--site-dark-color);
+}
+
+.customize-page .page-subtitle {
+  color: var(--site-dark-color);
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.customize-page__contents {
+  margin: 5vh auto;
+  width: 95%;
+  padding-top: 8vh;
+  padding-right: 6vw;
+  padding-left: 6vw;
+  padding-bottom: 5vh;
+}
+
+.customize-page__secondary-view {
+  margin: 5vh auto;
+  width: 95%;
+  padding-top: 8vh;
+  padding-right: 6vw;
+  padding-left: 6vw;
+  padding-bottom: 5vh;
+  background-color: var(--site-white-color);
+}
+
+.theme-preview-container {
+  margin-top: 5vh;
+  width: 100%;
+}
+
+.theme-preview-item {
+  width: 95%;
+  height: 400px;
+  position: relative;
+  cursor: pointer;
+  margin: 15px;
+}
+
+.theme-preview-item .theme-thumbnail-container img {
+  /* height: 100%; */
+  width: 100%;
+  object-fit: cover;
+}
+
+.active-theme-indicator-text {
+  color: tomato;
+  font-weight: 600;
+  text-transform: uppercase;
+  margin: 0;
+  padding: 0;
+}
+
+.theme-preview-item:hover .theme-preview-overlay {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.theme-preview-item .theme-preview-overlay {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  transition: all 0.6s;
+  opacity: 0;
+  border-radius: 20px;
+  transform: translateX(-20px);
+}
+
+.theme-preview-item .theme-thumbnail-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  overflow-y: hidden;
+  border-radius: 20px;
+  box-shadow: 1px 0px 3px #bbb;
+}
+
+.theme-setup .form-container {
+  width: 100%;
+  margin-top: 5vh;
+}
+
+.theme-setup .form-group {
+  position: relative;
+  margin-bottom: 4vh;
+  width: 100%;
+
+}
+
+.theme-setup .form__input {
+  border-radius: 3px;
+  font-size: 16px;
+  transition: all 0.3s;
+  width: 100%;
+  display: block;
+  border: 0.5px solid #cad1d7;
+  padding: 12px 22px;
+  color: var(--alt-text-color);
+  box-shadow: 0 1px 3px rgb(50 50 93 / 15%), 0 1px 0 rgb(0 0 0 / 2%);
+}
+
+.theme-setup .form__input::-webkit-input-placeholder {
+  color: #cad1d7;
+}
+
+.theme-setup .form__input:placeholder-shown + .form__label {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(3px);
+}
+
+.theme-setup .form__label {
+  color: #cad1d7;
+  margin-left: 20px;
+  display: block;
+  position: absolute;
+  transition: all 0.3s;
+  background-color: var(--site-white-color);
+  top: 0;
+  margin-top: -9px !important;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.theme-setup .instructions-tag {
+  background-color: var(--background-black);
+  color: var(--site-white-color);
+  width: 190px;
+  height: 110px;
+  padding: 20px;
+  border-radius: 3px;
+  position: absolute;
+  right: -210px;
+  top: 0;
+}
+
+.theme-setup .instructions-tag::before {
+  content: "";
+  background-color: var(--background-black);
+  border-radius: 3px;
+  width: 25px;
+  height: 25px;
+  position: absolute;
+  left: -11px;
+  transform: rotate(45deg);
+}
+
+.image-upload__container {
+  width: 50%;
+}
+
+.image-upload__container small {
+  color: var(--site-dark-color);
+}
+
+.image-upload__container h3 {
+  color: var(--site-dark-color);
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.image-with-upload-btn {
+  position: relative;
+  background-color: #dddddd;
+  width: 100%;
+  padding-top: 10px;
+  cursor: pointer;
+}
+
+.image-with-upload-btn .img-container {
+  z-index: -1;
+  margin: 0 auto;
+  width: 80%;
+}
+
+.upload-cta {
+  background-color: var(--site-theme-color);
+  color: #fff;
+  font-weight: 400;
+  text-transform: uppercase;
+  font-size: 19px;
+  width: 100%;
+  z-index: 1000;
+  position: absolute;
+  bottom: 0;
+  padding: 3px;
+}
+
+.theme-setup .customize-page-btn,
+.theme-setup .customize-page-btn:hover,
+.theme-setup .customize-page-btn:active
+{
+  color: var(--site-white-color) !important;
+  background-color: var(--site-cta-color) !important;
+  border: 0;
+  box-shadow: none;
+}
+
+.customize-modal-btn,
+.customize-modal-btn:hover {
+  color: var(--site-white-color);
+  background-color: var(--site-dark-color);
+}
+
+.theme-setup .uploads-container {
+  width: 80%;
+}
+
+.theme-setup .upload-banner-section {
+  padding-bottom: 8vh;
+  border-bottom: 0.7px solid #c4c4c4;
+}
+
+.theme-setup .upload-button {
+  position: relative;
+  height: 100%;
+}
+
+.theme-setup .customize-upload-btn {
+  border-radius: 0;
+  box-shadow: none;
+  border: 0.5px solid var(--site-subtle-dark);
+  color: var(--site-subtle-dark);
+  background-color: var(--site-alt-green);
+  padding-left: 50px;
+  padding-right: 50px;
+  position: absolute;
+  bottom: 0;
+}
+
+.theme-setup .upload-photo-section {
+  margin-top: 5vh;
+  margin-bottom: 1vh;
+}
+
+.theme-setup .upload-photo-preview-container {
+  background-color: var(--site-white-color);
+  width: 100%;
+  height: 320px;
+  text-align: center;
+}
+
+.theme-setup .upload-photo-preview-container img {
+  height: 100%;
+}
+
+.theme-setup .update-contact-section {
+  margin-top: 4vh;
+  width: 70%;
+}
+
+.theme-setup .menu-flags-button {
+  background-color: var(--site-white-color);
+  border-radius: 0;
+}
+
+.theme-setup .social-icon-and-input {
+  display: flex;
+  margin-bottom: 5vh;
+  margin-top: 5vh;
+}
+
+.theme-setup .social-icon-and-input .icon-styles {
+  margin-left: 2vw;
+  margin-right: 20px;
+  font-size: 25px;
+  text-align: center;
+  margin-top: 1.6vh;
+  color: var(--site-dark-color);
+}
+
+@media screen and (max-width: 840px) {
+  .theme-setup .instructions-tag {
+    background-color: var(--background-black);
+    color: var(--site-white-color);
+    max-width: 190px;
+    max-height: 110px;
+    padding: 15px;
+    border-radius: 3px;
+    position: absolute;
+    right: -40px;
+    top: 70px;
+  }
+  .theme-setup .instructions-tag::before {
+    content: "";
+    background-color: var(--background-black);
+    border-radius: 3px;
+    width: 25px;
+    height: 25px;
+    position: absolute;
+    top: -11px;
+    left: 15px;
+    transform: rotate(45deg);
+  }
+}
+/* .theme-setup  */

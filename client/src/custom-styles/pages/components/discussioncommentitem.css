@@ -1,0 +1,86 @@
+.discussion-comment-item {
+  display: flex;
+  width: 100%;
+}
+
+.discussion-comment-item .item-avatar {
+  height: 80px;
+  width: 80px;
+  overflow: hidden;
+  margin-right: 1vw;
+}
+
+.discussion-details {
+  flex: 2;
+}
+
+.discussion-name-and-timestamp {
+  display: flex;
+  margin-bottom: 2px;
+}
+
+.discussion-name-and-timestamp p {
+  /* color: #569d6b; */
+  margin: 0;
+  padding: 0;
+}
+
+/* .discussion-name-and-timestamp span {
+  color: #6f6c6c;
+} */
+
+.discussion-text p {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+  font-size: 15px;
+}
+
+.discussion-controls {
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  width: 100%;
+}
+
+.discussion-controls .discussion-reply-controls {
+  display: flex;
+}
+
+.discussion-controls .reply-btn-and-counter {
+  cursor: pointer;
+}
+
+.reply-btn-and-counter i {
+  font-size: 15px;
+}
+
+.discussion-controls .view-reply {
+  /* color: #6f6c6c; */
+  cursor: pointer;
+  border: none;
+  background-color: transparent;
+}
+
+.discussion-controls .view-reply i {
+  font-size: 8px;
+}
+
+.discussion-controls .discussion-comment-menu {
+  /* color: #6f6c6c; */
+  cursor: pointer;
+  position: relative;
+  width: 10px;
+}
+
+.discussion-controls .discussion-comment-menu i {
+  font-size: 15px;
+}
+
+
+.comment-delete__menu-item {
+  padding: 3px 10px;
+  cursor: pointer;
+}
