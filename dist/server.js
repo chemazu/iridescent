@@ -99,6 +99,8 @@ var _Livewebinar = _interopRequireDefault(require("./models/Livewebinar"));
 
 var _studentwebinar = _interopRequireDefault(require("./routes/studentwebinar"));
 
+var _console = require("console");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 _cloudinary.default.v2.config({
@@ -121,56 +123,74 @@ const io = new _socket.Server(server, {
 // io.use(socketAuthMiddleware);
 
 exports.io = io;
+const timers = {};
+const newWatcherHolder = {};
+const newBroadcasterHolder = {};
+let screenSharing = false;
+let screenStream = null;
 io.on("connection", socket => {
   let currentRoom;
   let broadcasterId;
   const watchers = {};
   const wathcersArray = ["cds"];
-  const broadcasters = {};
-  socket.on("broadcaster", async roomId => {
-    broadcasterId = socket.id;
-    currentRoom = roomId;
-    let liveWebinar = await _Livewebinar.default.findOne({
-      streamKey: roomId
-    });
-    liveWebinar.isLive = true;
-    await liveWebinar.save();
+  const broadcasters = {}; // socket.on("broadcaster", async (roomId) => {
+  //   broadcasterId = socket.id;
+  //   currentRoom = roomId;
+  //   let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
+  //   liveWebinar.isLive = true;
+  //   await liveWebinar.save();
+  //   socket.join(roomId);
+  //   socket.broadcast.to(roomId).emit("broadcaster");
+  // });
+  // socket.on("watcher", async (roomId, userId) => {
+  //   console.log(newBroadcasterHolder)
+  //   socket.join(roomId);
+  //   var room = io.sockets.adapter.rooms;
+  //   let roomSize = room.get(roomId).size || 1;
+  //   socket.to(socket.id).emit("for your eyes only", roomSize);
+  //   socket.broadcast.to(roomId).emit("watcher", userId, roomSize);
+  //   wathcersArray.push({ id: socket.id, roomId, user: userId });
+  //   watchers[socket.id] = { roomId, user: userId };
+  //   if (broadcasters[roomId]) {
+  //     socket.emit("broadcaster", broadcasters[roomId]);
+  //   }
+  //   let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
+  //   if (liveWebinar.isLive === true) {
+  //     // user can join meeting
+  //     socket.broadcast.to(roomId).emit("watcher", userId, roomSize);
+  //   } else {
+  //     socket.broadcast.to(roomId).emit("waiting for broadcaster");
+  //   }
+  // });
+
+  socket.on("broadcaster", async (roomId, peerId) => {
+    newBroadcasterHolder[roomId] = peerId;
     socket.join(roomId);
     socket.broadcast.to(roomId).emit("broadcaster");
   });
+  socket.on("watcher", async (roomId, userId) => {
+    console.log(newBroadcasterHolder);
+    socket.join(roomId);
+    const room = io.sockets.adapter.rooms.get(roomId);
+    let roomSize = room ? room.size : 1; // check screensharing
+
+    if (newBroadcasterHolder[roomId]) {
+      console.log(newBroadcasterHolder[roomId]);
+      io.in(roomId).emit("join stream", roomSize, newBroadcasterHolder[roomId]); // io.in(roomid).
+    } else {
+      socket.emit("no stream");
+    }
+  });
+  socket.on('startScreenSharing', roomId => {
+    screenSharing = true;
+    io.in(roomId).emit('screenSharingStatus', true);
+  });
+  socket.on('stopScreenSharing', roomId => {
+    screenSharing = false;
+    io.in(roomId).emit('screenSharingStatus', false);
+  });
   socket.on("end-stream", roomId => {
     socket.broadcast.to(roomId).emit("end-stream");
-  });
-  socket.on("watcher", async (roomId, userId) => {
-    socket.join(roomId);
-    var room = io.sockets.adapter.rooms;
-    let roomSize = room.get(roomId).size;
-    io.to(socket.id).emit("for your eyes only", roomSize);
-    socket.broadcast.to(roomId).emit("watcher", userId, roomSize);
-    wathcersArray.push({
-      id: socket.id,
-      roomId,
-      user: userId
-    });
-    watchers[socket.id] = {
-      roomId,
-      user: userId
-    };
-
-    if (broadcasters[roomId]) {
-      socket.emit("broadcaster", broadcasters[roomId]);
-    }
-
-    let liveWebinar = await _Livewebinar.default.findOne({
-      streamKey: roomId
-    });
-
-    if (liveWebinar.isLive === true) {
-      // user can join meeting
-      socket.broadcast.to(roomId).emit("watcher", userId, roomSize);
-    } else {
-      socket.broadcast.to(roomId).emit("waiting for broadcaster");
-    }
   }); //
 
   socket.on("screensharing", roomId => {
@@ -186,22 +206,106 @@ io.on("connection", socket => {
     socket.broadcast.to(roomId).emit("message", { ...message
     });
   });
-  socket.on("special submit", (type, result, roomId, user) => {
-    socket.broadcast.to(roomId).emit("special submit", {
-      type,
-      result,
-      user
-    });
+  socket.on("special close", (roomid, index) => {
+    socket.broadcast.to(roomid).emit("special close", index);
   });
+  socket.on("special submit", (type, result, roomId, user, questionControl) => {
+    socket.broadcast.to(roomId).emit("special submit", type, result, user, questionControl);
+  });
+  socket.on("startTimer", timerData => {
+    const {
+      duration,
+      questionControl,
+      roomid
+    } = timerData; // Check if a timer is already running for the same room and question
+
+    if (timers[roomid] && timers[roomid][questionControl]) {
+      socket.emit("timerError", "A timer is already running for this question.");
+      return;
+    } // Create a new timer for the room and question
+
+
+    if (!timers[roomid]) {
+      timers[roomid] = {};
+    }
+
+    timers[roomid][questionControl] = {
+      duration: duration,
+      remainingTime: duration
+    }; // Broadcast the start event to all connected clients in the room
+
+    io.in(roomid).emit("timerStarted", questionControl, duration); // socket.to(roomid).emit("timerStarted", questionControl, duration);
+    // Start the countdown
+
+    const timer = setInterval(() => {
+      timers[roomid][questionControl].remainingTime -= 1; // Broadcast the remaining time to all connected clients in the room
+
+      io.in(roomid).emit("timerTick", questionControl, timers[roomid][questionControl].remainingTime);
+
+      if (timers[roomid][questionControl].remainingTime <= 0) {
+        clearInterval(timer);
+        io.in(roomid).emit("timerEnded", questionControl); // Clean up the timer after it ends
+
+        delete timers[roomid][questionControl];
+      }
+    }, 1000);
+  });
+  socket.on("updatedPollResult", (roomid, updatedResults, questionControl) => {
+    io.in(roomid).emit("updatedPollResult", updatedResults, questionControl);
+  }); // socket.on("startTimer",(timerData)=>{
+  //   const { duration, questionControl, roomid } = timerData;
+  //   // Check if a timer is already running for the same room and question
+  //   if (timers[roomid] && timers[roomid][questionControl]) {
+  //     socket.emit('timerError', 'A timer is already running for this question.');
+  //     return;
+  //   }
+  //   // Create a new timer for the room and question
+  //   if (!timers[roomid]) {
+  //     timers[roomid] = {};
+  //   }
+  //   timers[roomid][questionControl] = {
+  //     duration: duration,
+  //     remainingTime: duration,
+  //   };
+  //   // Broadcast the start event to all connected clients in the room
+  //   socket.to(roomid).emit('timerStarted', questionControl, duration);
+  // // Start the countdown
+  // const timer = setInterval(() => {
+  //   timers[roomid][questionControl].remainingTime -= 1;
+  //   // Broadcast the remaining time to all connected clients in the room
+  //   socket.to(roomid).emit(
+  //     'timerTick',
+  //     questionControl,
+  //     timers[roomid][questionControl].remainingTime
+  //   );
+  //   if (timers[roomid][questionControl].remainingTime <= 0) {
+  //     clearInterval(timer);
+  //     socket.to(roomid).emit('timerEnded', questionControl);
+  //     // Clean up the timer after it ends
+  //     delete timers[roomid][questionControl];
+  //   }
+  // }, 1000);
+  // })
+
   socket.on("disconnect", async () => {
     // on broadcaster disconnected
     if (broadcasterId === socket.id) {
       let liveWebinar = await _Livewebinar.default.findOne({
         streamKey: currentRoom
       });
-      socket.broadcast.to(currentRoom).emit("broadcaster-disconnected");
+      let timeStamp = Date.now();
+      let timeUpdate;
+      const timeDifferenceInSeconds = Math.floor((timeStamp - liveWebinar.streamStarted) / 1000);
+
+      if (liveWebinar.timeleft === 0) {// timeUpdate = 2700 - timeDifferenceInSeconds;
+        // liveWebinar.timeleft = timeUpdate;
+        // delete webinar
+      }
+
+      liveWebinar.timeleft = liveWebinar.timeleft - timeDifferenceInSeconds;
       liveWebinar.isLive = false;
       await liveWebinar.save();
+      socket.broadcast.to(currentRoom).emit("broadcaster-disconnected");
     }
 
     if (watchers[socket.id]) {

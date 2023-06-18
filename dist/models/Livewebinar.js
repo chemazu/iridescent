@@ -78,9 +78,10 @@ const liveWebinarSchema = new _mongoose.default.Schema({
     required: true
   },
   timeleft: {
-    type: String,
-    default: 2700
+    type: Number,
+    default: 0
   },
+  streamStarted: {},
   creator: {
     type: _mongoose.default.Schema.Types.ObjectId,
     ref: "user",

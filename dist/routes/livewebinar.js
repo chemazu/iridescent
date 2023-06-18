@@ -152,8 +152,17 @@ router.get("/watch/:streamKey", async (req, res) => {
       streamKey
     }).populate("creator").populate("school");
     let payment = await _PaymentPlans.default.findOne(livestream.creator.selectedplan);
+    const timestamp = Date.now();
+    console.log(livestream);
 
     if (livestream && payment) {
+      livestream.streamStarted = timestamp;
+
+      if (livestream.timeleft === 0) {
+        livestream.timeleft = 2700;
+      }
+
+      await livestream.save();
       res.json({
         title: livestream.title,
         streamkey: livestream.streamKey,
@@ -162,7 +171,8 @@ router.get("/watch/:streamKey", async (req, res) => {
         lastname: livestream.creator.lastname,
         username: livestream.creator.username,
         school: livestream.school.name,
-        planname: payment.planname
+        planname: payment.planname,
+        timeLeft: livestream.timeleft
       });
     } // check if they are validate for the livestream registered to the course or check a password
     // res.json({ error: "Stream not found" });
@@ -243,12 +253,7 @@ router.get("/studentdetails", _studentAuth.default, async (req, res) => {
     username: user.username
   });
 }); // Start the server
-
-const port = 3000; // Choose any port number you prefer
-
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
-}); // router.get("/purge", async () => {
+// router.get("/purge", async () => {
 // await LiveWebinar.deleteMany({});
 //   await StudentWebinar.deleteMany({});
 //   console.log("All documents deleted successfully.");

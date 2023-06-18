@@ -16,6 +16,7 @@ import CountdownTimer from "./CountDownTimer";
 export default function Stream() {
   const { roomid } = useParams();
   // const myPeer = new Peer({ videoCodec: "h264" });
+  const [screenStream, setScreenStream] = useState(null);
   const myVideoRef = useRef();
   const chatInterfaceRef = useRef(null);
   const alert = useAlert();
@@ -29,8 +30,7 @@ export default function Stream() {
   const [pollStatus, setPollStatus] = useState(false);
   const [answerHolder, setAnswerHolder] = useState({});
   const [timerHolder, setTimerHolder] = useState({});
-  const [currentPeer, setCurrentPeer] = useState(null);
-  const [checkCurrentPeer, setCheckCurrentPeer] = useState(false);
+
   const [timeLeft, setTimeLeft] = useState(null);
   const [pollTitle, setPollTitle] = useState("");
   const [defaultChat, setDefaultChat] = useState([]);
@@ -43,7 +43,7 @@ export default function Stream() {
   });
   const [presentrDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
-  const [screenSharing, setScreenSharing] = useState(false);
+  // const [screenSharing, setScreenSharing] = useState(false);
   const [questionNumber, setQuestionNumber] = useState(1);
   const [pollConfirmation, setPollConfirmation] = useState(false);
   const [quizConfirmation, setQuizConfirmation] = useState(false);
@@ -51,15 +51,15 @@ export default function Stream() {
   const [pollResultHolder, setPollResultHolder] = useState({});
   const [answers, setAnswers] = useState([]);
   const [waiting, setWaiting] = useState(47);
-  const [screenTrack, setScreenTrack] = useState(null);
+
   const [durationValue, setDurationValue] = useState(""); // State to track the input value
   const [durationUnit, setDurationUnit] = useState("secs"); // State to track the selected unit
   const [viewDuration, setViewDuration] = useState(false);
   const [pollDuration, setPollDuration] = useState(false);
   const [totalQuestion, setTotalQuestion] = useState(0);
-  const [newScreenSharing, setNewScreenSharing] = useState(false);
+  const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
-  let screenStream = null;
+  // let screenStream = null;
 
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
@@ -111,16 +111,50 @@ export default function Stream() {
   //     });
   //   }
   // };
-  const handleScreenSharingEnded = () => {
+  // const handleScreenSharingEnded = () => {
+  //   // setScreenSharing(false);
+  //   currentPeer?.destroy();
+  //   onConnect();
+  //   let returnPeer = new Peer();
+  //   setCurrentPeer(returnPeer);
+  //   setCheckCurrentPeer(true);
+  //   returnPeer.on("open", (peerId) => {
+  //     socket.emit("returnPeer", roomid, peerId);
+  //   });
+  // };
+
+  const handleScreenSharingEnded =   () => {
+    console.log("end");
+    // const screenSharingTrack = screenStream.getVideoTracks()[0];
+    // console.log(screenSharingTrack);
+    // await screenSharingTrack.stop();
+    // const mediaStream = screenStream.getStream();
+    // mediaStream.getTracks().forEach(track => track.stop());
+    // console.log(screenStream)
+    // const mediaStream = screenStream.stream;
+    // mediaStream.getTracks().forEach(track => track.stop());
+
+    socket.emit("stopScreenSharing", roomid);
     setScreenSharing(false);
-    currentPeer?.destroy();
-    onConnect();
-    let returnPeer = new Peer();
-    setCurrentPeer(returnPeer);
-    setCheckCurrentPeer(true);
-    returnPeer.on("open", (peerId) => {
-      socket.emit("returnPeer", roomid, peerId);
-    });
+    setScreenStream(null);
+    navigator.mediaDevices
+      .getUserMedia(audioVisuals)
+      .then((stream) => {
+        addVideoStream(myVideoRef.current, stream);
+
+        const connections = peerHolder._connections;
+        console.log(connections);
+        connections.forEach((value, key) => {
+          // console.log("Connected user ID:", key, value);
+          const call = peerHolder.call(key, stream);
+          console.log(call);
+          call.on("stream", (userVideoStream) => {
+            // Handle the updated stream (screen sharing)
+            console.log("suer");
+          });
+        });
+      })
+      .catch((error) => console.error(error));
   };
 
   // const handleExitStream = async () => {
@@ -727,9 +761,9 @@ export default function Stream() {
     });
   }, [roomid]);
 
-  useEffect(() => {
-    handleScreenSharing();
-  }, [roomid, screenSharing]);
+  // useEffect(() => {
+  //   handleScreenSharing();
+  // }, [roomid, screenSharing]);
 
   useEffect(() => {
     const initializePeer = async () => {
@@ -740,36 +774,17 @@ export default function Stream() {
         socket.emit("broadcaster", roomid, peerId);
       });
       peerInstance.on("call", (call) => {
-        navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
-          console.log(" ssfsd")
-          call.answer(stream)
-        });
+        // check if livestream
+        if (screenSharing && screenStream) {
+          console.log(screenSharing, screenStream);
+          call.answer(screenStream);
+        } else {
+          navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
+            console.log(" ssfsd");
+            call.answer(stream);
+          });
+        }
       });
-      // peerInstance.on("call", (call) => {
-      //   if (newScreenSharing && screenStream) {
-      //     call.answer(screenStream);
-      //   } else {
-      //     console.log("first")
-      //     navigator.mediaDevices
-      //       .getUserMedia({ video: true, audio: true })
-      //       .then((stream) => {
-      //         if (newScreenSharing) {
-      //           const videoTrack = stream.getVideoTracks()[0];
-      //           screenStream = new MediaStream([videoTrack]);
-      //           call.answer(screenStream);
-      //         } else {
-      //           call.answer(stream);
-      //         }
-      //       })
-      //       .catch((error) => {
-      //         console.error("Error accessing media devices:", error);
-      //       });
-      //   }
-
-      //   call.on("stream", (remoteStream) => {
-      //     // Handle the incoming stream
-      //   });
-      // });
     };
 
     initializePeer();
@@ -777,7 +792,96 @@ export default function Stream() {
     return () => {
       peerHolder?.destroy();
     };
-  }, [newScreenSharing, roomid]);
+  }, [roomid, screenStream]);
+
+  const toggleScreenSharing = () => {
+    if (screenSharing) {
+      setScreenSharing(false);
+      handleScreenSharingEnded();
+      // socket.emit("stopScreenSharing", roomid);
+    } else {
+      setScreenSharing(true);
+      console.log("ccccc");
+
+      // Get permission to access the screen sharing stream
+      navigator.mediaDevices
+        .getDisplayMedia({ video: true, audio: true })
+        .then((stream) => {
+          setScreenStream(stream);
+          const screenSharingTrack = stream.getVideoTracks()[0];
+          screenSharingTrack.addEventListener(
+            "ended",
+            handleScreenSharingEnded
+          );
+          if (myVideoRef.current) {
+            myVideoRef.current.srcObject = stream;
+          }
+
+          // Replace the stream in each PeerJS connection with the screen sharing stream
+          socket.emit("startScreenSharing", roomid);
+
+          const connections = peerHolder._connections;
+          console.log(connections);
+          connections.forEach((value, key) => {
+            // console.log("Connected user ID:", key, value);
+            const call = peerHolder.call(key, stream);
+            console.log(call);
+            call.on("stream", (userVideoStream) => {
+              // Handle the updated stream (screen sharing)
+              console.log("suer");
+            });
+          });
+          // peerHolder._connections.forEach((conn) => {
+          //   console.log(conn)
+          //   const call = peerHolder.call(conn.peer, stream);
+          //   console.log(call)
+          //   call.on("stream", (userVideoStream) => {
+          //     // Handle the updated stream (screen sharing)
+          //     console.log("suer")
+          //   });
+          // });
+        })
+        .catch((error) => console.error(error));
+    }
+  };
+
+  // const toggleScreenSharing = () => {
+  //   if (!screenSharing) {
+  //     navigator.mediaDevices
+  //       .getDisplayMedia({ video: true, audio: true })
+  //       .then((stream) => {
+  //         setStream(stream);
+  //         if (myVideoRef.current) {
+  //           myVideoRef.current.srcObject = stream;
+  //         }
+  //         peerHolder._connections.forEach((conn) => {
+  //           const call = peerHolder.current.call(conn.peer, stream);
+  //           call.on('stream', (userVideoStream) => {
+  //             // Handle the updated stream
+  //           });
+  //         });
+  //       })
+  //       .catch((error) => console.error(error));
+  //   } else {
+  //     navigator.mediaDevices
+  //       .getUserMedia({ video: true, audio: true })
+  //       .then((stream) => {
+  //         setStream(stream);
+  //         if (myVideoRef.current) {
+  //           myVideoRef.current.srcObject = stream;
+  //         }
+  //         peerHolder._connections.forEach((conn) => {
+  //           const call = peerHolder.current.call(conn.peer, stream);
+  //           call.on('stream', (userVideoStream) => {
+  //             // Handle the updated stream
+  //           });
+  //         });
+  //       })
+  //       .catch((error) => console.error(error));
+  //   }
+
+  //   setScreenSharing(!screenSharing);
+  // };
 
   return (
     <div className="dashboard-layout">
@@ -1131,7 +1235,7 @@ export default function Stream() {
                 <div className="page-title" style={{ display: "block" }}>
                   <div className="time-constraints">
                     <div className="time-tracker">
-                      <p>Time Remaining{waiting}</p>
+                      <p>Time Remaining</p>
                       {planname ? (
                         planname === "free" ? (
                           !isLoading && (
@@ -1450,10 +1554,7 @@ export default function Stream() {
                     {screenSharing ? (
                       <div
                         className="control-object more share"
-                        onClick={() => {
-                          screenTrack.dispatchEvent(new Event("ended"));
-                          handleScreenSharingEnded(currentPeer);
-                        }}
+                        onClick={toggleScreenSharing}
                       >
                         <i className="fa fa-desktop"></i>
                         <p>Stop Screen Share</p>
@@ -1461,9 +1562,7 @@ export default function Stream() {
                     ) : (
                       <div
                         className="control-object more share"
-                        onClick={() => {
-                          setScreenSharing(true);
-                        }}
+                        onClick={toggleScreenSharing}
                       >
                         <i className="fa fa-desktop"></i>
                         <p>Share screen</p>
@@ -1485,7 +1584,8 @@ export default function Stream() {
                         setQuizStatus(true);
                       }}
                     >
-                      <i className="fas fa-book-open"></i> 
+                      <i className="fas fa-book-open"></i>
+
                       <p>Pop Quiz</p>
                     </div>
                   </div>

@@ -30,6 +30,7 @@ function WatchStream({ schoolname }) {
   let history = useHistory();
   let [currentPeer, setCurrentPeer] = useState(null);
   const myVideoRef = useRef();
+  const peerRef = useRef(null);
   const [trigger, setTrigger] = useState("");
 
   const chatInterfaceRef = useRef(null);
@@ -307,9 +308,9 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     socket.on("broadcaster", () => {
       console.log("broadcaster returned");
-      setReconnect("reconnect");
+      // setReconnect("reconnect");
       // start reconnecting loading
-      setReconnectLoading(true);
+      // setReconnectLoading(true);
       setDisconnect(false);
       const NewPeer = new Peer();
       NewPeer.on("open", (user) => {
@@ -328,6 +329,57 @@ function WatchStream({ schoolname }) {
       });
     });
   }, [roomid]);
+
+  useEffect(() => {
+    socket.on("broadcaster", () => {
+      console.log("broadcaster returned");
+    });
+  },[roomid]);
+
+  useEffect(() => {
+    socket.on("screenSharingStatus", (status) => {
+      setScreenSharing(status);
+      let newDummyStream = createBlankVideoStream();
+      if (status) {
+        console.log("ssssss", currentPeer, peerRef.current);
+        peerRef.current.on("call", (call) => {
+          console.log(call);
+          call.answer(newDummyStream);
+          call.on("stream", (remoteStream) => {
+            console.log("Received screen sharing stream");
+            // Handle the received screen sharing stream
+            addVideoStream(remoteStream);
+          });
+        });
+      } else {
+        console.log(status);
+        peerRef.current.on("call", (call) => {
+          console.log(call);
+          call.answer(newDummyStream);
+          call.on("stream", (remoteStream) => {
+            console.log("stop screen sharing stream");
+            // Handle the received screen sharing stream
+            addVideoStream(remoteStream);
+          });
+        });
+      }
+    });
+    return () => {
+      socket.off("screenSharingStatus");
+    };
+  }, [roomid, screenSharing, currentPeer]);
+
+  let newDummyStream = createBlankVideoStream();
+
+  // peerRef.current?.on("call", (call) => {
+  //   console.log(call);
+  //   call.answer(newDummyStream);
+  //   call.on("stream", (remoteStream) => {
+  //     console.log("Received screen sharing stream",screenSharing);
+  //     // Handle the received screen sharing stream
+  //     // addVideoStream(remoteStream);
+  //   });
+  // });
 
   useEffect(() => {
     socket.on("timerStarted", (questionControl, duration) => {
@@ -387,7 +439,7 @@ function WatchStream({ schoolname }) {
     socket.on("screenPeer", (data) => {
       console.log("screen peer recieved");
 
-      myPeer.destroy();
+      // myPeer.destroy();
       // currentPeer?.destroy();
 
       const screenPeer = new Peer();
@@ -413,8 +465,8 @@ function WatchStream({ schoolname }) {
     socket.on("end-stream", () => {
       console.log("broadcaster left");
 
-      setDisconnect(true);
-      myPeer.destroy();
+      // setDisconnect(true);
+      // myPeer.destroy();
     });
   }, [roomid]);
   useEffect(() => {
@@ -428,7 +480,7 @@ function WatchStream({ schoolname }) {
       console.log("broadcaster left");
       setDisconnect(true);
     });
-  });
+  }, [roomid]);
   useEffect(() => {
     socket.on("special close", (index) => {
       const updatedChat = defaultChat.filter((item, i) => i !== index);
@@ -445,12 +497,13 @@ function WatchStream({ schoolname }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolname]);
-  const myPeer = new Peer({ videoCodec: "h264" });
+  // const myPeer = new Peer({ videoCodec: "h264" });
 
   useEffect(() => {
     const initializePeer = async () => {
       const peerInstance = new Peer();
       setCurrentPeer(peerInstance);
+      peerRef.current = peerInstance;
 
       peerInstance.on("open", (peerId) => {
         // socket.emit("join", peerId);
@@ -463,7 +516,7 @@ function WatchStream({ schoolname }) {
 
       // peerInstance.on("call", (call) => {
       //   const blankStream = createBlankVideoStream();
-       
+
       //   call.answer(blankStream);
       //   call.on("stream", (remoteStream) => {
       //     console.log(" ssfsd")
@@ -490,26 +543,21 @@ function WatchStream({ schoolname }) {
     return () => {
       currentPeer?.destroy();
     };
-  }, [roomid,screenSharing]);
-
-
+  }, [roomid, trigger]);
 
   const initiateCall = (peerId) => {
     if (currentPeer) {
       const blankStream = createBlankVideoStream();
       const call = currentPeer.call(peerId, blankStream);
-  
-      call.on('stream', (remoteStream) => {
-        console.log("first")
-        addVideoStream(remoteStream)
 
+      call.on("stream", (remoteStream) => {
+        console.log("first");
+        addVideoStream(remoteStream);
 
         // Handle the incoming stream
       });
     }
-  }
-
- 
+  };
 
   useEffect(() => {
     socket.on("watcher", (userId, roomSize) => {
@@ -518,17 +566,19 @@ function WatchStream({ schoolname }) {
   });
 
   useEffect(() => {
-    socket.on('join stream', (roomSize, peerId) => {
-      console.log("first")
+    socket.on("join stream", (roomSize, peerId) => {
+      console.log("first");
       // Handle the join stream event
-      console.log(`Received join stream event with room size ${roomSize} and peerId ${peerId}`);
+      console.log(
+        `Received join stream event with room size ${roomSize} and peerId ${peerId}`
+      );
       initiateCall(peerId);
     });
 
     return () => {
-      socket.off('join stream');
+      socket.off("join stream");
     };
-  }, [roomid,currentPeer]);
+  }, [roomid, currentPeer]);
 
   useEffect(() => {
     socket.on("for your eyes only", (roomSize) => {
