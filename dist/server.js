@@ -164,7 +164,10 @@ io.on("connection", socket => {
   // });
 
   socket.on("broadcaster", async (roomId, peerId) => {
-    newBroadcasterHolder[roomId] = peerId;
+    newBroadcasterHolder[roomId] = {
+      peerId,
+      socketId: socket.id
+    };
     socket.join(roomId);
     socket.broadcast.to(roomId).emit("broadcaster");
   });
@@ -176,18 +179,18 @@ io.on("connection", socket => {
 
     if (newBroadcasterHolder[roomId]) {
       console.log(newBroadcasterHolder[roomId]);
-      io.in(roomId).emit("join stream", roomSize, newBroadcasterHolder[roomId]); // io.in(roomid).
+      io.in(roomId).emit("join stream", roomSize, newBroadcasterHolder[roomId].peerId); // io.in(roomid).
     } else {
       socket.emit("no stream");
     }
   });
-  socket.on('startScreenSharing', roomId => {
+  socket.on("startScreenSharing", roomId => {
     screenSharing = true;
-    io.in(roomId).emit('screenSharingStatus', true);
+    io.in(roomId).emit("screenSharingStatus", true);
   });
-  socket.on('stopScreenSharing', roomId => {
+  socket.on("stopScreenSharing", roomId => {
     screenSharing = false;
-    io.in(roomId).emit('screenSharingStatus', false);
+    io.in(roomId).emit("screenSharingStatus", false);
   });
   socket.on("end-stream", roomId => {
     socket.broadcast.to(roomId).emit("end-stream");
@@ -286,40 +289,46 @@ io.on("connection", socket => {
   //   }
   // }, 1000);
   // })
+  // socket.on("disconnect", async () => {
+  //   // on broadcaster disconnected
+  //   if (broadcasterId === socket.id) {
+  //     let liveWebinar = await LiveWebinar.findOne({ streamKey: currentRoom });
+  //     let timeStamp = Date.now();
+  //     let timeUpdate;
+  //     const timeDifferenceInSeconds = Math.floor(
+  //       (timeStamp - liveWebinar.streamStarted) / 1000
+  //     );
+  //     if (liveWebinar.timeleft === 0) {
+  //       // timeUpdate = 2700 - timeDifferenceInSeconds;
+  //       // liveWebinar.timeleft = timeUpdate;
+  //       // delete webinar
+  //     }
+  //     liveWebinar.timeleft = liveWebinar.timeleft - timeDifferenceInSeconds;
+  //     liveWebinar.isLive = false;
+  //     await liveWebinar.save();
+  //     socket.broadcast.to(currentRoom).emit("broadcaster-disconnected");
+  //   }
+  //   if (watchers[socket.id]) {
+  //     const { roomId, user } = watchers[socket.id];
+  //     delete watchers[socket.id];
+  //     socket.leave(roomId);
+  //     var room = io.sockets.adapter.rooms;
+  //     let roomSize = room.get(roomId).size;
+  //     socket.to(roomId).emit("user-disconnected", user, roomSize);
+  //   }
+  //   // it should be possible to get the user id
+  // });
 
   socket.on("disconnect", async () => {
-    // on broadcaster disconnected
-    if (broadcasterId === socket.id) {
-      let liveWebinar = await _Livewebinar.default.findOne({
-        streamKey: currentRoom
-      });
-      let timeStamp = Date.now();
-      let timeUpdate;
-      const timeDifferenceInSeconds = Math.floor((timeStamp - liveWebinar.streamStarted) / 1000);
-
-      if (liveWebinar.timeleft === 0) {// timeUpdate = 2700 - timeDifferenceInSeconds;
-        // liveWebinar.timeleft = timeUpdate;
-        // delete webinar
+    // Check if the socket is a broadcaster
+    const socketId = socket.id;
+    Object.entries(newBroadcasterHolder).forEach(([roomId, broadcaster]) => {
+      if (broadcaster.socketId === socketId) {
+        // The disconnected socket was a broadcaster
+        socket.broadcast.to(roomId).emit("broadcaster-disconnected");
+        delete newBroadcasterHolder[roomId];
       }
-
-      liveWebinar.timeleft = liveWebinar.timeleft - timeDifferenceInSeconds;
-      liveWebinar.isLive = false;
-      await liveWebinar.save();
-      socket.broadcast.to(currentRoom).emit("broadcaster-disconnected");
-    }
-
-    if (watchers[socket.id]) {
-      const {
-        roomId,
-        user
-      } = watchers[socket.id];
-      delete watchers[socket.id];
-      socket.leave(roomId);
-      var room = io.sockets.adapter.rooms;
-      let roomSize = room.get(roomId).size;
-      socket.to(roomId).emit("user-disconnected", user, roomSize);
-    } // it should be possible to get the user id
-
+    });
   });
 }); // middle ware to exclude cloudflare webhooks endpoint path
 // from app.use(express.json()) middleware

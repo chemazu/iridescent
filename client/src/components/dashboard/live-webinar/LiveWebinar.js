@@ -141,7 +141,7 @@ function LiveWebinar() {
                               className="table-body"
                               style={{
                                 display:
-                                  index > 2 && !viewMore ? "none" : "flex",
+                                  index > 2 && !viewMore ? "none" : "grid",
                               }}
                             >
                               <p className="first">

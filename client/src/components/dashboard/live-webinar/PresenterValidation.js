@@ -1,23 +1,41 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { connect, useDispatch } from "react-redux";
+
+import { useParams, withRouter } from "react-router-dom";
 import axios from "axios";
 
-import WatchStream from "./WatchStream";
+import Stream from "./Stream";
+import setAuthToken from "../../../utilities/setAuthToken";
 
-const StreamValidation = () => {
+const PresenterValidation = ({ school }) => {
   const { roomid } = useParams();
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // get school name
+  console.log(school);
+  if (localStorage.getItem("tutorToken")) {
+    console.log(localStorage.getItem("tutorToken"));
+    setAuthToken(localStorage.getItem("tutorToken"));
+  }
 
   const validateWebinar = async () => {
     setIsLoading(true);
 
     try {
-      let res = await axios.get(`/api/v1/livewebinar/watch/${roomid}`);
+      if (localStorage.getItem("tutorToken")) {
+        console.log(localStorage.getItem("tutorToken"));
+        setAuthToken(localStorage.getItem("tutorToken"));
+      }
+      let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
       if (res) {
+        console.log(res);
+        // if (res.data.school === school.schoolDetails.name) {
         setIsValid(true);
         setIsLoading(false);
+        // }
       }
+      // setIsLoading(false);
+      // setIsValid(false);
     } catch (error) {
       console.log(error);
       setIsValid(false);
@@ -36,8 +54,14 @@ const StreamValidation = () => {
   if (!isValid) {
     return <div>Invalid Stream ID</div>;
   }
-
-  return <WatchStream />;
+  return <Stream />;
 };
 
-export default StreamValidation;
+const mapStateToProps = (state) => ({
+  school: state.school,
+  user: state.auth.user,
+  currentPage: state.currentPage,
+});
+
+// export default PresenterValidation;
+export default connect(mapStateToProps)(withRouter(PresenterValidation));

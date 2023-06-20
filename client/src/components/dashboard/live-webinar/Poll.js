@@ -42,7 +42,7 @@ export default function Poll({ pollOptions, pollResult }) {
   }
   const calculatePercentage = (a, b) => {
     const percentage = ((a / calculateSum(b)) * 100).toFixed(0);
-    return percentage;
+    return Number(percentage).toFixed(0);
   };
 
   return (

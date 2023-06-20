@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import auth from "../middleware/auth";
 import studentAuth from "../middleware/studentAuth";
+
 import cloudinary from "cloudinary";
 import multer, { memoryStorage } from "multer";
 import { Router } from "express";
@@ -26,20 +27,6 @@ const createCourseThumbnailPhoto = multer({
   },
 });
 
-// const uploadFileToCloudinary = (file, options) => {
-//   return new Promise((resolve, reject) => {
-//     cloudinary.v2.uploader.upload(file, options, (error, response) => {
-//       if (error) {
-//         reject(error);
-//       } else {
-//         resolve(response);
-//         console.log(response);
-//       }
-//     });
-//   });
-// };
-
-// Create a live stream
 router.post(
   "/",
   [
@@ -109,18 +96,10 @@ router.post(
       webinarReps,
       endTime,
       school,
+      timeLeft: 2700,
     });
 
-    // let options = {
-    //   folder: `tuturly/livewebinar/${title}`,
-    //   resource_type: "image",
-    // };
     try {
-      // const [thumbnailUploadResponse] = await uploadFileToCloudinary(
-      //   image,
-      //   options
-      // );
-
       const savedStream = await newStream.save();
       res.json({
         message: "Stream created successfully",
@@ -136,40 +115,96 @@ router.post(
 
 // confirm a live stream
 
+router.get("/stream/:streamKey", auth, async (req, res) => {
+  const { streamKey } = req.params;
+  let user = req.user.id;
+
+  try {
+    const livestream = await LiveWebinar.findOne({ streamKey, creator: user })
+      .populate("creator")
+      .populate("school");
+
+    if (livestream) {
+      console.log(livestream);
+      const payment = await PaymentPlans.findOne({
+        _id: livestream.creator.selectedplan,
+      });
+      const timestamp = Date.now();
+
+      if (payment) {
+        livestream.streamStarted = timestamp;
+
+        // if (livestream.timeleft === 0) {
+        //   livestream.timeleft = 2700;
+        // }
+
+        await livestream.save();
+
+        res.json({
+          title: livestream.title,
+          streamkey: livestream.streamKey,
+          isLive: livestream.isLive,
+          firstname: livestream.creator.firstname,
+          lastname: livestream.creator.lastname,
+          username: livestream.creator.username,
+          school: livestream.school.name,
+          planname: payment.planname,
+          timeLeft: livestream.timeleft,
+        });
+      } else {
+        res.status(400).json({ error: "Payment plan not found" });
+      }
+    } else {
+      res.status(400).json({ error: "Stream not found" });
+    }
+  } catch (error) {
+    res.status(400).json({ error: "Server error" });
+  }
+});
 router.get("/watch/:streamKey", async (req, res) => {
   const { streamKey } = req.params;
+  console.log(req);
 
   try {
     const livestream = await LiveWebinar.findOne({ streamKey })
       .populate("creator")
       .populate("school");
-    let payment = await PaymentPlans.findOne(livestream.creator.selectedplan);
-    const timestamp = Date.now();
-    console.log(livestream);
-    if (livestream && payment) {
-      livestream.streamStarted = timestamp;
-      if (livestream.timeleft === 0) {
-        livestream.timeleft = 2700;
-      }
-      await livestream.save();
 
-      res.json({
-        title: livestream.title,
-        streamkey: livestream.streamKey,
-        isLive: livestream.isLive,
-        firstname: livestream.creator.firstname,
-        lastname: livestream.creator.lastname,
-        username: livestream.creator.username,
-        school: livestream.school.name,
-        planname: payment.planname,
-        timeLeft: livestream.timeleft,
+    if (livestream) {
+      const payment = await PaymentPlans.findOne({
+        _id: livestream.creator.selectedplan,
       });
+      const timestamp = Date.now();
+      console.log(livestream);
+
+      if (payment) {
+        livestream.streamStarted = timestamp;
+
+        // if (livestream.timeleft === 0) {
+        //   livestream.timeleft = 2700;
+        // }
+
+        await livestream.save();
+
+        res.json({
+          title: livestream.title,
+          streamkey: livestream.streamKey,
+          isLive: livestream.isLive,
+          firstname: livestream.creator.firstname,
+          lastname: livestream.creator.lastname,
+          username: livestream.creator.username,
+          school: livestream.school.name,
+          planname: payment.planname,
+          timeLeft: livestream.timeleft,
+        });
+      } else {
+        res.status(400).json({ error: "Payment plan not found" });
+      }
+    } else {
+      res.status(400).json({ error: "Stream not found" });
     }
-    // check if they are validate for the livestream registered to the course or check a password
-    // res.json({ error: "Stream not found" });
   } catch (error) {
-    // res.json({ error: "Server error" });
-    console.log(error);
+    res.status(400).json({ error: "Server error" });
   }
 });
 
@@ -220,6 +255,39 @@ router.get("/studentdetails", studentAuth, async (req, res) => {
   let user = await Student.findOne({ _id: req.student.id });
 
   res.json({ username: user.username });
+});
+
+// get user payment details
+
+router.post("/studentPayment/:schoolname", studentAuth, async (req, res) => {
+  console.log("first");
+  // try {
+  //   let studentId = req.student.id;
+  //   const schoolname = req.params.schoolname;
+  //   console.log(schoolname)
+
+  //   const school = await School.findOne({
+  //     name: schoolname,
+  //   });
+
+  //   if (!school) {
+  //     return res.status(400).json({
+  //       errors: [
+  //         {
+  //           msg: "school not found",
+  //         },
+  //       ],
+  //     });
+  //   }
+  //   const studentPayment = await StudentWebinar.findOne({
+  //     student: studentId,
+  //     boughtfrom: school._id,
+  //   }).populate("course");
+  //   res.json(studentPayment);
+  // } catch (error) {
+  //   console.error(error);
+  //   res.status(500).json(error);
+  // }
 });
 
 // Start the server

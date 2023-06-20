@@ -9,7 +9,6 @@ import {
   Button,
   Card,
   Spinner,
-  ListGroup,
   Progress,
 } from "reactstrap";
 import { connect } from "react-redux";
@@ -17,7 +16,6 @@ import { loadUser } from "../../../actions/auth";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import { useParams, useHistory } from "react-router-dom";
 import setDocumentTitle from "../../../utilities/setDocumentTitle";
-
 import smiley from "../../../images/emojisvg.svg";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
@@ -31,7 +29,6 @@ function WatchStream({ schoolname }) {
   let [currentPeer, setCurrentPeer] = useState(null);
   const myVideoRef = useRef();
   const peerRef = useRef(null);
-  const [trigger, setTrigger] = useState("");
 
   const chatInterfaceRef = useRef(null);
   const [title, setTitle] = useState("");
@@ -43,7 +40,6 @@ function WatchStream({ schoolname }) {
   const [answers, setAnswers] = useState([]);
   const [timerHolder, setTimerHolder] = useState({});
   const [pollAnswerHolder, setPollAnswerHolder] = useState({});
-  const [reconnect, setReconnect] = useState("");
   const [submitStatusHolder, setSubmitStatusHolder] = useState({});
   const [defaultChat, setDefaultChat] = useState([]);
   const [watcherUsername, setWatcherUsername] = useState("");
@@ -58,12 +54,28 @@ function WatchStream({ schoolname }) {
   const [waiting, setWaiting] = useState(true);
   const [disconnect, setDisconnect] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
+  const [webinarRoomTimer, setWebinarRoomTimer] = useState(null);
 
   const handleToggleEmojiPicker = () => {
     setShowEmojiPicker(!showEmojiPicker);
   };
   if (localStorage.getItem("studentToken")) {
     setAuthToken(localStorage.getItem("studentToken"));
+  }
+  function addVideoStream(stream) {
+    const video = myVideoRef.current;
+    if (video) {
+      video.srcObject = stream;
+      video.addEventListener("loadedmetadata", () => {
+        video.play();
+      });
+    }
+  }
+  function beep() {
+    var snd = new Audio(
+      "data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA//uQZAUAB1WI0PZugAAAAAoQwAAAEk3nRd2qAAAAACiDgAAAAAAABCqEEQRLCgwpBGMlJkIz8jKhGvj4k6jzRnqasNKIeoh5gI7BJaC1A1AoNBjJgbyApVS4IDlZgDU5WUAxEKDNmmALHzZp0Fkz1FMTmGFl1FMEyodIavcCAUHDWrKAIA4aa2oCgILEBupZgHvAhEBcZ6joQBxS76AgccrFlczBvKLC0QI2cBoCFvfTDAo7eoOQInqDPBtvrDEZBNYN5xwNwxQRfw8ZQ5wQVLvO8OYU+mHvFLlDh05Mdg7BT6YrRPpCBznMB2r//xKJjyyOh+cImr2/4doscwD6neZjuZR4AgAABYAAAABy1xcdQtxYBYYZdifkUDgzzXaXn98Z0oi9ILU5mBjFANmRwlVJ3/6jYDAmxaiDG3/6xjQQCCKkRb/6kg/wW+kSJ5//rLobkLSiKmqP/0ikJuDaSaSf/6JiLYLEYnW/+kXg1WRVJL/9EmQ1YZIsv/6Qzwy5qk7/+tEU0nkls3/zIUMPKNX/6yZLf+kFgAfgGyLFAUwY//uQZAUABcd5UiNPVXAAAApAAAAAE0VZQKw9ISAAACgAAAAAVQIygIElVrFkBS+Jhi+EAuu+lKAkYUEIsmEAEoMeDmCETMvfSHTGkF5RWH7kz/ESHWPAq/kcCRhqBtMdokPdM7vil7RG98A2sc7zO6ZvTdM7pmOUAZTnJW+NXxqmd41dqJ6mLTXxrPpnV8avaIf5SvL7pndPvPpndJR9Kuu8fePvuiuhorgWjp7Mf/PRjxcFCPDkW31srioCExivv9lcwKEaHsf/7ow2Fl1T/9RkXgEhYElAoCLFtMArxwivDJJ+bR1HTKJdlEoTELCIqgEwVGSQ+hIm0NbK8WXcTEI0UPoa2NbG4y2K00JEWbZavJXkYaqo9CRHS55FcZTjKEk3NKoCYUnSQ0rWxrZbFKbKIhOKPZe1cJKzZSaQrIyULHDZmV5K4xySsDRKWOruanGtjLJXFEmwaIbDLX0hIPBUQPVFVkQkDoUNfSoDgQGKPekoxeGzA4DUvnn4bxzcZrtJyipKfPNy5w+9lnXwgqsiyHNeSVpemw4bWb9psYeq//uQZBoABQt4yMVxYAIAAAkQoAAAHvYpL5m6AAgAACXDAAAAD59jblTirQe9upFsmZbpMudy7Lz1X1DYsxOOSWpfPqNX2WqktK0DMvuGwlbNj44TleLPQ+Gsfb+GOWOKJoIrWb3cIMeeON6lz2umTqMXV8Mj30yWPpjoSa9ujK8SyeJP5y5mOW1D6hvLepeveEAEDo0mgCRClOEgANv3B9a6fikgUSu/DmAMATrGx7nng5p5iimPNZsfQLYB2sDLIkzRKZOHGAaUyDcpFBSLG9MCQALgAIgQs2YunOszLSAyQYPVC2YdGGeHD2dTdJk1pAHGAWDjnkcLKFymS3RQZTInzySoBwMG0QueC3gMsCEYxUqlrcxK6k1LQQcsmyYeQPdC2YfuGPASCBkcVMQQqpVJshui1tkXQJQV0OXGAZMXSOEEBRirXbVRQW7ugq7IM7rPWSZyDlM3IuNEkxzCOJ0ny2ThNkyRai1b6ev//3dzNGzNb//4uAvHT5sURcZCFcuKLhOFs8mLAAEAt4UWAAIABAAAAAB4qbHo0tIjVkUU//uQZAwABfSFz3ZqQAAAAAngwAAAE1HjMp2qAAAAACZDgAAAD5UkTE1UgZEUExqYynN1qZvqIOREEFmBcJQkwdxiFtw0qEOkGYfRDifBui9MQg4QAHAqWtAWHoCxu1Yf4VfWLPIM2mHDFsbQEVGwyqQoQcwnfHeIkNt9YnkiaS1oizycqJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU="
+    );
+    snd.play();
   }
 
   var currentDate = new Date();
@@ -81,6 +93,7 @@ function WatchStream({ schoolname }) {
       console.log(error.message);
     }
   };
+  //
 
   const handleOptionClick = (index) => {
     // here sets the settings for answers
@@ -102,10 +115,6 @@ function WatchStream({ schoolname }) {
       watcherUsername,
       questionControl
     );
-
-    // const newAnswers = [...pollAnswers];
-    // newAnswers[currentQuestion - 1] = String.fromCharCode(65 + index);
-    // setPollAnswers(newAnswers);
   };
   const handlePollOptionClick = (index, questionControl) => {
     let newAnswerHolder = {
@@ -113,9 +122,6 @@ function WatchStream({ schoolname }) {
       [questionControl]: String.fromCharCode(65 + index),
     };
     setPollAnswerHolder(newAnswerHolder);
-    // const newAnswers = [...pollAnswers];
-    // newAnswers[currentQuestion - 1] = String.fromCharCode(65 + index);
-    // setPollAnswers(newAnswers);
   };
 
   const handleExitStream = () => {
@@ -239,34 +245,25 @@ function WatchStream({ schoolname }) {
     setSubmitStatusHolder(newSub);
   };
 
-  // const handleSpecialSubmit = (result, type, index) => {
-  //   socket.emit("special submit", type, result, roomid, watcherUsername);
-  // };
-  // const convertToSeconds = (value, unit) => {
-  //   let seconds = parseFloat(value);
-
-  //   switch (unit) {
-  //     case "secs":
-  //       break;
-  //     case "min":
-  //       seconds *= 60;
-  //       break;
-  //     case "hour":
-  //       seconds *= 3600;
-  //       break;
-  //     default:
-  //       break;
-  //   }
-
-  //   return seconds;
-  // };
   useEffect(() => {
     socket.on("message", (message) => {
       console.log(message);
 
       setDefaultChat([...defaultChat, { ...message, submitted: false }]);
     });
+    return () => {
+      socket.off("message");
+    };
   }, [defaultChat, roomid]);
+  useEffect(() => {
+    socket.on("no stream", () => {
+      console.log("no stream");
+      setWaiting(true);
+    });
+    return () => {
+      socket.off("no stream");
+    };
+  }, []);
   function convertArrayToObject(array) {
     const result = {};
 
@@ -299,18 +296,11 @@ function WatchStream({ schoolname }) {
     });
     return () => {
       socket.off("updatedPollResult");
-      // socket.off("timerTick");
-      // socket.off("timerEnded");
-      // socket.off("timerError");
     };
   }, [roomid, pollResults]);
 
   useEffect(() => {
     socket.on("broadcaster", () => {
-      console.log("broadcaster returned");
-      // setReconnect("reconnect");
-      // start reconnecting loading
-      // setReconnectLoading(true);
       setDisconnect(false);
       const NewPeer = new Peer();
       NewPeer.on("open", (user) => {
@@ -319,35 +309,32 @@ function WatchStream({ schoolname }) {
       });
       NewPeer.on("call", (call) => {
         // stop reconnecting loading
-        setReconnectLoading(false);
+        setReconnectLoading(true);
 
         console.log("call incoming");
         call.answer();
         call.on("stream", (userVideoStream) => {
+          setReconnectLoading(false);
           addVideoStream(userVideoStream);
         });
       });
     });
+    return () => {
+      socket.off("broadcaster");
+    };
   }, [roomid]);
-
-  useEffect(() => {
-    socket.on("broadcaster", () => {
-      console.log("broadcaster returned");
-    });
-  },[roomid]);
 
   useEffect(() => {
     socket.on("screenSharingStatus", (status) => {
       setScreenSharing(status);
       let newDummyStream = createBlankVideoStream();
       if (status) {
-        console.log("ssssss", currentPeer, peerRef.current);
         peerRef.current.on("call", (call) => {
           console.log(call);
           call.answer(newDummyStream);
           call.on("stream", (remoteStream) => {
             console.log("Received screen sharing stream");
-            // Handle the received screen sharing stream
+
             addVideoStream(remoteStream);
           });
         });
@@ -367,19 +354,7 @@ function WatchStream({ schoolname }) {
     return () => {
       socket.off("screenSharingStatus");
     };
-  }, [roomid, screenSharing, currentPeer]);
-
-  let newDummyStream = createBlankVideoStream();
-
-  // peerRef.current?.on("call", (call) => {
-  //   console.log(call);
-  //   call.answer(newDummyStream);
-  //   call.on("stream", (remoteStream) => {
-  //     console.log("Received screen sharing stream",screenSharing);
-  //     // Handle the received screen sharing stream
-  //     // addVideoStream(remoteStream);
-  //   });
-  // });
+  }, [roomid, screenSharing]);
 
   useEffect(() => {
     socket.on("timerStarted", (questionControl, duration) => {
@@ -395,9 +370,32 @@ function WatchStream({ schoolname }) {
     });
     return () => {
       socket.off("timerStarted");
-      // socket.off("timerTick");
-      // socket.off("timerEnded");
-      // socket.off("timerError");
+    };
+  }, [roomid]);
+
+  useEffect(() => {
+    socket.on("currentStatus", (roomSize, roomTimer, pollQuizHolder) => {
+      setAttendees(roomSize);
+      console.log(roomSize, roomTimer);
+      if (pollQuizHolder) {
+        setDefaultChat([...defaultChat, ...pollQuizHolder]);
+      }
+
+      if (roomTimer) {
+        setWebinarRoomTimer(roomTimer);
+      }
+    });
+    return () => {
+      socket.off("currentStatus");
+    };
+  }, [defaultChat]);
+  useEffect(() => {
+    socket.on("roomTimerTick", (roomTimer) => {
+      setWebinarRoomTimer(roomTimer);
+      // console.log(roomTimer)
+    });
+    return () => {
+      socket.off("roomTimerTick");
     };
   }, [roomid]);
 
@@ -406,6 +404,9 @@ function WatchStream({ schoolname }) {
       console.log("first");
       console.log(timerHolder);
       if (timerHolder[questionControl]) {
+        if (remainingTime === 0) {
+          handlePollSubmit(questionControl);
+        }
         let newTimeHolder = {
           ...timerHolder,
           [questionControl]: {
@@ -417,10 +418,7 @@ function WatchStream({ schoolname }) {
       }
     });
     return () => {
-      // socket.off("timerStarted");
       socket.off("timerTick");
-      // socket.off("timerEnded");
-      // socket.off("timerError");
     };
   }, [roomid, timerHolder]);
 
@@ -435,51 +433,23 @@ function WatchStream({ schoolname }) {
     const stream = canvas.captureStream();
     return stream;
   }
-  useEffect(() => {
-    socket.on("screenPeer", (data) => {
-      console.log("screen peer recieved");
 
-      // myPeer.destroy();
-      // currentPeer?.destroy();
-
-      const screenPeer = new Peer();
-
-      screenPeer.on("open", (user) => {
-        console.log("screen peer created");
-        // find a way to delete current stream
-
-        const blankStream = createBlankVideoStream();
-        console.log(blankStream);
-        const call = screenPeer.call(data, blankStream);
-        call.on("stream", (remoteStream) => {
-          // Add the remote stream to the video element
-          console.log("remote stream should be the screen display ");
-
-          addVideoStream(remoteStream);
-        });
-      });
-    });
-  }, [roomid]);
-
-  useEffect(() => {
-    socket.on("end-stream", () => {
-      console.log("broadcaster left");
-
-      // setDisconnect(true);
-      // myPeer.destroy();
-    });
-  }, [roomid]);
   useEffect(() => {
     socket.on("user-disconnected", (userId, roomSize) => {
       setAttendees(roomSize);
     });
+    return () => {
+      socket.off("user-disconnected");
+    };
   });
 
   useEffect(() => {
     socket.on("broadcaster-disconnected", () => {
-      console.log("broadcaster left");
       setDisconnect(true);
     });
+    return () => {
+      socket.off("broadcaster-disconnected");
+    };
   }, [roomid]);
   useEffect(() => {
     socket.on("special close", (index) => {
@@ -488,8 +458,10 @@ function WatchStream({ schoolname }) {
       const updatedStatusHolder = { ...submitStatusHolder };
       delete updatedStatusHolder.index;
       setSubmitStatusHolder(updatedStatusHolder);
-      console.log("special close");
     });
+    return () => {
+      socket.off("special close");
+    };
   });
   useEffect(() => {
     if (schoolname?.length > 0) {
@@ -509,33 +481,6 @@ function WatchStream({ schoolname }) {
         // socket.emit("join", peerId);
         socket.emit("watcher", roomid, peerId);
       });
-
-      // socket.on("screenSharingStatus", (status) => {
-      //   setScreenSharing(status);
-      // });
-
-      // peerInstance.on("call", (call) => {
-      //   const blankStream = createBlankVideoStream();
-
-      //   call.answer(blankStream);
-      //   call.on("stream", (remoteStream) => {
-      //     console.log(" ssfsd")
-
-      //     addVideoStream(remoteStream);
-
-      //   });
-      //   // navigator.mediaDevices
-      //   //   .getUserMedia({ video: true, audio: true })
-      //   //   .then((stream) => {
-      //   //     call.answer(stream);
-      //   //     call.on("stream", (remoteStream) => {
-      //   //       // Handle the incoming stream
-      //   //     });
-      //   //   })
-      //   //   .catch((error) => {
-      //   //     console.error("Error accessing media devices:", error);
-      //   //   });
-      // });
     };
 
     initializePeer();
@@ -543,7 +488,7 @@ function WatchStream({ schoolname }) {
     return () => {
       currentPeer?.destroy();
     };
-  }, [roomid, trigger]);
+  }, [roomid]);
 
   const initiateCall = (peerId) => {
     if (currentPeer) {
@@ -552,6 +497,7 @@ function WatchStream({ schoolname }) {
 
       call.on("stream", (remoteStream) => {
         console.log("first");
+        setWaiting(false);
         addVideoStream(remoteStream);
 
         // Handle the incoming stream
@@ -563,6 +509,9 @@ function WatchStream({ schoolname }) {
     socket.on("watcher", (userId, roomSize) => {
       setAttendees(roomSize);
     });
+    return () => {
+      socket.off("watcher");
+    };
   });
 
   useEffect(() => {
@@ -581,54 +530,6 @@ function WatchStream({ schoolname }) {
   }, [roomid, currentPeer]);
 
   useEffect(() => {
-    socket.on("for your eyes only", (roomSize) => {
-      setAttendees(roomSize);
-    });
-  });
-
-  // useEffect(() => {
-  //   myPeer.on("call", (call) => {
-  //     console.log("call incoming");
-  //     call.answer();
-  //     call.on("stream", (userVideoStream) => {
-  //       addVideoStream(userVideoStream);
-  //     });
-  //   });
-  // }, [roomid]);
-
-  useEffect(() => {
-    socket.on("returnPeer", () => {
-      const myPeer = new Peer({ videoCodec: "h264" });
-
-      myPeer.on("open", (user) => {
-        console.log("peer created");
-        socket.emit("watcher", roomid, user);
-        setReconnectLoading(true);
-      });
-      myPeer.on("call", (call) => {
-        // stop reconnecting loading
-        setReconnectLoading(false);
-
-        console.log("call incoming");
-        call.answer();
-        call.on("stream", (userVideoStream) => {
-          addVideoStream(userVideoStream);
-        });
-      });
-    });
-  }, [roomid]);
-
-  function addVideoStream(stream) {
-    const video = myVideoRef.current;
-    if (video) {
-      video.srcObject = stream;
-      video.addEventListener("loadedmetadata", () => {
-        video.play();
-      });
-    }
-  }
-
-  useEffect(() => {
     validateWebinar();
   }, []);
 
@@ -644,316 +545,995 @@ function WatchStream({ schoolname }) {
       <Container fluid>
         <Row>
           <Col className="page-actions__col">
-            <div className="live-webinar">
-              <div className="stream-webinar-content watch-webinar-content">
-                <div
-                  className="page-title"
-                  style={{
-                    backgroundColor: theme?.themestyles.primarybackgroundcolor,
-                    color: theme?.themestyles.primarytextcolor,
-                  }}
-                >
-                  <div className="time-constraints">
+            {waiting ? (
+              <div className="live-webinar">
+                <div className="stream-webinar-content watch-webinar-content">
+                  <div
+                    className="page-title"
+                    style={{
+                      backgroundColor:
+                        theme?.themestyles.primarybackgroundcolor,
+                      color: theme?.themestyles.primarytextcolor,
+                    }}
+                  >
+                    <div className="time-constraints">
+                      {webinarRoomTimer && (
+                        <div
+                          className="time-tracker"
+                          style={{
+                            color: theme?.themestyles.primarytextcolor,
+                          }}
+                        >
+                          <p
+                            style={{
+                              color: theme?.themestyles.primarytextcolor,
+                            }}
+                          >
+                            Time Remaining
+                          </p>
+                          <CountdownTimer
+                            duration={webinarRoomTimer}
+                            onCompletion={() => {
+                              console.log("first");
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <Button className="page-title_cta-btn"></Button>
+                    </div>
                     <div
-                      className="time-tracker"
+                      className="page-title__text"
                       style={{
                         color: theme?.themestyles.primarytextcolor,
                       }}
                     >
-                      <p
-                        style={{
-                          color: theme?.themestyles.primarytextcolor,
-                        }}
-                      >
-                        Time Remaining
+                      {isLoading ? "..." : title}
+                      <p style={{ margin: "0" }}>
+                        {isLoading ? "..." : presenterName}
                       </p>
-                      <p>00:00:00</p>
                     </div>
-
-                    <Button
-                      className="page-title_cta-btn"
-                      onClick={() => {
-                        handleExitStream();
-                      }}
-                    >
-                      End Webinar &nbsp; <i className="fa fa-times"></i>
-                    </Button>
                   </div>
-                  <div
-                    className="page-title__text"
-                    style={{
-                      color: theme?.themestyles.primarytextcolor,
-                    }}
-                  >
-                    {isLoading ? "..." : title}
-                    <p style={{ margin: "0" }}>
-                      {isLoading ? "..." : presenterName}
-                    </p>
-                  </div>
-                </div>
-                <div className="live-webinar-watch">
-                  <div className="watch-left">
-                    {/* <div id="video-grid" ref={videoGridRef}> */}
-                    {reconnectLoading ? (
-                      <div className="reconnect-loading">
-                        <p>Tutor reconnecting</p>
-                        <Spinner />
-                      </div>
-                    ) : (
+                  <div className="live-webinar-watch">
+                    <div className="watch-left">
                       <div>
-                        {disconnect ? (
-                          <div
-                            className="video-background"
-                            style={{ height: "50vh" }}
-                          >
-                            <div className="broadcaster-disconnected reconnect-loading">
-                              <p> Broadcaster Disconnected</p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="video-background">
-                            <video
-                              ref={myVideoRef}
-                              muted
-                              style={{ width: "100%" }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <Card className="presenter-controls-wrapper">
-                      {" "}
-                      <div
-                        className="presenter-controls pc-top"
-                        style={{
-                          backgroundColor:
-                            theme?.themestyles.primarybackgroundcolor,
-                          color: theme?.themestyles.primarytextcolor,
-                        }}
-                      >
-                        {formattedDate} | Attendies ({attendees}){" "}
-                      </div>
-                      <div
-                        className="presenter-controls  pc-bottom watcher-pc"
-                        style={{
-                          backgroundColor:
-                            theme?.themestyles.primarybackgroundcolor,
-                          color: theme?.themestyles.primarytextcolor,
-                        }}
-                      >
-                        <div className="control-object more">
-                          <i className="fa fa-ellipsis-h"></i>
-
-                          <p>More</p>
-                        </div>
                         <div
-                          className="control-object"
-                          // onClick={() => {
-                          //   setAudioVisuals({
-                          //     audio: !audioVisuals.audio,
-                          //    video:audioVisuals.video
-                          //   });
-                          // }}
+                          className="video-background"
+                          style={{ height: "50vh" }}
                         >
-                          <i
-                            className="fas fa-microphone"
-                            // style={
-                            //   !audioVisuals.audio
-                            //     ? {
-                            //         background: "#cecece",
-                            //         color: "#888",
-                            //       }
-                            //     : null // No additional style for the active state
-                            // }
-                          ></i>
+                          <div className="broadcaster-disconnected reconnect-loading">
+                            <Spinner/>
+                            <p>Waiting for Tutor</p>
 
-                          <p>Mic</p>
+                          </div>
                         </div>
-                        <div className="control-object">
-                          <i className="fas fa-video"></i>
-                          <p>Webcam</p>
-                        </div>
+                      </div>
 
+                      <Card className="presenter-controls-wrapper">
+                        {" "}
                         <div
-                          className="control-object"
-                          onClick={() => {
-                            handleExitStream();
+                          className="presenter-controls pc-top"
+                          style={{
+                            backgroundColor:
+                              theme?.themestyles.primarybackgroundcolor,
+                            color: theme?.themestyles.primarytextcolor,
                           }}
                         >
-                          <i className="fas fa-times" style={{ color: "red" }}>
-                            {" "}
-                          </i>
-
-                          <p>Exit</p>
+                          {formattedDate} | Attendies (1){" "}
                         </div>
-                      </div>
-                    </Card>
-                  </div>
+                        <div
+                          className="presenter-controls  pc-bottom watcher-pc"
+                          style={{
+                            backgroundColor:
+                              theme?.themestyles.primarybackgroundcolor,
+                            color: theme?.themestyles.primarytextcolor,
+                          }}
+                        >
+                          <div className="control-object more">
+                            <i className="fa fa-ellipsis-h"></i>
 
-                  <div className="chat-box">
-                    <div className="chat-interface">
-                      {defaultChat.map((singleChat, index) => {
-                        return singleChat.type === "quiz" ? (
+                            <p>More</p>
+                          </div>
+                          <div className="control-object">
+                            <i
+                              className="fas fa-microphone"
+                              // style={
+                              //   !audioVisuals.audio
+                              //     ? {
+                              //         background: "#cecece",
+                              //         color: "#888",
+                              //       }
+                              //     : null // No additional style for the active state
+                              // }
+                            ></i>
+
+                            <p>Mic</p>
+                          </div>
+                          <div className="control-object">
+                            <i className="fas fa-video"></i>
+                            <p>Webcam</p>
+                          </div>
+
                           <div
-                            className="inchat-poll   inchat-quiz"
-                            style={{
-                              backgroundColor:
-                                theme?.themestyles.primarybackgroundcolor,
-                              color: theme?.themestyles.primarytextcolor,
+                            className="control-object"
+                            onClick={() => {
+                              handleExitStream();
                             }}
                           >
-                            <div
-                              className="top"
-                              style={{
-                                backgroundColor:
-                                  theme?.themestyles.secondarybackgroundcolor,
-                                color:
-                                  theme?.themestyles.primarytextcolor || "#fff",
-                              }}
+                            <i
+                              className="fas fa-times"
+                              style={{ color: "red" }}
                             >
-                              <span style={{ color: "#fff" }}>
-                                Pop Quiz{" "}
-                                <i className="fas fa-book-open poll"></i>
-                              </span>
-                              <p>
-                                {Number(
-                                  timerHolder[singleChat.questionControl]
-                                    ?.remainingTime
+                              {" "}
+                            </i>
+
+                            <p>Exit</p>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+
+                    <div className="chat-box">
+                      <div className="chat-interface">
+                        <div className="chat-interface-text">
+                          {defaultChat.map((singleChat, index) => {
+                            return singleChat.type === "quiz" ? (
+                              <></>
+                            ) : (
+                              <>
+                                {singleChat.type === "poll" ? (
+                                  <></>
+                                ) : (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "flex-end",
+                                    }}
+                                  >
+                                    <p
+                                      style={{
+                                        marginBottom: "0",
+                                        alignSelf:
+                                          singleChat.user === watcherUsername
+                                            ? ""
+                                            : "flex-start",
+                                      }}
+                                    >
+                                      {singleChat.user}
+                                    </p>
+                                    <div
+                                      key={index}
+                                      className={`chat-bubble ${
+                                        singleChat.user === watcherUsername
+                                          ? "user-bubble"
+                                          : ""
+                                      }`}
+                                    >
+                                      {singleChat.msg}
+                                    </div>
+                                  </div>
                                 )}
-                              </p>
-                              <CountdownTimer
-                                // duration={convertToSeconds(
-                                //   singleChat.duration?.durationValue,
-                                //   singleChat.duration?.durationUnit
-                                // )}
-                                duration={
-                                  Number(
-                                    timerHolder[singleChat.questionControl]
-                                      ?.remainingTime
-                                  )
-                                    ? Number(
+                              </>
+                            );
+                          })}
+                          <div ref={chatInterfaceRef} />
+                        </div>
+                        <div className="chat-interface-quiz">
+                          {defaultChat.map((singleChat, index) => {
+                            return singleChat.type === "quiz" ? (
+                              <div
+                                className="inchat-poll   inchat-quiz"
+                                style={{
+                                  backgroundColor:
+                                    theme?.themestyles.primarybackgroundcolor,
+                                  color: theme?.themestyles.primarytextcolor,
+                                }}
+                              >
+                                <div
+                                  className="top"
+                                  style={{
+                                    backgroundColor:
+                                      theme?.themestyles
+                                        .secondarybackgroundcolor,
+                                    color:
+                                      theme?.themestyles.primarytextcolor ||
+                                      "#fff",
+                                  }}
+                                >
+                                  <span style={{ color: "#fff" }}>
+                                    Pop Quiz{" "}
+                                    <i className="fas fa-book-open poll"></i>
+                                  </span>
+                                  <p>
+                                    {Number(
+                                      timerHolder[singleChat.questionControl]
+                                        ?.remainingTime
+                                    )}
+                                  </p>
+                                  <CountdownTimer
+                                    // duration={convertToSeconds(
+                                    //   singleChat.duration?.durationValue,
+                                    //   singleChat.duration?.durationUnit
+                                    // )}
+                                    duration={
+                                      Number(
                                         timerHolder[singleChat.questionControl]
                                           ?.remainingTime
                                       )
-                                    : 0
-                                }
-                                onCompletion={handleCompletion}
-                                style={{ color: "#fff" }}
+                                        ? Number(
+                                            timerHolder[
+                                              singleChat.questionControl
+                                            ]?.remainingTime
+                                          )
+                                        : 0
+                                    }
+                                    onCompletion={() => {
+                                      handleUniqueSubmission(
+                                        answers,
+                                        "quiz",
+                                        singleChat.questionControl
+                                      );
+                                    }}
+                                    style={{ color: "#fff" }}
+                                  />
+                                </div>
+
+                                <div className="bottom">
+                                  {submitStatusHolder[
+                                    singleChat.questionControl
+                                  ] ? (
+                                    <p>Submitted!!!</p>
+                                  ) : (
+                                    singleChat.quizHolder.map(
+                                      (item, index, arr) => {
+                                        // return submitStatusHolder[
+                                        //   singleChat.questionControl
+                                        // ] ? (
+                                        //   <p>Submitted</p>
+                                        // ) : (
+                                        return (
+                                          <div
+                                            className="single-question-holder"
+                                            key={index}
+                                            style={{
+                                              display:
+                                                index + 1 === currentQuestion ||
+                                                arr.length === 1
+                                                  ? "block"
+                                                  : "none",
+                                            }}
+                                          >
+                                            <p>{item.question}</p>
+                                            <ul
+                                              className="question-options "
+                                              type="A"
+                                            >
+                                              {item.options.map(
+                                                (option, index) => {
+                                                  return (
+                                                    <li
+                                                      key={index}
+                                                      style={{
+                                                        listStyleType:
+                                                          answers[
+                                                            currentQuestion - 1
+                                                          ] ===
+                                                          String.fromCharCode(
+                                                            65 + index
+                                                          )
+                                                            ? "disc"
+                                                            : "circle",
+                                                      }}
+                                                      onClick={() =>
+                                                        handleOptionClick(index)
+                                                      }
+                                                    >
+                                                      {option}
+                                                    </li>
+                                                  );
+                                                }
+                                              )}
+                                            </ul>
+                                            <div className="quiz-button-wrapper">
+                                              {currentQuestion > 1 &&
+                                                currentQuestion <=
+                                                  item.options.length && (
+                                                  <Button
+                                                    onClick={() => {
+                                                      setCurrentQuestion(
+                                                        currentQuestion - 1
+                                                      );
+                                                    }}
+                                                  >
+                                                    Prev
+                                                  </Button>
+                                                )}
+
+                                              {index + 1 >= arr.length ||
+                                              arr.length === 1 ? (
+                                                ""
+                                              ) : (
+                                                <Button
+                                                  onClick={() => {
+                                                    setCurrentQuestion(
+                                                      currentQuestion + 1
+                                                    );
+                                                  }}
+                                                >
+                                                  Next {arr.length}
+                                                </Button>
+                                              )}
+                                              {submitStatusHolder[
+                                                singleChat.questionControl
+                                              ] ? (
+                                                <Button disabled>
+                                                  Submitted
+                                                </Button>
+                                              ) : (
+                                                // <Button
+                                                //   onClick={() => {
+                                                //     handleUniqueSubmission(
+                                                //       answers,
+                                                //       "quiz",
+                                                //       singleChat.questionControl
+                                                //     );
+                                                //   }}
+                                                // >
+                                                //   Unique Submission
+                                                // </Button>
+                                                <Button
+                                                  onClick={() => {
+                                                    handleUniqueSubmission(
+                                                      answers,
+                                                      "quiz",
+                                                      singleChat.questionControl
+                                                    );
+                                                  }}
+                                                >
+                                                  Submit
+                                                </Button>
+                                              )}
+                                              {/* {submittedObject[index] ? (
+                                       <Button disabled>Submitted</Button>
+                                     ) : (
+                                       <Button
+                                         onClick={() => {
+                                           handleSpecialSubmit(
+                                             answers,
+                                             "quiz"
+                                           );
+                                           setSubmitedObject((prevState) => ({
+                                             ...prevState,
+                                             [index]: true,
+                                           }));
+                                           console.log(
+                                             answers,
+                                             submittedObject
+                                           );
+                                         }}
+                                       >
+                                         Submit
+                                       </Button>
+                                     )} */}
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                    )
+                                  )}
+                                  {/* {item.quizHolder.map((item, index) => {
+                             <div
+                               className="single-question-holder"
+                               key={index}
+                               // style={{
+                               //   display:
+                               //     index  === currentQuestion
+                               //       ? "block"
+                               //       : "none",
+                               // }}
+                             >
+                               <p>{item.question}</p>
+                               {item.options.map((item, index) => {
+                                 <div key={index}>{item}</div>;
+                               })}
+                             </div>;
+                           })} */}
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {singleChat.type === "poll" ? (
+                                  <div
+                                    className="inchat-poll"
+                                    style={{
+                                      backgroundColor:
+                                        theme?.themestyles
+                                          .primarybackgroundcolor,
+                                      color:
+                                        theme?.themestyles.primarytextcolor,
+                                    }}
+                                  >
+                                    <div
+                                      className="top"
+                                      style={{
+                                        backgroundColor:
+                                          theme?.themestyles
+                                            .secondarybackgroundcolor,
+                                        color:
+                                          theme?.themestyles.primarytextcolor,
+                                      }}
+                                    >
+                                      <span>
+                                        Poll{" "}
+                                        <i className="fas fa-poll poll"></i>
+                                      </span>
+                                    </div>
+                                    <div className="bottom">
+                                      {pollResults[
+                                        singleChat.questionControl
+                                      ] ? (
+                                        ""
+                                      ) : (
+                                        <Progress
+                                          max={
+                                            Number(
+                                              timerHolder[
+                                                singleChat.questionControl
+                                              ]?.duration
+                                            )
+                                              ? `${Number(
+                                                  timerHolder[
+                                                    singleChat.questionControl
+                                                  ]?.duration
+                                                )}`
+                                              : "0"
+                                          }
+                                          value={
+                                            Number(
+                                              timerHolder[
+                                                singleChat.questionControl
+                                              ]?.remainingTime
+                                            )
+                                              ? Number(
+                                                  timerHolder[
+                                                    singleChat.questionControl
+                                                  ]?.remainingTime
+                                                )
+                                              : 0
+                                          }
+                                        />
+                                      )}
+                                      <p>Question : </p>
+                                      <p>{singleChat.title}</p>
+                                      <div className="poll-options">
+                                        {/* add POLL RES HERES */}
+                                        {pollResults[
+                                          singleChat.questionControl
+                                        ] &&
+                                        submitted[
+                                          singleChat.questionControl
+                                        ] ? (
+                                          <Poll
+                                            pollOptions={singleChat.options}
+                                            pollResult={
+                                              pollResults[
+                                                singleChat.questionControl
+                                              ]
+                                                ? pollResults[
+                                                    singleChat.questionControl
+                                                  ]
+                                                : []
+                                            }
+                                            // pollResult={[submitted[singleChat.questionControl]]}
+                                          />
+                                        ) : (
+                                          <ul>
+                                            {singleChat.options.map(
+                                              (option, index) => {
+                                                return (
+                                                  <li
+                                                    key={index}
+                                                    style={{
+                                                      listStyleType:
+                                                        pollAnswerHolder[
+                                                          singleChat
+                                                            .questionControl
+                                                        ] ===
+                                                        String.fromCharCode(
+                                                          65 + index
+                                                        )
+                                                          ? "disc"
+                                                          : "circle",
+                                                    }}
+                                                    onClick={() =>
+                                                      handlePollOptionClick(
+                                                        index,
+                                                        singleChat.questionControl
+                                                      )
+                                                    }
+                                                  >
+                                                    {option}
+                                                  </li>
+                                                );
+                                              }
+                                            )}
+                                          </ul>
+                                        )}
+                                      </div>
+                                      {/* {submitted ? ( */}
+                                      {submitted[singleChat.questionControl] ? (
+                                        <Button disabled>Submitted</Button>
+                                      ) : (
+                                        <Button
+                                          onClick={() => {
+                                            handlePollSubmit(
+                                              singleChat.questionControl
+                                            );
+                                            // handleSpecialSubmit(
+                                            //   pollAnswers,
+                                            //   "poll",
+                                            //   index
+                                            // );
+                                          }}
+                                        >
+                                          Submit
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <></>
+                                )}
+                              </>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div
+                        className="chat-control"
+                        style={{
+                          backgroundColor:
+                            theme?.themestyles.primarybackgroundcolor,
+                          color: theme?.themestyles.primarytextcolor,
+                        }}
+                      >
+                        {showEmojiPicker && (
+                          // <Picker
+                          //
+                          // />
+                          <div
+                            className="emoji-wrapper"
+                            style={{
+                              position: "absolute",
+                              bottom: "90px",
+
+                              width: "100%",
+                            }}
+                          >
+                            <Picker
+                              previewPosition="none"
+                              showPreview="false"
+                              data={data}
+                              onClickOutside={() => {
+                                setShowEmojiPicker(false);
+                              }}
+                              // onEmojiSelect={()=>{console.log("first")}}
+                              onEmojiSelect={(emoji) => {
+                                handleSelectEmoji(emoji);
+                              }}
+                              perLine="7"
+                            />
+                          </div>
+                        )}
+                        <div
+                          className="action-wrapper"
+                          style={{ justifyContent: "center" }}
+                          onClick={() => {
+                            handleToggleEmojiPicker();
+                          }}
+                        >
+                          <img src={smiley} alt="emoji" />
+                        </div>
+                        <input
+                          value={chatMessage}
+                          onChange={(e) => {
+                            setChatMessage(e.target.value);
+                            console.log(e.target.value);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Type a message"
+                          style={{
+                            width: "auto",
+                            marginRight: ".5rem",
+                            marginLeft: ".5rem",
+                          }}
+                        />
+                        <Button
+                          onClick={() => {
+                            console.log("first");
+                            sendMessage();
+                          }}
+                        >
+                          Send
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="live-webinar">
+                <div className="stream-webinar-content watch-webinar-content">
+                  <div
+                    className="page-title"
+                    style={{
+                      backgroundColor:
+                        theme?.themestyles.primarybackgroundcolor,
+                      color: theme?.themestyles.primarytextcolor,
+                    }}
+                  >
+                    <div className="time-constraints">
+                      {webinarRoomTimer && (
+                        <div
+                          className="time-tracker"
+                          style={{
+                            color: theme?.themestyles.primarytextcolor,
+                          }}
+                        >
+                          <p
+                            style={{
+                              color: theme?.themestyles.primarytextcolor,
+                            }}
+                          >
+                            Time Remaining
+                          </p>
+                          <CountdownTimer
+                            duration={webinarRoomTimer}
+                            onCompletion={() => {
+                              console.log("first");
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <Button
+                        className="page-title_cta-btn"
+                        onClick={() => {
+                          handleExitStream();
+                        }}
+                      >
+                        End Webinar &nbsp; <i className="fa fa-times"></i>
+                      </Button>
+                    </div>
+                    <div
+                      className="page-title__text"
+                      style={{
+                        color: theme?.themestyles.primarytextcolor,
+                      }}
+                    >
+                      {isLoading ? "..." : title}
+                      <p style={{ margin: "0" }}>
+                        {isLoading ? "..." : presenterName}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="live-webinar-watch">
+                    <div className="watch-left">
+                      {/* <div id="video-grid" ref={videoGridRef}> */}
+                      {reconnectLoading ? (
+                        <div className="reconnect-loading">
+                          <p>Tutor reconnecting</p>
+                          <Spinner />
+                        </div>
+                      ) : (
+                        <div>
+                          {disconnect ? (
+                            <div
+                              className="video-background"
+                              style={{ height: "50vh" }}
+                            >
+                              <div className="broadcaster-disconnected reconnect-loading">
+                                <p> Broadcaster Disconnected</p>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="video-background">
+                              <video
+                                ref={myVideoRef}
+                                muted
+                                style={{ width: "100%" }}
                               />
                             </div>
+                          )}
+                        </div>
+                      )}
+                      <Card className="presenter-controls-wrapper">
+                        {" "}
+                        <div
+                          className="presenter-controls pc-top"
+                          style={{
+                            backgroundColor:
+                              theme?.themestyles.primarybackgroundcolor,
+                            color: theme?.themestyles.primarytextcolor,
+                          }}
+                        >
+                          {formattedDate} | Attendies ({attendees}){" "}
+                        </div>
+                        <div
+                          className="presenter-controls  pc-bottom watcher-pc"
+                          style={{
+                            backgroundColor:
+                              theme?.themestyles.primarybackgroundcolor,
+                            color: theme?.themestyles.primarytextcolor,
+                          }}
+                        >
+                          <div className="control-object more">
+                            <i className="fa fa-ellipsis-h"></i>
 
-                            <div className="bottom">
-                              {submitStatusHolder[
-                                singleChat.questionControl
-                              ] ? (
-                                <p>Submitted!!!</p>
-                              ) : (
-                                singleChat.quizHolder.map(
-                                  (item, index, arr) => {
-                                    // return submitStatusHolder[
-                                    //   singleChat.questionControl
-                                    // ] ? (
-                                    //   <p>Submitted</p>
-                                    // ) : (
-                                    return (
-                                      <div
-                                        className="single-question-holder"
-                                        key={index}
-                                        style={{
-                                          display:
-                                            index + 1 === currentQuestion ||
-                                            arr.length === 1
-                                              ? "block"
-                                              : "none",
-                                        }}
-                                      >
-                                        <p>{item.question}</p>
-                                        <ul
-                                          className="question-options "
-                                          type="A"
-                                        >
-                                          {item.options.map((option, index) => {
-                                            return (
-                                              <li
-                                                key={index}
-                                                style={{
-                                                  listStyleType:
-                                                    answers[
-                                                      currentQuestion - 1
-                                                    ] ===
-                                                    String.fromCharCode(
-                                                      65 + index
-                                                    )
-                                                      ? "disc"
-                                                      : "circle",
-                                                }}
-                                                onClick={() =>
-                                                  handleOptionClick(index)
-                                                }
-                                              >
-                                                {option}
-                                              </li>
-                                            );
-                                          })}
-                                        </ul>
-                                        <div className="quiz-button-wrapper">
-                                          {currentQuestion > 1 &&
-                                            currentQuestion <=
-                                              item.options.length && (
-                                              <Button
-                                                onClick={() => {
-                                                  setCurrentQuestion(
-                                                    currentQuestion - 1
+                            <p>More</p>
+                          </div>
+                          <div className="control-object">
+                            <i
+                              className="fas fa-microphone"
+                              // style={
+                              //   !audioVisuals.audio
+                              //     ? {
+                              //         background: "#cecece",
+                              //         color: "#888",
+                              //       }
+                              //     : null // No additional style for the active state
+                              // }
+                            ></i>
+
+                            <p>Mic</p>
+                          </div>
+                          <div className="control-object">
+                            <i className="fas fa-video"></i>
+                            <p>Webcam</p>
+                          </div>
+
+                          <div
+                            className="control-object"
+                            onClick={() => {
+                              handleExitStream();
+                            }}
+                          >
+                            <i
+                              className="fas fa-times"
+                              style={{ color: "red" }}
+                            >
+                              {" "}
+                            </i>
+
+                            <p>Exit</p>
+                          </div>
+                        </div>
+                      </Card>
+                    </div>
+
+                    <div className="chat-box">
+                      <div className="chat-interface">
+                        <div className="chat-interface-text">
+                          {defaultChat.map((singleChat, index) => {
+                            return singleChat.type === "quiz" ? (
+                              <></>
+                            ) : (
+                              <>
+                                {singleChat.type === "poll" ? (
+                                  <></>
+                                ) : (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "flex-end",
+                                    }}
+                                  >
+                                    <p
+                                      style={{
+                                        marginBottom: "0",
+                                        alignSelf:
+                                          singleChat.user === watcherUsername
+                                            ? ""
+                                            : "flex-start",
+                                      }}
+                                    >
+                                      {singleChat.user}
+                                    </p>
+                                    <div
+                                      key={index}
+                                      className={`chat-bubble ${
+                                        singleChat.user === watcherUsername
+                                          ? "user-bubble"
+                                          : ""
+                                      }`}
+                                    >
+                                      {singleChat.msg}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            );
+                          })}
+                          <div ref={chatInterfaceRef} />
+                        </div>
+                        <div className="chat-interface-quiz">
+                          {defaultChat.map((singleChat, index) => {
+                            return singleChat.type === "quiz" ? (
+                              <div
+                                className="inchat-poll   inchat-quiz"
+                                style={{
+                                  backgroundColor:
+                                    theme?.themestyles.primarybackgroundcolor,
+                                  color: theme?.themestyles.primarytextcolor,
+                                }}
+                              >
+                                <div
+                                  className="top"
+                                  style={{
+                                    backgroundColor:
+                                      theme?.themestyles
+                                        .secondarybackgroundcolor,
+                                    color:
+                                      theme?.themestyles.primarytextcolor ||
+                                      "#fff",
+                                  }}
+                                >
+                                  <span style={{ color: "#fff" }}>
+                                    Pop Quiz{" "}
+                                    <i className="fas fa-book-open poll"></i>
+                                  </span>
+                                  <p>
+                                    {Number(
+                                      timerHolder[singleChat.questionControl]
+                                        ?.remainingTime
+                                    )}
+                                  </p>
+                                  <CountdownTimer
+                                    // duration={convertToSeconds(
+                                    //   singleChat.duration?.durationValue,
+                                    //   singleChat.duration?.durationUnit
+                                    // )}
+                                    duration={
+                                      Number(
+                                        timerHolder[singleChat.questionControl]
+                                          ?.remainingTime
+                                      )
+                                        ? Number(
+                                            timerHolder[
+                                              singleChat.questionControl
+                                            ]?.remainingTime
+                                          )
+                                        : 0
+                                    }
+                                    onCompletion={() => {
+                                      handleUniqueSubmission(
+                                        answers,
+                                        "quiz",
+                                        singleChat.questionControl
+                                      );
+                                    }}
+                                    style={{ color: "#fff" }}
+                                  />
+                                </div>
+
+                                <div className="bottom">
+                                  {submitStatusHolder[
+                                    singleChat.questionControl
+                                  ] ? (
+                                    <p>Submitted!!!</p>
+                                  ) : (
+                                    singleChat.quizHolder.map(
+                                      (item, index, arr) => {
+                                        // return submitStatusHolder[
+                                        //   singleChat.questionControl
+                                        // ] ? (
+                                        //   <p>Submitted</p>
+                                        // ) : (
+                                        return (
+                                          <div
+                                            className="single-question-holder"
+                                            key={index}
+                                            style={{
+                                              display:
+                                                index + 1 === currentQuestion ||
+                                                arr.length === 1
+                                                  ? "block"
+                                                  : "none",
+                                            }}
+                                          >
+                                            <p>{item.question}</p>
+                                            <ul
+                                              className="question-options "
+                                              type="A"
+                                            >
+                                              {item.options.map(
+                                                (option, index) => {
+                                                  return (
+                                                    <li
+                                                      key={index}
+                                                      style={{
+                                                        listStyleType:
+                                                          answers[
+                                                            currentQuestion - 1
+                                                          ] ===
+                                                          String.fromCharCode(
+                                                            65 + index
+                                                          )
+                                                            ? "disc"
+                                                            : "circle",
+                                                      }}
+                                                      onClick={() =>
+                                                        handleOptionClick(index)
+                                                      }
+                                                    >
+                                                      {option}
+                                                    </li>
                                                   );
-                                                }}
-                                              >
-                                                Prev
-                                              </Button>
-                                            )}
+                                                }
+                                              )}
+                                            </ul>
+                                            <div className="quiz-button-wrapper">
+                                              {currentQuestion > 1 &&
+                                                currentQuestion <=
+                                                  item.options.length && (
+                                                  <Button
+                                                    onClick={() => {
+                                                      setCurrentQuestion(
+                                                        currentQuestion - 1
+                                                      );
+                                                    }}
+                                                  >
+                                                    Prev
+                                                  </Button>
+                                                )}
 
-                                          {index + 1 >= arr.length ||
-                                          arr.length === 1 ? (
-                                            ""
-                                          ) : (
-                                            <Button
-                                              onClick={() => {
-                                                setCurrentQuestion(
-                                                  currentQuestion + 1
-                                                );
-                                              }}
-                                            >
-                                              Next {arr.length}
-                                            </Button>
-                                          )}
-                                          {submitStatusHolder[
-                                            singleChat.questionControl
-                                          ] ? (
-                                            <Button disabled>Submitted</Button>
-                                          ) : (
-                                            // <Button
-                                            //   onClick={() => {
-                                            //     handleUniqueSubmission(
-                                            //       answers,
-                                            //       "quiz",
-                                            //       singleChat.questionControl
-                                            //     );
-                                            //   }}
-                                            // >
-                                            //   Unique Submission
-                                            // </Button>
-                                            <Button
-                                              onClick={() => {
-                                                handleUniqueSubmission(
-                                                  answers,
-                                                  "quiz",
-                                                  singleChat.questionControl
-                                                );
-                                              }}
-                                            >
-                                              Submit
-                                            </Button>
-                                          )}
-                                          {/* {submittedObject[index] ? (
+                                              {index + 1 >= arr.length ||
+                                              arr.length === 1 ? (
+                                                ""
+                                              ) : (
+                                                <Button
+                                                  onClick={() => {
+                                                    setCurrentQuestion(
+                                                      currentQuestion + 1
+                                                    );
+                                                  }}
+                                                >
+                                                  Next {arr.length}
+                                                </Button>
+                                              )}
+                                              {submitStatusHolder[
+                                                singleChat.questionControl
+                                              ] ? (
+                                                <Button disabled>
+                                                  Submitted
+                                                </Button>
+                                              ) : (
+                                                // <Button
+                                                //   onClick={() => {
+                                                //     handleUniqueSubmission(
+                                                //       answers,
+                                                //       "quiz",
+                                                //       singleChat.questionControl
+                                                //     );
+                                                //   }}
+                                                // >
+                                                //   Unique Submission
+                                                // </Button>
+                                                <Button
+                                                  onClick={() => {
+                                                    handleUniqueSubmission(
+                                                      answers,
+                                                      "quiz",
+                                                      singleChat.questionControl
+                                                    );
+                                                  }}
+                                                >
+                                                  Submit
+                                                </Button>
+                                              )}
+                                              {/* {submittedObject[index] ? (
                                         <Button disabled>Submitted</Button>
                                       ) : (
                                         <Button
@@ -975,13 +1555,13 @@ function WatchStream({ schoolname }) {
                                           Submit
                                         </Button>
                                       )} */}
-                                        </div>
-                                      </div>
-                                    );
-                                  }
-                                )
-                              )}
-                              {/* {item.quizHolder.map((item, index) => {
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                    )
+                                  )}
+                                  {/* {item.quizHolder.map((item, index) => {
                               <div
                                 className="single-question-holder"
                                 key={index}
@@ -998,244 +1578,230 @@ function WatchStream({ schoolname }) {
                                 })}
                               </div>;
                             })} */}
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            {singleChat.type === "poll" ? (
-                              <div
-                                className="inchat-poll"
-                                style={{
-                                  backgroundColor:
-                                    theme?.themestyles.primarybackgroundcolor,
-                                  color: theme?.themestyles.primarytextcolor,
-                                }}
-                              >
-                                <div
-                                  className="top"
-                                  style={{
-                                    backgroundColor:
-                                      theme?.themestyles
-                                        .secondarybackgroundcolor,
-                                    color: theme?.themestyles.primarytextcolor,
-                                  }}
-                                >
-                                  <span>
-                                    Poll <i className="fas fa-poll poll"></i>
-                                  </span>
                                 </div>
-                                <div className="bottom">
-                                  {pollResults[singleChat.questionControl] ? (
-                                    ""
-                                  ) : (
-                                    <Progress
-                                      max={
-                                        Number(
-                                          timerHolder[
-                                            singleChat.questionControl
-                                          ]?.duration
-                                        )
-                                          ? `${Number(
+                              </div>
+                            ) : (
+                              <>
+                                {singleChat.type === "poll" ? (
+                                  <div
+                                    className="inchat-poll"
+                                    style={{
+                                      backgroundColor:
+                                        theme?.themestyles
+                                          .primarybackgroundcolor,
+                                      color:
+                                        theme?.themestyles.primarytextcolor,
+                                    }}
+                                  >
+                                    <div
+                                      className="top"
+                                      style={{
+                                        backgroundColor:
+                                          theme?.themestyles
+                                            .secondarybackgroundcolor,
+                                        color:
+                                          theme?.themestyles.primarytextcolor,
+                                      }}
+                                    >
+                                      <span>
+                                        Poll{" "}
+                                        <i className="fas fa-poll poll"></i>
+                                      </span>
+                                    </div>
+                                    <div className="bottom">
+                                      {pollResults[
+                                        singleChat.questionControl
+                                      ] ? (
+                                        ""
+                                      ) : (
+                                        <Progress
+                                          max={
+                                            Number(
                                               timerHolder[
                                                 singleChat.questionControl
                                               ]?.duration
-                                            )}`
-                                          : "0"
-                                      }
-                                      value={
-                                        Number(
-                                          timerHolder[
-                                            singleChat.questionControl
-                                          ]?.remainingTime
-                                        )
-                                          ? Number(
+                                            )
+                                              ? `${Number(
+                                                  timerHolder[
+                                                    singleChat.questionControl
+                                                  ]?.duration
+                                                )}`
+                                              : "0"
+                                          }
+                                          value={
+                                            Number(
                                               timerHolder[
                                                 singleChat.questionControl
                                               ]?.remainingTime
                                             )
-                                          : 0
-                                      }
-                                    />
-                                  )}
-                                  <p>{singleChat.title}</p>
-                                  <div className="poll-options">
-                                    {/* add POLL RES HERES */}
-                                    {pollResults[singleChat.questionControl] ? (
-                                      <Poll
-                                        pollOptions={singleChat.options}
-                                        pollResult={
-                                          pollResults[
-                                            singleChat.questionControl
-                                          ]
-                                            ? pollResults[
+                                              ? Number(
+                                                  timerHolder[
+                                                    singleChat.questionControl
+                                                  ]?.remainingTime
+                                                )
+                                              : 0
+                                          }
+                                        />
+                                      )}
+                                      <p>Question : </p>
+                                      <p>{singleChat.title}</p>
+                                      <div className="poll-options">
+                                        {/* add POLL RES HERES */}
+                                        {pollResults[
+                                          singleChat.questionControl
+                                        ] &&
+                                        submitted[
+                                          singleChat.questionControl
+                                        ] ? (
+                                          <Poll
+                                            pollOptions={singleChat.options}
+                                            pollResult={
+                                              pollResults[
                                                 singleChat.questionControl
                                               ]
-                                            : []
-                                        }
-                                        // pollResult={[submitted[singleChat.questionControl]]}
-                                      />
-                                    ) : (
-                                      <ul>
-                                        {singleChat.options.map(
-                                          (option, index) => {
-                                            return (
-                                              <li
-                                                key={index}
-                                                style={{
-                                                  listStyleType:
-                                                    pollAnswerHolder[
-                                                      singleChat.questionControl
-                                                    ] ===
-                                                    String.fromCharCode(
-                                                      65 + index
-                                                    )
-                                                      ? "disc"
-                                                      : "circle",
-                                                }}
-                                                onClick={() =>
-                                                  handlePollOptionClick(
-                                                    index,
+                                                ? pollResults[
                                                     singleChat.questionControl
-                                                  )
-                                                }
-                                              >
-                                                {option}
-                                              </li>
-                                            );
-                                          }
+                                                  ]
+                                                : []
+                                            }
+                                            // pollResult={[submitted[singleChat.questionControl]]}
+                                          />
+                                        ) : (
+                                          <ul>
+                                            {singleChat.options.map(
+                                              (option, index) => {
+                                                return (
+                                                  <li
+                                                    key={index}
+                                                    style={{
+                                                      listStyleType:
+                                                        pollAnswerHolder[
+                                                          singleChat
+                                                            .questionControl
+                                                        ] ===
+                                                        String.fromCharCode(
+                                                          65 + index
+                                                        )
+                                                          ? "disc"
+                                                          : "circle",
+                                                    }}
+                                                    onClick={() =>
+                                                      handlePollOptionClick(
+                                                        index,
+                                                        singleChat.questionControl
+                                                      )
+                                                    }
+                                                  >
+                                                    {option}
+                                                  </li>
+                                                );
+                                              }
+                                            )}
+                                          </ul>
                                         )}
-                                      </ul>
-                                    )}
+                                      </div>
+                                      {/* {submitted ? ( */}
+                                      {submitted[singleChat.questionControl] ? (
+                                        <Button disabled>Submitted</Button>
+                                      ) : (
+                                        <Button
+                                          onClick={() => {
+                                            handlePollSubmit(
+                                              singleChat.questionControl
+                                            );
+                                            // handleSpecialSubmit(
+                                            //   pollAnswers,
+                                            //   "poll",
+                                            //   index
+                                            // );
+                                          }}
+                                        >
+                                          Submit
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
-                                  {/* {submitted ? ( */}
-                                  {submitted[singleChat.questionControl] ? (
-                                    <Button disabled>Submitted</Button>
-                                  ) : (
-                                    <Button
-                                      onClick={() => {
-                                        handlePollSubmit(
-                                          singleChat.questionControl
-                                        );
-                                        // handleSpecialSubmit(
-                                        //   pollAnswers,
-                                        //   "poll",
-                                        //   index
-                                        // );
-                                      }}
-                                    >
-                                      Submit
-                                    </Button>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "flex-end",
-                                }}
-                              >
-                                <p
-                                  style={{
-                                    marginBottom: "0",
-                                    alignSelf:
-                                      singleChat.user === watcherUsername
-                                        ? ""
-                                        : "flex-start",
-                                  }}
-                                >
-                                  {singleChat.user}
-                                </p>
-                                <div
-                                  key={index}
-                                  className={`chat-bubble ${
-                                    singleChat.user === watcherUsername
-                                      ? "user-bubble"
-                                      : ""
-                                  }`}
-                                >
-                                  {singleChat.msg}
-                                </div>
-                              </div>
-                            )}
-                          </>
-                        );
-                      })}
-                      <div ref={chatInterfaceRef} />
-                    </div>
-                    <div
-                      className="chat-control"
-                      style={{
-                        backgroundColor:
-                          theme?.themestyles.primarybackgroundcolor,
-                        color: theme?.themestyles.primarytextcolor,
-                      }}
-                    >
-                      {showEmojiPicker && (
-                        // <Picker
-                        //
-                        // />
-                        <div
-                          className="emoji-wrapper"
-                          style={{
-                            position: "absolute",
-                            bottom: "90px",
+                                ) : (
+                                  <></>
+                                )}
+                              </>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <div
+                        className="chat-control"
+                        style={{
+                          backgroundColor:
+                            theme?.themestyles.primarybackgroundcolor,
+                          color: theme?.themestyles.primarytextcolor,
+                        }}
+                      >
+                        {showEmojiPicker && (
+                          // <Picker
+                          //
+                          // />
+                          <div
+                            className="emoji-wrapper"
+                            style={{
+                              position: "absolute",
+                              bottom: "90px",
 
-                            width: "100%",
+                              width: "100%",
+                            }}
+                          >
+                            <Picker
+                              previewPosition="none"
+                              showPreview="false"
+                              data={data}
+                              onClickOutside={() => {
+                                setShowEmojiPicker(false);
+                              }}
+                              // onEmojiSelect={()=>{console.log("first")}}
+                              onEmojiSelect={(emoji) => {
+                                handleSelectEmoji(emoji);
+                              }}
+                              perLine="7"
+                            />
+                          </div>
+                        )}
+                        <div
+                          className="action-wrapper"
+                          style={{ justifyContent: "center" }}
+                          onClick={() => {
+                            handleToggleEmojiPicker();
                           }}
                         >
-                          <Picker
-                            previewPosition="none"
-                            showPreview="false"
-                            data={data}
-                            onClickOutside={() => {
-                              setShowEmojiPicker(false);
-                            }}
-                            // onEmojiSelect={()=>{console.log("first")}}
-                            onEmojiSelect={(emoji) => {
-                              handleSelectEmoji(emoji);
-                            }}
-                            perLine="7"
-                          />
+                          <img src={smiley} alt="emoji" />
                         </div>
-                      )}
-                      <div
-                        className="action-wrapper"
-                        style={{ justifyContent: "center" }}
-                        onClick={() => {
-                          handleToggleEmojiPicker();
-                        }}
-                      >
-                        <img src={smiley} alt="emoji" />
+                        <input
+                          value={chatMessage}
+                          onChange={(e) => {
+                            setChatMessage(e.target.value);
+                            console.log(e.target.value);
+                          }}
+                          onKeyDown={handleKeyDown}
+                          placeholder="Type a message"
+                          style={{
+                            width: "auto",
+                            marginRight: ".5rem",
+                            marginLeft: ".5rem",
+                          }}
+                        />
+                        <Button
+                          onClick={() => {
+                            console.log("first");
+                            sendMessage();
+                          }}
+                        >
+                          Send
+                        </Button>
                       </div>
-                      <input
-                        value={chatMessage}
-                        onChange={(e) => {
-                          setChatMessage(e.target.value);
-                          console.log(e.target.value);
-                        }}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Type a message"
-                        style={{
-                          width: "auto",
-                          marginRight: ".5rem",
-                          marginLeft: ".5rem",
-                        }}
-                      />
-                      <Button
-                        onClick={() => {
-                          console.log("first");
-                          sendMessage();
-                        }}
-                      >
-                        Send
-                      </Button>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
           </Col>
         </Row>
       </Container>

@@ -40,7 +40,9 @@
   color: #000;
 }
 .webinar-container .card-content .table-heading {
-  display: flex;
+  display: grid;
+  grid-template-columns: 3fr 5fr;
+  grid-gap: 1rem;
   padding: 0.8rem 2.5%;
   padding-bottom: 0;
 
@@ -50,10 +52,7 @@
   width: 100%;
   border: 1px solid var(--site-theme-color);
 }
-.webinar-container .card-content .table-heading .first {
-  min-width: 20rem;
-  /* width: 30%; */
-}
+
 .table-heading p {
   font-size: 1rem;
   font-weight: 400;
@@ -70,11 +69,10 @@
   display: flex;
   flex-direction: column;
 }
-.webinar-container .card-content .table-body .first {
-  min-width: 20rem;
-}
+
 .webinar-container .card-content .table-body {
-  display: flex;
+  display: grid;
+  grid-template-columns: 3fr 5fr;
   width: 100%;
   color: #000;
   font-weight: 400;
@@ -638,9 +636,9 @@
 .chat-interface {
   background: #eaedf6;
 
-  overflow: scroll;
+  overflow: hidden;
   box-sizing: border-box;
-  padding: 5%;
+  /* padding: 5%; */
 
   width: 100%;
   display: flex;
@@ -889,12 +887,21 @@
   flex-grow: 1;
   position: relative;
 }
+.live-webinar-interface .chat-box .chat-interface .chat-interface-text {
+  flex-grow: 1;
+  overflow: scroll;
+  padding: 5%;
+}
+.live-webinar-interface .chat-box .chat-interface .chat-interface-quiz {
+  /* padding: 5%; */
+}
 .inchat-poll {
   background-color: var(--site-white-color);
   box-shadow: 0px 1.94048px 1.94048px rgba(0, 0, 0, 0.25);
   border-radius: 12px;
 
   overflow: hidden;
+  margin: 5%;
 
   margin-bottom: 1rem;
   min-height: 40%;
@@ -1066,4 +1073,71 @@
 .poll-modal .quiz-button-wrapper {
   display: flex;
   justify-content: space-between;
+}
+.chat-interface-quiz {
+  /* padding: 5%; */
+}
+.chat-interface-quiz .inchat-poll {
+  display: none;
+}
+.chat-interface-quiz .inchat-poll:last-child {
+  display: block;
+}
+.chat-interface-text {
+  flex-grow: 1;
+  overflow: scroll;
+  padding: 5%;
+}
+
+/* media queries */
+
+@media screen and (max-width: 480px) {
+  .live-webinar-interface {
+    flex-direction: column;
+  }
+
+  .live-webinar-interface .video-background {
+    width: 100%;
+  }
+  .live-webinar-interface .chat-box {
+    width: 100%;
+  }
+  .presenter-controls-wrapper {
+    width: 100%;
+  }
+  .presenter-controls {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .presenter-controls .control-object {
+    width: auto;
+  }
+  .webinar-container {
+    padding: 1rem 1.5rem;
+  }
+  .date-wrapper {
+    width: auto;
+  }
+  .form-image {
+    width: auto;
+    margin-bottom: 2rem;
+  }
+  .double {
+    width: auto;
+  }
+  .monthly-option .date-wrapper-parent {
+    flex-direction: column;
+    align-items: baseline;
+    width: 100%;
+  }
+  .monthly-option .start {
+    width: 100%;
+  }
+  .monthly-option hr {
+    align-self: center;
+  }
+  .recurring-frequency-wrapper select {
+    width: auto;
+  }
 }

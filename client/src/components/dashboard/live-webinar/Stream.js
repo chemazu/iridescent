@@ -12,16 +12,17 @@ import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import CountdownTimer from "./CountDownTimer";
+import setAuthToken from "../../../utilities/setAuthToken";
 
 export default function Stream() {
   const { roomid } = useParams();
-  // const myPeer = new Peer({ videoCodec: "h264" });
-  const [screenStream, setScreenStream] = useState(null);
   const myVideoRef = useRef();
   const chatInterfaceRef = useRef(null);
   const alert = useAlert();
   const [title, setTitle] = useState("");
   const [quizStatus, setQuizStatus] = useState(false);
+  const [timeOutHolder, setTimeOutHolder] = useState(false);
+
   const [quizHolder, setQuizHolder] = useState([]);
   const [quizResultHolder, setQuizResultHolder] = useState({});
   const [allQuizHolder, setAllQuizHolderHolder] = useState({});
@@ -29,11 +30,12 @@ export default function Stream() {
   const [chatMessage, setChatMessage] = useState(null);
   const [pollStatus, setPollStatus] = useState(false);
   const [answerHolder, setAnswerHolder] = useState({});
-  const [timerHolder, setTimerHolder] = useState({});
-
+  const [timerHolder, setTimerHolder] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
   const [pollTitle, setPollTitle] = useState("");
   const [defaultChat, setDefaultChat] = useState([]);
+  const [specialChat, setSpecialChat] = useState([]);
+
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attendies, setAttendies] = useState(0);
@@ -41,9 +43,8 @@ export default function Stream() {
     video: true,
     audio: true,
   });
-  const [presentrDetails, setPresenterDetails] = useState(null);
+  const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
-  // const [screenSharing, setScreenSharing] = useState(false);
   const [questionNumber, setQuestionNumber] = useState(1);
   const [pollConfirmation, setPollConfirmation] = useState(false);
   const [quizConfirmation, setQuizConfirmation] = useState(false);
@@ -59,81 +60,27 @@ export default function Stream() {
   const [totalQuestion, setTotalQuestion] = useState(0);
   const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
-  // let screenStream = null;
+  const [screenStream, setScreenStream] = useState(null);
+
+  //
 
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
   };
+
   const handleDurationUnitChange = (event) => {
     setDurationUnit(event.target.value);
   };
   const handlePlanTimeOut = () => {
-    console.log("plan-time-out");
+    handleExitStream();
+    setTimeOutHolder(true);
   };
-
   const questionArray = Array.from(
     { length: totalQuestion },
     (_, index) => index
   );
-  const handleScreenSharing = async () => {
-    console.log("screensharing");
-  };
-  // const handleScreenSharing = async () => {
-  //   if (screenSharing) {
-  //     myPeer.destroy();
 
-  //     if (checkCurrentPeer) {
-  //       currentPeer.destroy();
-  //     }
-  //     const newPeer = new Peer();
-  //     setCurrentPeer(newPeer);
-  //     newPeer.on("open", (peerId) => {
-  //       socket.emit("screenPeer", roomid, peerId);
-  //     });
-  //     const stream = await navigator.mediaDevices.getDisplayMedia({
-  //       video: true,
-  //     });
-
-  //     const screenSharingTrack = stream.getVideoTracks()[0];
-  //     setScreenTrack(stream);
-  //     screenSharingTrack.addEventListener("ended", () => {
-  //       handleScreenSharingEnded(newPeer);
-  //     });
-
-  //     newPeer.on("call", (call) => {
-  //       // Answer the incoming call and send our stream
-  //       call.answer(stream);
-  //       addVideoStream(myVideoRef.current, stream);
-  //       // Handle the remote stream when it arrives
-  //       call.on("stream", (remoteStream) => {
-  //         // Add the remote stream to the video element
-  //       });
-  //     });
-  //   }
-  // };
-  // const handleScreenSharingEnded = () => {
-  //   // setScreenSharing(false);
-  //   currentPeer?.destroy();
-  //   onConnect();
-  //   let returnPeer = new Peer();
-  //   setCurrentPeer(returnPeer);
-  //   setCheckCurrentPeer(true);
-  //   returnPeer.on("open", (peerId) => {
-  //     socket.emit("returnPeer", roomid, peerId);
-  //   });
-  // };
-
-  const handleScreenSharingEnded =   () => {
-    console.log("end");
-    // const screenSharingTrack = screenStream.getVideoTracks()[0];
-    // console.log(screenSharingTrack);
-    // await screenSharingTrack.stop();
-    // const mediaStream = screenStream.getStream();
-    // mediaStream.getTracks().forEach(track => track.stop());
-    // console.log(screenStream)
-    // const mediaStream = screenStream.stream;
-    // mediaStream.getTracks().forEach(track => track.stop());
-
+  const handleScreenSharingEnded = () => {
     socket.emit("stopScreenSharing", roomid);
     setScreenSharing(false);
     setScreenStream(null);
@@ -143,42 +90,43 @@ export default function Stream() {
         addVideoStream(myVideoRef.current, stream);
 
         const connections = peerHolder._connections;
-        console.log(connections);
         connections.forEach((value, key) => {
-          // console.log("Connected user ID:", key, value);
           const call = peerHolder.call(key, stream);
-          console.log(call);
-          call.on("stream", (userVideoStream) => {
-            // Handle the updated stream (screen sharing)
-            console.log("suer");
-          });
+          call.on("stream", (userVideoStream) => {});
         });
       })
       .catch((error) => console.error(error));
   };
 
-  // const handleExitStream = async () => {
-  //   const stream = await navigator.mediaDevices.getUserMedia(audioVisuals);
-  //   stream.getTracks().forEach(function (track) {
-  //     track.stop();
-  //   });
-  //   myPeer.destroy();
-  //   socket.emit("end-stream", roomid);
-  // };
-  const handleExitStream = async () => {
+  const handleExitStream = () => {
     console.log("handleExitStream");
+    socket.emit("endstream", roomid);
+
+    // myVideoRef.current.srcObject = stream;
+    let tracks = myVideoRef.current.srcObject.getTracks();
+    tracks.forEach((track) => track.stop());
+    myVideoRef.current.srcObject = null;
+    peerHolder.destroy();
   };
 
   const validateWebinar = async () => {
+    if (localStorage.getItem("tutorToken")) {
+      console.log(localStorage.getItem("tutorToken"));
+      setAuthToken(localStorage.getItem("tutorToken"));
+    }
     setIsLoading(true);
     try {
-      let res = await axios.get(`/api/v1/livewebinar/watch/${roomid}`);
+      let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
       if (res) {
         setPresenterDetails({
           name: `${res.data.firstname} ${res.data.lastname} `,
           username: res.data.username,
         });
         setPlanname(res.data.planname);
+        if (res.data.planname === "free") {
+          socket.emit("freeTimer", roomid);
+        }
+
         setTitle(res.data.title);
 
         setTimeLeft(res.data.timeLeft);
@@ -235,13 +183,23 @@ export default function Stream() {
         durationInSec,
       },
     ]);
+    setSpecialChat([
+      ...specialChat,
+      {
+        user: 1,
+        type: "poll",
+        title: pollTitle,
+        options: pollOptions,
+        durationInSec,
+      },
+    ]);
     let newIndex = newDefaultChat.length;
 
     socket.emit(
       "message",
       {
         title: pollTitle,
-        user: presentrDetails.username || 1,
+        user: presenterDetails.username || 1,
         options: pollOptions,
         type: "poll",
         timeStamp: Date.now(),
@@ -277,6 +235,7 @@ export default function Stream() {
           duration: { durationUnit, durationValue },
         },
       ]);
+      // setSpecialChat
 
       const newIndex = defaultChat.length;
 
@@ -380,7 +339,7 @@ export default function Stream() {
       socket.emit(
         "message",
         {
-          user: presentrDetails?.username,
+          user: presenterDetails?.username,
           msg: chatMessage,
           timeStamp: Date.now(),
           type: "text",
@@ -390,7 +349,7 @@ export default function Stream() {
       setDefaultChat([
         ...defaultChat,
         {
-          user: presentrDetails?.username,
+          user: presenterDetails?.username,
           msg: chatMessage,
           timeStamp: Date.now(),
           type: "text",
@@ -399,7 +358,6 @@ export default function Stream() {
     }
     setChatMessage("");
   };
-
   const handleKeyDown = (event) => {
     if (event.keyCode === 13) {
       sendMessage();
@@ -495,7 +453,6 @@ export default function Stream() {
         setPollOptions(["", "", "", ""]);
       } else {
         // move to the correct number
-
         handleSelectQuestion(totalQuestion + 1);
         setAnswers((prevAnswers) => prevAnswers.slice(0, -1));
       }
@@ -582,19 +539,12 @@ export default function Stream() {
       })
       .catch((error) => console.error(error));
   };
-  // const TransmitCamera = (userId) => {
-  //   navigator.mediaDevices
-  //     .getUserMedia(audioVisuals)
-  //     .then((stream) => {
-  //       const call = myPeer.call(userId, stream);
-  //       call.on("stream", (remoteStream) => {});
-  //     })
-  //     .catch((error) => console.error(error));
-  // };
+
   const TransmitCamera = (userId) => {
     console.log("transmit camer");
+    console.log(planname);
   };
-  const handleCompletion = () => {
+  const handleQuizTimeOut = () => {
     console.log("completed,timed,out");
   };
   const convertToSeconds = (value, unit) => {
@@ -618,7 +568,6 @@ export default function Stream() {
 
   const handleStudentPollSubmit = (newResult, questionControl) => {
     let newResultArray = [];
-
     if (pollResultHolder.hasOwnProperty(questionControl)) {
       newResultArray = [...pollResultHolder[questionControl], ...newResult];
     } else {
@@ -633,11 +582,40 @@ export default function Stream() {
     setPollResultHolder(newResultHolder);
     socket.emit("updatedPollResult", roomid, newResultArray, questionControl);
   };
+  useEffect(() => {
+    socket.on("roomTimerStarted", (roomTimer) => {
+      setTimeLeft(roomTimer);
+    });
+
+    return () => {
+      socket.off("roomTimerStarted");
+    };
+  }, [roomid, timeLeft]);
+
+  useEffect(() => {
+    socket.on("timer elapsed for room", (roomTimer) => {
+      console.log("timer elapsed for room"
+      )
+      setTimeLeft(roomTimer);
+    });
+
+    return () => {
+      socket.off("timer elapsed for room");
+    };
+  }, [roomid, timeLeft]);
+  useEffect(() => {
+    socket.on("roomTimerTick", (roomTimer) => {
+      setTimeLeft(roomTimer);
+    });
+
+    return () => {
+      socket.off("roomTimerTick");
+    };
+  }, [roomid, timeLeft]);
 
   useEffect(() => {
     socket.on("special submit", (type, result, user, questionControl) => {
       if (type === "poll") {
-        // handleStudentPollSubmit(result, questionControl);
         handleStudentPollSubmit(result, questionControl);
       }
 
@@ -684,7 +662,11 @@ export default function Stream() {
         }
       }
     });
+    return () => {
+      socket.off("special submit");
+    };
   }, [pollResultHolder, answerHolder, roomid]);
+
   useEffect(() => {
     socket.on("timerStarted", (questionControl, duration) => {
       let newTimeHolder = {
@@ -715,16 +697,16 @@ export default function Stream() {
       }
     });
     return () => {
-      // socket.off("timerStarted");
       socket.off("timerTick");
-      // socket.off("timerEnded");
-      // socket.off("timerError");
     };
   }, [roomid, timerHolder]);
   useEffect(() => {
     socket.on("user-disconnected", (userId, roomSize) => {
       setAttendies(roomSize);
     });
+    return () => {
+      socket.off("user-disconnected");
+    };
   });
   useEffect(() => {
     validateWebinar();
@@ -734,6 +716,9 @@ export default function Stream() {
     socket.on("message", (message) => {
       setDefaultChat([...defaultChat, { ...message }]);
     });
+    return () => {
+      socket.off("message");
+    };
   });
   useEffect(() => {
     onConnect();
@@ -747,23 +732,12 @@ export default function Stream() {
     scrollToBottom();
   }, [defaultChat]);
 
-  // useEffect(() => {
-  //   myPeer.on("open", (user) => {
-  //     socket.emit("broadcaster", roomid, user);
-  //   });
-  // }, [roomid]);
-
   useEffect(() => {
     socket.on("watcher", (userId, roomSize) => {
       setAttendies(roomSize);
-
       TransmitCamera(userId);
     });
   }, [roomid]);
-
-  // useEffect(() => {
-  //   handleScreenSharing();
-  // }, [roomid, screenSharing]);
 
   useEffect(() => {
     const initializePeer = async () => {
@@ -776,11 +750,9 @@ export default function Stream() {
       peerInstance.on("call", (call) => {
         // check if livestream
         if (screenSharing && screenStream) {
-          console.log(screenSharing, screenStream);
           call.answer(screenStream);
         } else {
           navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
-            console.log(" ssfsd");
             call.answer(stream);
           });
         }
@@ -798,12 +770,9 @@ export default function Stream() {
     if (screenSharing) {
       setScreenSharing(false);
       handleScreenSharingEnded();
-      // socket.emit("stopScreenSharing", roomid);
     } else {
       setScreenSharing(true);
-      console.log("ccccc");
 
-      // Get permission to access the screen sharing stream
       navigator.mediaDevices
         .getDisplayMedia({ video: true, audio: true })
         .then((stream) => {
@@ -817,71 +786,17 @@ export default function Stream() {
             myVideoRef.current.srcObject = stream;
           }
 
-          // Replace the stream in each PeerJS connection with the screen sharing stream
           socket.emit("startScreenSharing", roomid);
 
           const connections = peerHolder._connections;
-          console.log(connections);
           connections.forEach((value, key) => {
-            // console.log("Connected user ID:", key, value);
             const call = peerHolder.call(key, stream);
-            console.log(call);
-            call.on("stream", (userVideoStream) => {
-              // Handle the updated stream (screen sharing)
-              console.log("suer");
-            });
+            call.on("stream", (userVideoStream) => {});
           });
-          // peerHolder._connections.forEach((conn) => {
-          //   console.log(conn)
-          //   const call = peerHolder.call(conn.peer, stream);
-          //   console.log(call)
-          //   call.on("stream", (userVideoStream) => {
-          //     // Handle the updated stream (screen sharing)
-          //     console.log("suer")
-          //   });
-          // });
         })
         .catch((error) => console.error(error));
     }
   };
-
-  // const toggleScreenSharing = () => {
-  //   if (!screenSharing) {
-  //     navigator.mediaDevices
-  //       .getDisplayMedia({ video: true, audio: true })
-  //       .then((stream) => {
-  //         setStream(stream);
-  //         if (myVideoRef.current) {
-  //           myVideoRef.current.srcObject = stream;
-  //         }
-  //         peerHolder._connections.forEach((conn) => {
-  //           const call = peerHolder.current.call(conn.peer, stream);
-  //           call.on('stream', (userVideoStream) => {
-  //             // Handle the updated stream
-  //           });
-  //         });
-  //       })
-  //       .catch((error) => console.error(error));
-  //   } else {
-  //     navigator.mediaDevices
-  //       .getUserMedia({ video: true, audio: true })
-  //       .then((stream) => {
-  //         setStream(stream);
-  //         if (myVideoRef.current) {
-  //           myVideoRef.current.srcObject = stream;
-  //         }
-  //         peerHolder._connections.forEach((conn) => {
-  //           const call = peerHolder.current.call(conn.peer, stream);
-  //           call.on('stream', (userVideoStream) => {
-  //             // Handle the updated stream
-  //           });
-  //         });
-  //       })
-  //       .catch((error) => console.error(error));
-  //   }
-
-  //   setScreenSharing(!screenSharing);
-  // };
 
   return (
     <div className="dashboard-layout">
@@ -891,6 +806,11 @@ export default function Stream() {
           <Col className="page-actions__col">
             <div className="live-webinar">
               <div className="stream-webinar-content">
+                <Modal isOpen={timerHolder}>
+                  <div>
+                    <h2>Webinar TimedOut</h2>
+                  </div>
+                </Modal>
                 <Modal isOpen={pollStatus} className="poll-modal-wrapper">
                   <div className="poll-modal">
                     <div className="top">
@@ -1271,7 +1191,7 @@ export default function Stream() {
                       paddingBottom: "1rem",
                     }}
                   >
-                    <span>{isLoading ? "..." : presentrDetails?.name}</span>
+                    <span>{isLoading ? "..." : presenterDetails?.name}</span>
                     <span style={{ width: "30%" }}>
                       Attendees{" "}
                       <strong>
@@ -1286,163 +1206,181 @@ export default function Stream() {
                     <div className="video-background">
                       <video
                         ref={myVideoRef}
-                        muted
+                        // muted
                         // style={{ width: "300px", height: "200px" }}
                       />
                     </div>
                     <div className="chat-box">
                       <div className="chat-interface">
-                        {defaultChat.map((item, index) => {
-                          return item.type === "quiz" ? (
-                            <div className="inchat-poll   inchat-quiz">
-                              <div className="top">
-                                <span>
-                                  Pop Quiz{" "}
-                                  <i className="fas fa-book-open poll"></i>
-                                </span>
-                                <i
-                                  className="fa fa-times"
-                                  onClick={() => {
-                                    removePollQuizFromChat(index);
-                                  }}
-                                ></i>
-                              </div>
-                              <div className="bottom">
-                                <div className="quiz-progress">
-                                  {quizSubmission[index] ? (
-                                    <p>Quiz Over</p>
-                                  ) : (
-                                    <p>Quiz in Progress</p>
-                                  )}
-
-                                  <CountdownTimer
-                                    // duration={convertToSeconds(
-                                    //   item.duration?.durationValue,
-                                    //   item.duration?.durationUnit
-                                    // )}
-                                    duration={Number(
-                                      timerHolder[index]?.remainingTime
-                                    )}
-                                    onCompletion={handleCompletion}
+                        <div className="chat-interface-text">
+                          {defaultChat.map((item, index) => {
+                            return item.type === "quiz" ? (
+                              <></>
+                            ) : (
+                              <>
+                                {item.type === "poll" ? (
+                                  <></>
+                                ) : (
+                                  <div
                                     style={{
-                                      color: "rgb(82, 95, 127)",
-                                      fontSize: "1rem",
-                                      fontWeight: "300",
-                                      lineHeight: "1.7",
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      alignItems: "flex-end",
                                     }}
-                                  />
-                                </div>{" "}
-                                {quizSubmission[index] && (
-                                  <div className="quiz-submission">
-                                    <p>
-                                      ({quizResultHolder[index]?.length}
-                                      )Submitted
+                                  >
+                                    <p
+                                      style={{
+                                        marginBottom: "0",
+                                        alignSelf:
+                                          item.user ===
+                                          presenterDetails?.username
+                                            ? ""
+                                            : "flex-start",
+                                      }}
+                                    >
+                                      {item.user}
                                     </p>
-                                    <p>View Results</p>
-                                  </div>
-                                )}{" "}
-                                {quizSubmission[index] && (
-                                  <div className="quiz-submitted">
-                                    <p>
-                                      ({quizResultHolder[index]?.length}
-                                      )Submitted
-                                    </p>
-                                    <div className="quiz-result-wrapper">
-                                      <div className="quiz-result">
-                                        {quizResultHolder[index]?.map(
-                                          (item, index) => {
-                                            return (
-                                              <div
-                                                className="single-quiz-result"
-                                                key={index}
-                                              >
-                                                <p>{index + 1}.</p>
-                                                <p
-                                                  style={{
-                                                    width: "55%",
-                                                    wordWrap: "break-word",
-                                                  }}
-                                                >
-                                                  {item.user}
-                                                </p>
-                                                <p>{item.result}%</p>
-                                              </div>
-                                            );
-                                          }
-                                        )}
-                                        {/* <div className="single-quiz-result">
-                                          <p>1.</p>
-                                          <p>Bruce Lee</p>
-                                          <p>70%</p>
-                                        </div> */}
-                                      </div>
+                                    <div
+                                      key={index}
+                                      className={`${
+                                        item.user === presenterDetails?.username
+                                          ? "user-bubble"
+                                          : "chat-bubble"
+                                      }`}
+                                    >
+                                      {item.msg}
                                     </div>
                                   </div>
                                 )}
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              {item.type === "poll" ? (
-                                <div className="inchat-poll">
-                                  <div className="top">
-                                    <span>
-                                      Poll <i className="fas fa-poll poll"></i>
-                                    </span>
-                                    <i
-                                      className="fa fa-times"
-                                      onClick={() => {
-                                        removePollQuizFromChat(index);
-                                      }}
-                                    ></i>
-                                  </div>
-                                  <div className="bottom">
-                                    <p>{item.title}</p>
+                              </>
+                            );
+                          })}
+                          <div ref={chatInterfaceRef} />
+                        </div>
+                        <div className="chat-interface-quiz">
+                          {defaultChat.map((item, index) => {
+                            return item.type === "quiz" ? (
+                              <div className="inchat-poll   inchat-quiz">
+                                <div className="top">
+                                  <span>
+                                    Pop Quiz{" "}
+                                    <i className="fas fa-book-open poll"></i>
+                                  </span>
+                                  <i
+                                    className="fa fa-times"
+                                    onClick={() => {
+                                      removePollQuizFromChat(index);
+                                    }}
+                                  ></i>
+                                </div>
+                                <div className="bottom">
+                                  <div className="quiz-progress">
+                                    {quizSubmission[index] ? (
+                                      <p>Quiz Over</p>
+                                    ) : (
+                                      <p>Quiz in Progress</p>
+                                    )}
 
-                                    <div className="poll-options">
-                                      <Poll
-                                        pollOptions={item.options}
-                                        pollResult={pollResultHolder[index + 1]}
-                                      />
+                                    <CountdownTimer
+                                      // duration={convertToSeconds(
+                                      //   item.duration?.durationValue,
+                                      //   item.duration?.durationUnit
+                                      // )}
+                                      duration={Number(
+                                        timerHolder[index]?.remainingTime
+                                      )}
+                                      onCompletion={handleQuizTimeOut}
+                                      style={{
+                                        color: "rgb(82, 95, 127)",
+                                        fontSize: "1rem",
+                                        fontWeight: "300",
+                                        lineHeight: "1.7",
+                                      }}
+                                    />
+                                  </div>{" "}
+                                  {quizSubmission[index] && (
+                                    <div className="quiz-submission">
+                                      <p>
+                                        ({quizResultHolder[index]?.length}
+                                        )Submitted
+                                      </p>
+                                      <p>View Results</p>
+                                    </div>
+                                  )}{" "}
+                                  {quizSubmission[index] && (
+                                    <div className="quiz-submitted">
+                                      <p>
+                                        ({quizResultHolder[index]?.length}
+                                        )Submitted
+                                      </p>
+                                      <div className="quiz-result-wrapper">
+                                        <div className="quiz-result">
+                                          {quizResultHolder[index]?.map(
+                                            (item, index) => {
+                                              return (
+                                                <div
+                                                  className="single-quiz-result"
+                                                  key={index}
+                                                >
+                                                  <p>{index + 1}.</p>
+                                                  <p
+                                                    style={{
+                                                      width: "55%",
+                                                      wordWrap: "break-word",
+                                                    }}
+                                                  >
+                                                    {item.user}
+                                                  </p>
+                                                  <p>{item.result}%</p>
+                                                </div>
+                                              );
+                                            }
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {item.type === "poll" ? (
+                                  <div className="inchat-poll">
+                                    <div className="top">
+                                      <span>
+                                        Poll{" "}
+                                        <i className="fas fa-poll poll"></i>
+                                      </span>
+                                      <i
+                                        className="fa fa-times"
+                                        onClick={() => {
+                                          removePollQuizFromChat(index);
+                                        }}
+                                      ></i>
+                                    </div>
+                                    <div className="bottom">
+                                      <p>{item.title}</p>
+
+                                      <div className="poll-options">
+                                        <Poll
+                                          pollOptions={item.options}
+                                          pollResult={
+                                            pollResultHolder[index + 1]
+                                          }
+                                        />
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              ) : (
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "flex-end",
-                                  }}
-                                >
-                                  <p
-                                    style={{
-                                      marginBottom: "0",
-                                      alignSelf:
-                                        item.user === presentrDetails?.username
-                                          ? ""
-                                          : "flex-start",
-                                    }}
-                                  >
-                                    {item.user}
-                                  </p>
-                                  <div
-                                    key={index}
-                                    className={`${
-                                      item.user === presentrDetails?.username
-                                        ? "user-bubble"
-                                        : "chat-bubble"
-                                    }`}
-                                  >
-                                    {item.msg}
-                                  </div>
-                                </div>
-                              )}
-                            </>
-                          );
-                        })}
-                        <div ref={chatInterfaceRef} />
+                                ) : (
+                                  <></>
+                                )}
+                              </>
+                            );
+                          })}
+                          {/* <div ref={chatInterfaceRef} /> */}
+                        </div>
                       </div>
+
                       <div className="chat-control">
                         {showEmojiPicker && (
                           <div

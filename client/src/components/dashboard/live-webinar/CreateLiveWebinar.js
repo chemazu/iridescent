@@ -5,7 +5,6 @@ import { startLoading, stopLoading } from "../../../actions/appLoading";
 
 import axios from "axios";
 import { useAlert } from "react-alert";
-import LiveWebinarDropZone from "./LiveWebinarDropZone";
 import setAuthToken from "../../../utilities/setAuthToken";
 
 import {
@@ -117,22 +116,13 @@ function CreateLiveWebinar() {
       console.error(error);
     }
   };
-  const acceptWebinarImage = (file) => {
-    if (file.name.match(/\.(jpg|png|gif|svg|jpeg)$/)) {
-      setImage(file);
-    } else {
-      alert.show("invalid file type", {
-        type: "error",
-      });
-    }
-  };
+ 
   function copyText(textToCopy) {
     navigator.clipboard
       .writeText(
-        `http://localhost:3000/dashboard/livewebinar/stream/${textToCopy}`
+        `https://tuturlybeta.com/dashboard/livewebinar/stream/${textToCopy}`
       )
       .then(() => {
-        console.log("Text copied to clipboard");
       })
       .catch((error) => {
         console.error("Error copying text: ", error);
@@ -146,8 +136,7 @@ function CreateLiveWebinar() {
     const formData = new FormData();
     formData.append("image", image);
     formData.append("isRecurring", recurring);
-    // formData.append("startTime", startDateTime);
-    // formData.append("endTime", endDateTime);
+ 
     formData.append("title", title);
     formData.append("category", category);
     formData.append("description", description);
@@ -169,7 +158,7 @@ function CreateLiveWebinar() {
     await axios
       .post("/api/v1/livewebinar", body, config)
       .then((res) => {
-        console.log(res.data);
+       
 
         setStreamLink(res.data.streamKey);
         setShowModal(true);
@@ -179,119 +168,7 @@ function CreateLiveWebinar() {
         console.error(error);
       });
   };
-  // const uploadThumbnail = async () => {
-  //   const cloudinaryCloudName = "kolaniyi";
-  //   const CloudinaryUploadPreset = "bqrfvvim";
-  //   const cloudinaryUploadUrl = `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/upload`;
-
-  //   const form = new FormData();
-  //   form.append("upload_preset", CloudinaryUploadPreset);
-  //   form.append("file", imageToCloudinary);
-
-  //   // axios header config
-  //   const config = {
-  //     onUploadProgress: (event) => {
-  //       setLoaded((event.loaded / event.total) * 100);
-  //     },
-  //   };
-
-  //   try {
-  //     delete axios.defaults.headers.common["x-auth-token"];
-  //     const res = await axios.post(cloudinaryUploadUrl, form, config);
-  //     setFormInputs({
-  //       ...formInputs,
-  //       thumbnail: res.data.url,
-  //       coursethumbnailid: res.data.public_id,
-  //     });
-  //     alert.show("Thumbnail Uploaded Successfully", {
-  //       type: "success",
-  //     });
-  //     setFileToSend(null); // reset image
-  //     setImageToCloudinary(null); // reset image
-  //     closeUploadThumbnailModal(); // close thumbnail
-  //     setLoaded(0);
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-
-  //   const [hour, minute] = time.split(":");
-  //   const [year, month, day] = date.split("-");
-
-  //   const [endHour, endMinute] = endTime?.split(":");
-  //   const [endYear, endMonth, endDay] = endDate?.split("-");
-
-  //   const startDateTime = new Date(year, month - 1, day, hour, minute);
-  //   const endDateTime = new Date(
-  //     endYear,
-  //     endMonth - 1,
-  //     endDay,
-  //     endHour,
-  //     endMinute
-  //   );
-
-  //   const formData = {
-  //     isRecurring: recurring,
-  //     startTime: startDateTime,
-  //     endTime: endDateTime,
-  //     title,
-  //     category,
-  //     description,
-  //     fee,
-  //     currency,
-  //     customRep,
-  //     recurringFrequency,
-  //     webinarReps,
-  //     image,
-  //   };
-
-  //   if (
-  //     startDateTime === null ||
-  //     title?.length < 1 ||
-  //     category?.length < 1 ||
-  //     description?.length < 1 ||
-  //     fee?.length < 1 ||
-  //     currency?.length < 1 ||
-  //     (recurring &&
-  //       (recurringFrequency?.length < 1 || webinarReps?.length < 1)) ||
-  //     new Date(date) > new Date(endDate) ||
-  //     (recurringFrequency === "Custom" && customRep?.length < 1)
-  //   ) {
-  //     alert.show("Please fill all required fields");
-  //   } else {
-  //     if (localStorage.getItem("token")) {
-  //       setAuthToken(localStorage.getItem("token"));
-  //     }
-  //     const config = {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     };
-
-  //     // dispatch(startLoading())
-  //     // console.log(formData)
-  //     axios
-  //       .post("/api/v1/livewebinar/", submitData, config)
-  //       .then((res) => {
-  //         console.log(res.data);
-  //         dispatch(stopLoading());
-  //         setStreamLink(res.data.streamKey);
-  //         setShowModal(true);
-  //         formReset();
-  //       })
-  //       .catch((error) => {
-  //         console.error(error);
-  //       });
-  //   }
-  // };
-
-  //  if (!fileToSend) {
-  //       return alert.show("Course thumbnail not found", {
-  //         type: "error",
-  //       });
-  //     }
+   
   const pickThumbnailFile = () => {
     thumbnailInputRef.current.click();
   };
@@ -325,7 +202,6 @@ function CreateLiveWebinar() {
     "Sunday",
   ];
   let dateCheck = () => {
-    console.log(endDate, date);
     let a = new Date(endDate);
     let b = new Date(date);
     if (b > a) {
@@ -358,7 +234,7 @@ function CreateLiveWebinar() {
                   Stream Created
                 </div>
                 <ModalBody>
-                  http://localhost:3000/dashboard/livewebinar/stream/
+                  https://tuturlybeta.com/dashboard/livewebinar/stream/
                   {streamLink}
                 </ModalBody>
                 <ModalFooter>
@@ -541,9 +417,9 @@ function CreateLiveWebinar() {
                                     value={date}
                                     onChange={handleDateChange}
                                     placeholder="Date"
-                                    style={{
-                                      minWidth: "fit-content",
-                                    }}
+                                    // style={{
+                                    //   minWidth: "fit-content",
+                                    // }}
                                   />{" "}
                                 </div>
                               </div>
@@ -565,9 +441,9 @@ function CreateLiveWebinar() {
                                       setEndDate(e.target.value);
                                     }}
                                     placeholder="Date"
-                                    style={{
-                                      minWidth: "fit-content",
-                                    }}
+                                    // style={{
+                                    //   minWidth: "fit-content",
+                                    // }}
                                   />{" "}
                                 </div>
                               </div>
@@ -606,9 +482,9 @@ function CreateLiveWebinar() {
                                     setEndTime(e.target.value);
                                   }}
                                   placeholder="HH:MM"
-                                  style={{
-                                    width: "fit-content",
-                                  }}
+                                  // style={{
+                                  //   width: "fit-content",
+                                  // }}
                                 />
                                 <input
                                   type="date"

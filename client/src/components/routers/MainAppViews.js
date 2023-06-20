@@ -54,6 +54,7 @@ import ProductDetail from "../dashboard/products/ProductDetail";
 import LiveWebinar from "../dashboard/live-webinar/LiveWebinar";
 import CreateLiveWebinar from "../dashboard/live-webinar/CreateLiveWebinar";
 import Stream from "../dashboard/live-webinar/Stream";
+import PresenterValidation from "../dashboard/live-webinar/PresenterValidation";
 
 export const MainAppViews = () => {
   return (
@@ -114,7 +115,7 @@ export const MainAppViews = () => {
         <PrivateRoute
           exact
           path="/dashboard/livewebinar/stream/:roomid"
-          component={Stream}
+          component={PresenterValidation}
         />
         <PrivateRoute exact path="/dashboard/products" component={Products} />
         <PrivateRoute

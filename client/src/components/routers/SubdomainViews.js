@@ -17,6 +17,7 @@ import PasswordRenew from "../school/PasswordRenew";
 import LiveWebinarPreview from "../school/SchoolSectionsComponent/LiveWebinarPreview";
 import StreamValidation from "../dashboard/live-webinar/StreamValidation";
 
+
 export const SubdomainViews = (props) => {
   return (
     <Switch>
