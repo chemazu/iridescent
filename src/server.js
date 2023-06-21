@@ -118,6 +118,7 @@ io.on("connection", (socket) => {
     const room = io.sockets.adapter.rooms.get(roomId);
     let roomSize = room ? room.size : 1;
     // check screensharing
+    console.log(newBroadcasterHolder)
     if (newBroadcasterHolder[roomId]) {
       io.in(roomId).emit(
         "join stream",
@@ -137,6 +138,7 @@ io.on("connection", (socket) => {
       );
       // socket.emit("for your eyes only", roomSize, roomTimer,pollQuizHolder);
     } else {
+      console.log("first no steam")
       io.to(socket.id).emit("no stream");
     }
   });

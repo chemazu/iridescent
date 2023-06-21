@@ -540,10 +540,6 @@ export default function Stream() {
       .catch((error) => console.error(error));
   };
 
-  const TransmitCamera = (userId) => {
-    console.log("transmit camer");
-    console.log(planname);
-  };
   const handleQuizTimeOut = () => {
     console.log("completed,timed,out");
   };
@@ -594,8 +590,7 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("timer elapsed for room", (roomTimer) => {
-      console.log("timer elapsed for room"
-      )
+      console.log("timer elapsed for room");
       setTimeLeft(roomTimer);
     });
 
@@ -720,13 +715,13 @@ export default function Stream() {
       socket.off("message");
     };
   });
-  useEffect(() => {
-    onConnect();
-  }, [roomid]);
+  // useEffect(() => {
+  //   onConnect();
+  // }, [roomid]);
 
-  useEffect(() => {
-    onConnect();
-  }, [audioVisuals]);
+  // useEffect(() => {
+  //   onConnect();
+  // }, [audioVisuals]);
 
   useEffect(() => {
     scrollToBottom();
@@ -735,36 +730,55 @@ export default function Stream() {
   useEffect(() => {
     socket.on("watcher", (userId, roomSize) => {
       setAttendies(roomSize);
-      TransmitCamera(userId);
     });
   }, [roomid]);
 
-  useEffect(() => {
-    const initializePeer = async () => {
-      const peerInstance = new Peer();
-      setPeerHolder(peerInstance);
+  // useEffect(() => {
+  //   const initializePeer = async () => {
+  //     const peerInstance = new Peer();
+  //     setPeerHolder(peerInstance);
 
-      peerInstance.on("open", (peerId) => {
-        socket.emit("broadcaster", roomid, peerId);
-      });
-      peerInstance.on("call", (call) => {
-        // check if livestream
-        if (screenSharing && screenStream) {
-          call.answer(screenStream);
-        } else {
-          navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
-            call.answer(stream);
-          });
-        }
-      });
-    };
+  //     peerInstance.on("open", (peerId) => {
+  //       socket.emit("broadcaster", roomid, peerId);
+  //     });
+  //     peerInstance.on("call", (call) => {
+  //       // check if livestream
+  //       if (screenSharing && screenStream) {
+  //         call.answer(screenStream);
+  //       } else {
+  //         navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
+  //           call.answer(stream);
+  //         });
+  //       }
+  //     });
+  //   };
 
-    initializePeer();
+  //   initializePeer();
 
-    return () => {
-      peerHolder?.destroy();
-    };
-  }, [roomid, screenStream]);
+  //   return () => {
+  //     peerHolder?.destroy();
+  //   };
+  // }, [roomid, screenStream]);
+
+  // trigger intialize Peeer
+  const handleInitializePeer = async () => {
+    const peerInstance = new Peer();
+    setPeerHolder(peerInstance);
+
+    peerInstance.on("open", (peerId) => {
+      socket.emit("broadcaster", roomid, peerId);
+    });
+    peerInstance.on("call", (call) => {
+      // check if livestream
+      if (screenSharing && screenStream) {
+        call.answer(screenStream);
+      } else {
+        navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
+          call.answer(stream);
+        });
+      }
+    });
+  };
 
   const toggleScreenSharing = () => {
     if (screenSharing) {
@@ -1206,9 +1220,17 @@ export default function Stream() {
                     <div className="video-background">
                       <video
                         ref={myVideoRef}
-                        // muted
+                        muted
                         // style={{ width: "300px", height: "200px" }}
                       />
+                      <button
+                        onClick={() => {
+                          onConnect();
+                          handleInitializePeer();
+                        }}
+                      >
+                        Start Stream
+                      </button>
                     </div>
                     <div className="chat-box">
                       <div className="chat-interface">

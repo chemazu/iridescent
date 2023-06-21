@@ -76,7 +76,7 @@ const liveWebinarSchema = new mongoose.Schema({
   },
   timeleft: {
     type: Number,
-    default: 2700,
+   
   },
   streamStarted: {},
 
