@@ -620,7 +620,7 @@ function WatchStream({ schoolname }) {
                     >
                       {isLoading ? "..." : title}
                       <p style={{ margin: "0" }}>
-                        <Button onClick={startStream}></Button>
+                        <Button onClick={startStream}>Join Webinar</Button>
                         {isLoading ? "..." : presenterName}
                       </p>
                     </div>

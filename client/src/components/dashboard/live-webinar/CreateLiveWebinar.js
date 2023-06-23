@@ -19,7 +19,7 @@ import {
 } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import DashboardNavbar from "../DashboardNavbar";
- 
+
 import { Link } from "react-router-dom";
 
 function CreateLiveWebinar() {
@@ -69,7 +69,7 @@ function CreateLiveWebinar() {
     setFee("");
     setRecurringFrequency("");
     setWebinarReps("");
-    setFileToSend(null)
+    setFileToSend(null);
   };
   const filePickerEventHandle = (e) => {
     if (e.target.files.length === 0) {
@@ -116,14 +116,13 @@ function CreateLiveWebinar() {
       console.error(error);
     }
   };
- 
+
   function copyText(textToCopy) {
     navigator.clipboard
       .writeText(
         `https://tuturlybeta.com/dashboard/livewebinar/stream/${textToCopy}`
       )
-      .then(() => {
-      })
+      .then(() => {})
       .catch((error) => {
         console.error("Error copying text: ", error);
       });
@@ -136,7 +135,7 @@ function CreateLiveWebinar() {
     const formData = new FormData();
     formData.append("image", image);
     formData.append("isRecurring", recurring);
- 
+
     formData.append("title", title);
     formData.append("category", category);
     formData.append("description", description);
@@ -155,12 +154,13 @@ function CreateLiveWebinar() {
     if (localStorage.getItem("token")) {
       setAuthToken(localStorage.getItem("token"));
     }
+    dispatch(startLoading());
     await axios
       .post("/api/v1/livewebinar", body, config)
       .then((res) => {
-       
-
         setStreamLink(res.data.streamKey);
+        dispatch(stopLoading());
+
         setShowModal(true);
         formReset();
       })
@@ -168,7 +168,7 @@ function CreateLiveWebinar() {
         console.error(error);
       });
   };
-   
+
   const pickThumbnailFile = () => {
     thumbnailInputRef.current.click();
   };

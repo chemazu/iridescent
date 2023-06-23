@@ -85,7 +85,7 @@ export default function Stream() {
     setScreenSharing(false);
     setScreenStream(null);
     navigator.mediaDevices
-      .getUserMedia(audioVisuals)
+      .getUserMedia({audio:true,video:true})
       .then((stream) => {
         addVideoStream(myVideoRef.current, stream);
 
@@ -533,7 +533,7 @@ export default function Stream() {
 
   const onConnect = () => {
     navigator.mediaDevices
-      .getUserMedia(audioVisuals)
+      .getUserMedia({audio:true,video:true})
       .then((stream) => {
         addVideoStream(myVideoRef.current, stream);
       })
@@ -715,13 +715,7 @@ export default function Stream() {
       socket.off("message");
     };
   });
-  // useEffect(() => {
-  //   onConnect();
-  // }, [roomid]);
-
-  // useEffect(() => {
-  //   onConnect();
-  // }, [audioVisuals]);
+ 
 
   useEffect(() => {
     scrollToBottom();
@@ -746,7 +740,7 @@ export default function Stream() {
   //       if (screenSharing && screenStream) {
   //         call.answer(screenStream);
   //       } else {
-  //         navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
+  //         navigator.mediaDevices.getUserMedia({audio:true,video:true}).then((stream) => {
   //           call.answer(stream);
   //         });
   //       }
@@ -773,7 +767,7 @@ export default function Stream() {
       if (screenSharing && screenStream) {
         call.answer(screenStream);
       } else {
-        navigator.mediaDevices.getUserMedia(audioVisuals).then((stream) => {
+        navigator.mediaDevices.getUserMedia({audio:true,video:true}).then((stream) => {
           call.answer(stream);
         });
       }
@@ -1220,7 +1214,6 @@ export default function Stream() {
                     <div className="video-background">
                       <video
                         ref={myVideoRef}
-                        muted
                         // style={{ width: "300px", height: "200px" }}
                       />
                       <button
