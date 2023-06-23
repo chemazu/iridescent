@@ -1214,6 +1214,7 @@ export default function Stream() {
                     <div className="video-background">
                       <video
                         ref={myVideoRef}
+                        muted
                         // style={{ width: "300px", height: "200px" }}
                       />
                       <button

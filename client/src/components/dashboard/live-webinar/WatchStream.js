@@ -62,6 +62,7 @@ function WatchStream({ schoolname }) {
   if (localStorage.getItem("studentToken")) {
     setAuthToken(localStorage.getItem("studentToken"));
   }
+
   function addVideoStream(stream) {
     const video = myVideoRef.current;
     if (video) {
@@ -513,16 +514,26 @@ function WatchStream({ schoolname }) {
   };
   const initiateCall = (peerId) => {
     if (currentPeer) {
-      const blankStream = createBlankVideoStream();
-      const call = currentPeer.call(peerId, blankStream);
+      navigator.mediaDevices.getUserMedia({ video: true, audio: true }).then((newStream) => {
+        const call = currentPeer.call(peerId, newStream);
+        call.on("stream", (remoteStream) => {
+          console.log("first");
+          setWaiting(false);
+          addVideoStream(remoteStream);
 
-      call.on("stream", (remoteStream) => {
-        console.log("first");
-        setWaiting(false);
-        addVideoStream(remoteStream);
-
-        // Handle the incoming stream
+          // Handle the incoming stream
+        });
       });
+      // const blankStream = createBlankVideoStream();
+      // const call = currentPeer.call(peerId, blankStream);
+
+      // call.on("stream", (remoteStream) => {
+      //   console.log("first");
+      //   setWaiting(false);
+      //   addVideoStream(remoteStream);
+
+      //   // Handle the incoming stream
+      // });
     }
   };
 
@@ -648,8 +659,9 @@ function WatchStream({ schoolname }) {
                             <div className="video-background">
                               <video
                                 ref={myVideoRef}
-                                // muted
                                 style={{ width: "100%" }}
+                                muted={false}
+                                typeof="video/mp4"
                               />
                             </div>
                           )}
