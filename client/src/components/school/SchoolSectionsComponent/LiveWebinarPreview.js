@@ -107,7 +107,7 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
 
   const handleGetProductClick = () => {
     if (cart.find((item) => item.itemId === liveWebinar._id) !== undefined) {
-      return alert.show("Course Already in Cart", {
+      return alert.show("Webinar Already in Cart", {
         type: "error",
       });
     }
@@ -165,7 +165,7 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
           school === null &&
           theme === null &&
           liveWebinar === null ? (
-            <p className="text-center lead">Product not found</p>
+            <p className="text-center lead">Webinar not found</p>
           ) : (
             <>
               <PageNavbar theme={theme} pageName={schoolname} />
@@ -203,7 +203,7 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                                 <img
                                   src={liveWebinar?.thumbnail}
                                   alt="product thumbnail previewer"
-                                  style={{maxHeight:"35vh"}}
+                            
                                 />
                               </div>
                             </Col>

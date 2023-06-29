@@ -56,10 +56,8 @@ const liveWebinarSchema = new mongoose.Schema({
       max: 6,
     },
   ],
-  recurringStartDate: {
-    type: Date,
-  },
-  recurringEndDate: {
+ 
+  endTime: {
     type: Date,
   },
   fee: {
@@ -76,7 +74,6 @@ const liveWebinarSchema = new mongoose.Schema({
   },
   timeleft: {
     type: Number,
-   
   },
   streamStarted: {},
 

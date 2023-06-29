@@ -6,15 +6,15 @@ import axios from "axios";
 
 import Stream from "./Stream";
 import setAuthToken from "../../../utilities/setAuthToken";
+import { Spinner } from "reactstrap";
+import InvalidStream from "./InvalidStream";
 
 const PresenterValidation = ({ school }) => {
   const { roomid } = useParams();
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // get school name
-  console.log(school);
   if (localStorage.getItem("tutorToken")) {
-    console.log(localStorage.getItem("tutorToken"));
     setAuthToken(localStorage.getItem("tutorToken"));
   }
 
@@ -23,16 +23,22 @@ const PresenterValidation = ({ school }) => {
 
     try {
       if (localStorage.getItem("tutorToken")) {
-        console.log(localStorage.getItem("tutorToken"));
         setAuthToken(localStorage.getItem("tutorToken"));
       }
       let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
       if (res) {
-        console.log(res);
-        // if (res.data.school === school.schoolDetails.name) {
         setIsValid(true);
-        setIsLoading(false);
-        // }
+          setIsLoading(false);
+        if (res.data.timeLeft > 0) {
+          if (res.data.school === school.schoolDetails.name) {
+          setIsValid(true);
+          setIsLoading(false);
+        } else {
+          setIsValid(false);
+          setIsLoading(false);
+
+        }
+        }
       }
       // setIsLoading(false);
       // setIsValid(false);
@@ -48,11 +54,23 @@ const PresenterValidation = ({ school }) => {
   }, [roomid]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div
+        style={{
+          display: "flex",
+          width: "100%",
+          height: "100vh",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <Spinner />
+      </div>
+    );
   }
 
   if (!isValid) {
-    return <div>Invalid Stream ID</div>;
+    return <InvalidStream/>;
   }
   return <Stream />;
 };

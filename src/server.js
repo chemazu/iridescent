@@ -80,37 +80,53 @@ io.on("connection", (socket) => {
     socket.broadcast.to(roomId).emit("broadcaster");
   });
   socket.on("freeTimer", async (roomId) => {
-    if (freeTimers[roomId]) {
+    if (freeTimers[roomId] || timerControl[roomId]) {
+      return;
     }
     if (!freeTimers[roomId]) {
       let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
-
       if (liveWebinar) {
         if (liveWebinar.timeleft === 0) {
           io.in(roomId).emit("timer elapsed for room", 0);
+        } else {
+          freeTimers[roomId] = liveWebinar.timeleft;
+          let timer = setInterval(() => {
+            if (freeTimers[roomId] === 0) {
+              clearInterval(timer);
+              // Perform any necessary cleanup or actions when the timer ends
+
+              // For example, emit an event to indicate the timer has ended
+              io.in(roomId).emit("freeTimerEnded", roomId);
+
+              // Clear the timer and remove the timer control from the objects
+              clearInterval(timerControl[roomId]);
+              delete timerControl[roomId];
+              delete freeTimers[roomId];
+
+              // Update the liveWebinar object if needed
+              liveWebinar.timeleft = 0;
+              liveWebinar.save((error) => {
+                if (error) {
+                  console.error("Error saving liveWebinar:", error);
+                }
+              });
+            } else {
+              io.in(roomId).emit("roomTimerTick", freeTimers[roomId]);
+              freeTimers[roomId]--;
+            }
+          }, 1000);
+          // Store the timer and timer control in the respective objects
+          timerControl[roomId] = timer;
         }
-        freeTimers[roomId] = liveWebinar.timeleft;
       }
-
-      // io.in(roomId).emit("roomTimerStarted", freeTimers[roomId]);
     }
-    timerControl[roomId] = setInterval(async () => {
-      freeTimers[roomId] -= 1;
+  });
 
-      // Broadcast the remaining time to all connected clients in the room
-      io.in(roomId).emit("roomTimerTick", freeTimers[roomId]);
-
-      if (freeTimers[roomId] <= 0) {
-        clearInterval(timerControl[roomId]);
-        io.in(roomId).emit("freeTimerEnded", roomId);
-        let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
-        // Clean up the timer after it ends
-        liveWebinar.timeleft = 0;
-        await liveWebinar.save();
-
-        // delete freeTimers[roomId];
-      }
-    }, 1000);
+  // socket.on("disconnect", () => {
+  socket.on("watcher-exit", (roomId) => {
+    const room = io.sockets.adapter.rooms.get(roomId);
+    let roomSize = room ? room.size : 1;
+    io.in(roomId).emit("watcher-exit", roomSize);
   });
 
   socket.on("watcher", async (roomId, userId) => {
@@ -118,7 +134,6 @@ io.on("connection", (socket) => {
     const room = io.sockets.adapter.rooms.get(roomId);
     let roomSize = room ? room.size : 1;
     // check screensharing
-    console.log(newBroadcasterHolder)
     if (newBroadcasterHolder[roomId]) {
       io.in(roomId).emit(
         "join stream",
@@ -136,9 +151,7 @@ io.on("connection", (socket) => {
         roomTimer,
         pollQuizHolder[roomId]
       );
-      // socket.emit("for your eyes only", roomSize, roomTimer,pollQuizHolder);
     } else {
-      console.log("first no steam")
       io.to(socket.id).emit("no stream");
     }
   });
@@ -158,62 +171,71 @@ io.on("connection", (socket) => {
     if (message.type === "quiz" || message.type === "poll") {
       if (!pollQuizHolder[roomId]) {
         pollQuizHolder[roomId] = [];
-        pollQuizHolder[roomId].push(message);
       }
       pollQuizHolder[roomId].push(message);
     }
   });
+  socket.on("specialchat", (message, roomId) => {
+    socket.broadcast.to(roomId).emit("specialchat", { ...message });
+
+    if (!pollQuizHolder[roomId]) {
+      pollQuizHolder[roomId] = [];
+    }
+    pollQuizHolder[roomId].push(message);
+  });
   socket.on("special close", (roomid, index) => {
     socket.broadcast.to(roomid).emit("special close", index);
+    pollQuizHolder[roomid] = [];
   });
-  socket.on("special submit", (type, result, roomId, user, questionControl) => {
-    socket.broadcast
-      .to(roomId)
-      .emit("special submit", type, result, user, questionControl);
+  socket.on("special submit", (type, result, roomId, user) => {
+    socket.broadcast.to(roomId).emit("special submit", type, result, user);
   });
   socket.on("startTimer", (timerData) => {
-    const { duration, questionControl, roomid } = timerData;
+    const { duration, roomid } = timerData;
+
     // Check if a timer is already running for the same room and question
-    if (timers[roomid] && timers[roomid][questionControl]) {
+    if (timers[roomid]) {
       socket.emit(
         "timerError",
         "A timer is already running for this question."
       );
       return;
     }
+
     // Create a new timer for the room and question
-    if (!timers[roomid]) {
-      timers[roomid] = {};
-    }
-    timers[roomid][questionControl] = {
+    timers[roomid] = {
       duration: duration,
       remainingTime: duration,
     };
+
     // Broadcast the start event to all connected clients in the room
-    io.in(roomid).emit("timerStarted", questionControl, duration);
+    io.in(roomid).emit("timerStarted", duration);
 
     // Start the countdown
     const timer = setInterval(() => {
-      timers[roomid][questionControl].remainingTime -= 1;
+      if (timers[roomid]) {
+        timers[roomid].remainingTime -= 1;
+        io.in(roomid).emit("timerTick", timers[roomid].remainingTime, timers);
+        if (timers[roomid].remainingTime <= 0) {
+          clearInterval(timer);
+          pollQuizHolder[roomid] = [];
+          io.in(roomid).emit("timerEnded");
+  
+          // Clean up the timer after it ends
+          delete timers[roomid];
+        }
+      }
 
       // Broadcast the remaining time to all connected clients in the room
-      io.in(roomid).emit(
-        "timerTick",
-        questionControl,
-        timers[roomid][questionControl].remainingTime
-      );
+      
 
-      if (timers[roomid][questionControl].remainingTime <= 0) {
-        clearInterval(timer);
-        io.in(roomid).emit("timerEnded", questionControl);
-
-        // Clean up the timer after it ends
-        delete timers[roomid][questionControl];
-      }
+    
     }, 1000);
   });
-  socket.on("updatedPollResult", (roomid, updatedResults, questionControl) => {
-    io.in(roomid).emit("updatedPollResult", updatedResults, questionControl);
+
+   
+  socket.on("updatedPollResult", (roomid, updatedResults) => {
+    io.in(roomid).emit("updatedPollResult", updatedResults);
   });
 
   socket.on("disconnect", async () => {
@@ -223,19 +245,25 @@ io.on("connection", (socket) => {
     Object.entries(newBroadcasterHolder).forEach(
       async ([roomId, broadcaster]) => {
         if (broadcaster.socketId === socketId) {
-          console.log(freeTimers[roomId], "here");
 
           // The disconnected socket was a broadcaster
+          delete pollQuizHolder[roomId];
+          delete timers[roomId];
+
           socket.broadcast.to(roomId).emit("broadcaster-disconnected");
           if (freeTimers[roomId]) {
             let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
-            console.log(liveWebinar, freeTimers[roomId], "here");
             if (liveWebinar) {
               liveWebinar.timeleft = freeTimers[roomId];
               await liveWebinar.save();
+              // clearInterval(timerControl[roomId]);
+              // delete timerControl[roomId];
+              delete pollQuizHolder[roomId];
+              // delete freeTimers[roomId];
               clearInterval(timerControl[roomId]);
               delete timerControl[roomId];
-              delete pollQuizHolder[roomId];
+              delete timers[roomId];
+
               delete freeTimers[roomId];
             }
           }

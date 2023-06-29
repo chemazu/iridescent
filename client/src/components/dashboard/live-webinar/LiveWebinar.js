@@ -6,7 +6,6 @@ import "../../../custom-styles/dashboard/live-webinar.css";
 import bellicon from "../../../images/flat-yellow-bell.png";
 
 import DashboardNavbar from "../DashboardNavbar";
-import NotificationNavbar from "../NotificationNavbar";
 import { Link } from "react-router-dom";
 
 function LiveWebinar() {
@@ -19,9 +18,11 @@ function LiveWebinar() {
     setLoading(true);
 
     let res = await axios.get("/api/v1/livewebinar/streams");
-    console.log(res);
-    setUserStreams(res.data.streams);
-    setLoading(false);
+    if(res){setUserStreams(res.data.streams);
+    setLoading(false);}
+    else{
+      console.log("error")
+    }
   };
   const today = new Date();
   const streams = userStreams?.filter((stream) => {
@@ -133,7 +134,7 @@ function LiveWebinar() {
                       </div>
                     ) : (
                       // userStreams.map((item, index) => {
-                      filteredStreams.map((item, index) => {
+                        userStreams.map((item, index) => {
                         return (
                           <>
                             <div

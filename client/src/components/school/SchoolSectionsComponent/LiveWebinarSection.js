@@ -30,7 +30,6 @@ export default function LiveWebinarSection({ schoolname, theme }) {
       }
       const res = await axios.get(`/api/v1/studentwebinar/${schoolname}`);
       setPurchasedWebinar(res.data);
-      console.log(res.data);
       setPurchasedWebinarLoading(false);
     } catch (error) {
       // eslint-disable-next-line
@@ -50,7 +49,6 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     let res = await axios.get(
       `/api/v1/livewebinar/schoolstreams/${schoolname}`
     );
-    console.log(res);
     setUserStreams(res.data.streams);
     setLoading(false);
   };
@@ -81,7 +79,6 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     const streamDate = new Date(stream.startTime);
     return streamDate >= startOfWeek && streamDate <= endOfWeek;
   });
-  console.log(streams);
   function handleTimeDisplay(time) {
     const timestamp = new Date(time);
     const dateStr = timestamp.toLocaleString("en-US", {
@@ -134,7 +131,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
             >
               Upcoming Webinar
             </h3>{" "}
-            {streams?.map((item, index) => {
+            {streams?.map((item, index, arr) => {
               return (
                 index === currentItem && (
                   <div className="school-live-webinar-content">
@@ -144,6 +141,10 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                       style={{ maxHeight: "35vh" }}
                     />
                     <div className="school-live-webinar-content-text">
+                      <div className="school-live-webinar-content-count">
+                        <span>{index + 1}</span>/
+                        <span style={{ marginLeft: "5px" }}>{arr.length}</span>
+                      </div>
                       <h3
                         style={{
                           color:
@@ -199,8 +200,29 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                           </Link>
                         )}
 
+                        {streams?.length > 0 && currentItem > 0 && (
+                          <Button
+                            style={{
+                              color: theme?.themestyles.navbartextcolor,
+                              backgroundColor:
+                                theme?.themestyles.navbarbackgroundcolor,
+                              fontFamily: theme?.themestyles.fontfamily,
+                              boxShadow: "none",
+                              border: `1px solid ${theme?.themestyles.navbartextcolor}`,
+                              transform: "none",
+                            }}
+                            onClick={() => {
+                              setCurrentItem(currentItem - 1);
+                            }}
+                          >
+                            Previous Webinar
+                          </Button>
+                        )}
                         {!(authenticated && confirmPayment(item._id)) && (
-                          <Link to={`/live/preview/${item._id}`} style={{marginRight:"1rem"}}>
+                          <Link
+                            to={`/live/preview/${item._id}`}
+                            style={{ marginRight: "1rem" }}
+                          >
                             <Button
                               style={{
                                 backgroundColor:
@@ -215,32 +237,16 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                             </Button>
                           </Link>
                         )}
-                        {streams?.length > 0 && currentItem > 0 && (
-                          <Button
-                            style={{
-                              backgroundColor:
-                                themeData.themestyles.buttontextcolor,
-                              borderRadius:
-                                themeData.themestyles.buttonborderradius,
-                              color:
-                                themeData.themestyles.buttonbackgroundcolor,
-                            }}
-                            onClick={() => {
-                              setCurrentItem(currentItem - 1);
-                            }}
-                          >
-                            Previous Webinar
-                          </Button>
-                        )}
                         {streams?.length > currentItem + 1 && (
                           <Button
                             style={{
+                              color: theme?.themestyles.navbartextcolor,
                               backgroundColor:
-                                themeData.themestyles.buttontextcolor,
-                              borderRadius:
-                                themeData.themestyles.buttonborderradius,
-                              color:
-                                themeData.themestyles.buttonbackgroundcolor,
+                                theme?.themestyles.navbarbackgroundcolor,
+                              fontFamily: theme?.themestyles.fontfamily,
+                              boxShadow: "none",
+                              border: `1px solid ${theme?.themestyles.navbartextcolor}`,
+                              transform: "none",
                             }}
                             onClick={() => {
                               setCurrentItem(currentItem + 1);

@@ -20,12 +20,12 @@ import {
 import "../../../custom-styles/dashboard/live-webinar.css";
 import DashboardNavbar from "../DashboardNavbar";
 
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 
-function CreateLiveWebinar() {
+function CreateLiveWebinar({ school }) {
   const alert = useAlert();
+  const history = useHistory();
   const [recurring, setRecurring] = useState(false);
-  const [image, setImage] = useState(null);
   const thumbnailInputRef = useRef();
   const [showModal, setShowModal] = useState(false);
   const [time, setTime] = useState("");
@@ -42,17 +42,54 @@ function CreateLiveWebinar() {
   const [fee, setFee] = useState("");
   const [fileToSend, setFileToSend] = useState(null);
   const [imageToCloudinary, setImageToCloudinary] = useState(null);
-
   const [recurringFrequency, setRecurringFrequency] = useState("");
   const [webinarReps, setWebinarReps] = useState("");
   const dispatch = useDispatch();
 
   const handleTimeChange = (e) => {
-    setTime(e.target.value);
+    const selectedTime = e.target.value; // Assuming the time value is in the correct format, e.g., "HH:mm"
+    const selectedDateTime = new Date(`${date}T${selectedTime}`);
+    const currentDateTime = new Date();
+  
+    if (selectedDateTime < currentDateTime) {
+      // alert.show("Selected datetime is less than current datetime");
+      alert.show("Selected date is earlier than the current date");
+
+      // Perform necessary actions if the datetime is less than the current datetime
+      // For example, display an error message or disable a submit button
+    } else {
+      setTime(selectedTime);
+    }
   };
 
   const handleDateChange = (e) => {
-    setDate(e.target.value);
+    const selectedDate = new Date(e.target.value);
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0);
+    selectedDate.setHours(0, 0, 0, 10);
+  
+    if (selectedDate < currentDate) {
+      alert.show("Selected date is earlier than the current date");
+      // Perform necessary actions if the date is earlier than the current date
+      // For example, display an error message or disable a submit button
+    } else {
+      setDate(e.target.value);
+    }
+  };
+  
+  const handleEndTimeChange = (e) => {
+    setEndTime(e.target.value);
+  };
+
+  const handleEndDateChange = (e) => {
+    const selectedEndDate = e.target.value;
+    if (date && selectedEndDate > date) {
+      setEndDate(selectedEndDate);
+    } else {
+      alert.show("End date must be after start date", {
+        type: "error",
+      });
+    }
   };
 
   const formReset = () => {
@@ -106,6 +143,7 @@ function CreateLiveWebinar() {
       reader.readAsDataURL(e.target.files[0]);
     }
   };
+
   const getCategoryListing = async (query = "") => {
     try {
       const res = await axios.get(
@@ -120,7 +158,7 @@ function CreateLiveWebinar() {
   function copyText(textToCopy) {
     navigator.clipboard
       .writeText(
-        `https://tuturlybeta.com/dashboard/livewebinar/stream/${textToCopy}`
+        `https://${school.name}.tuturlybeta.com/livewebinar/watch/${textToCopy}`
       )
       .then(() => {})
       .catch((error) => {
@@ -129,45 +167,144 @@ function CreateLiveWebinar() {
     alert.show("Link Copied", {
       type: "success",
     });
+    history.push("/dashboard/livewebinar");
   }
+  const convertToDate = (time, date) => {
+    const [hours, minutes] = time.split(":");
+    const [year, month, day] = date.split("-");
+    const combinedDate = new Date(year, month - 1, day, hours, minutes);
+    if (isNaN(combinedDate.getTime())) {
+      return ""; // Return an empty string for an invalid date
+    }
+
+    return combinedDate;
+  };
 
   const handleSubmit = async (e) => {
-    const formData = new FormData();
-    formData.append("image", image);
-    formData.append("isRecurring", recurring);
-
-    formData.append("title", title);
-    formData.append("category", category);
-    formData.append("description", description);
-    formData.append("fee", fee);
-    formData.append("currency", currency);
-    formData.append("customRep", customRep);
-    formData.append("recurringFrequency", recurringFrequency);
-    formData.append("webinarReps", webinarReps);
-    formData.append("file", fileToSend);
-    const config = {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    };
-    const body = formData;
-    if (localStorage.getItem("token")) {
-      setAuthToken(localStorage.getItem("token"));
-    }
-    dispatch(startLoading());
-    await axios
-      .post("/api/v1/livewebinar", body, config)
-      .then((res) => {
-        setStreamLink(res.data.streamKey);
-        dispatch(stopLoading());
-
-        setShowModal(true);
-        formReset();
-      })
-      .catch((error) => {
-        console.error(error);
+    if (
+      title === "" ||
+      category === "" ||
+      description === "" ||
+      fee === "" ||
+      currency === "" ||
+      (recurring === true &&
+        (recurringFrequency === "" ||
+          webinarReps === "" ||
+          endTime === "" ||
+          endDate === "")) ||
+      (webinarReps.toLowerCase() === "custom" && customRep === "") ||
+      imageToCloudinary === null ||
+      time === "" ||
+      date === "" ||
+      fileToSend === ""
+    ) {
+      alert.show("Please complete fields", {
+        type: "error",
       });
+    } else {
+      const formData = new FormData();
+      formData.append("isRecurring", recurring);
+      formData.append("title", title);
+      formData.append("category", category);
+      formData.append("description", description);
+      formData.append("fee", fee);
+      formData.append("currency", currency);
+      formData.append("customRep", customRep);
+      formData.append("recurringFrequency", recurringFrequency);
+      formData.append("webinarReps", webinarReps);
+      formData.append("file", fileToSend);
+      formData.append("startTime", convertToDate(time, date));
+      formData.append("endTime", convertToDate(endTime, endDate));
+
+      const config = {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      };
+      const body = formData;
+      if (localStorage.getItem("token")) {
+        setAuthToken(localStorage.getItem("token"));
+      }
+      dispatch(startLoading());
+      await axios
+        .post("/api/v1/livewebinar", body, config)
+        .then((res) => {
+          setStreamLink(res.data.streamKey);
+          dispatch(stopLoading());
+
+          setShowModal(true);
+          formReset();
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    }
   };
+  // const handleSubmit = async (e) => {
+  //   if (
+  //     title === "" ||
+  //     category === "" ||
+  //     description === "" ||
+  //     fee === "" ||
+  //     currency === "" ||
+  //     recurringFrequency === "" ||
+  //     webinarReps === "" ||
+  //     fileToSend === "" ||
+  //     time === "" ||
+  //     date === "" ||
+  //     (recurring === true && recurringFrequency === "") ||
+  //     (recurring === true && webinarReps === "")
+  //   ) {
+  //     console.log(
+  //       title,
+  //       category,
+  //       description,
+  //       fee,
+  //       currency,
+  //       customRep,
+  //       recurringFrequency,
+  //       webinarReps,
+  //       fileToSend
+  //     );
+  //   } else {
+  //     const formData = new FormData();
+  //     formData.append("isRecurring", recurring);
+  //     formData.append("title", title);
+  //     formData.append("category", category);
+  //     formData.append("description", description);
+  //     formData.append("fee", fee);
+  //     formData.append("currency", currency);
+  //     formData.append("customRep", customRep);
+  //     formData.append("recurringFrequency", recurringFrequency);
+  //     formData.append("webinarReps", webinarReps);
+  //     formData.append("file", fileToSend);
+  //     formData.append("startTime", convertToDate(time, date));
+  //     formData.append("endDate", convertToDate(endTime, endDate));
+
+  //     const config = {
+  //       headers: {
+  //         "Content-Type": "multipart/form-data",
+  //       },
+  //     };
+  //     const body = formData;
+  //     if (localStorage.getItem("token")) {
+  //       setAuthToken(localStorage.getItem("token"));
+  //     }
+  //     dispatch(startLoading());
+  //     await axios
+  //       .post("/api/v1/livewebinar", body, config)
+  //       .then((res) => {
+  //         setStreamLink(res.data.streamKey);
+  //         dispatch(stopLoading());
+
+  //         setShowModal(true);
+  //         formReset();
+  //       })
+  //       .catch((error) => {
+  //         console.error(error);
+  //       });
+  //   }
+  // };
 
   const pickThumbnailFile = () => {
     thumbnailInputRef.current.click();
@@ -234,8 +371,7 @@ function CreateLiveWebinar() {
                   Stream Created
                 </div>
                 <ModalBody>
-                  https://tuturlybeta.com/dashboard/livewebinar/stream/
-                  {streamLink}
+                  {`https://${school?.name}.tuturlybeta.com/livewebinar/watch/${streamLink}`}
                 </ModalBody>
                 <ModalFooter>
                   <Button
@@ -259,6 +395,7 @@ function CreateLiveWebinar() {
                     }}
                     onClick={() => {
                       setShowModal(false);
+                      history.push("/dashboard/livewebinar");
                     }}
                   >
                     Close
@@ -417,33 +554,32 @@ function CreateLiveWebinar() {
                                     value={date}
                                     onChange={handleDateChange}
                                     placeholder="Date"
-                                    // style={{
-                                    //   minWidth: "fit-content",
-                                    // }}
+                                    style={{
+                                      minWidth: "fit-content",
+                                    }}
                                   />{" "}
                                 </div>
                               </div>
                               <hr />
-
                               <div className="start">
                                 <p>End Date</p>
                                 <div className="date-wrapper">
                                   <input
                                     type="time"
-                                    value={time}
-                                    onChange={handleTimeChange}
+                                    value={endTime}
+                                    onChange={handleEndTimeChange}
                                     placeholder="HH:MM"
                                   />
                                   <input
                                     type="date"
-                                    value={endDate}
+                                    value={date}
                                     onChange={(e) => {
-                                      setEndDate(e.target.value);
+                                      handleEndDateChange(e);
                                     }}
                                     placeholder="Date"
-                                    // style={{
-                                    //   minWidth: "fit-content",
-                                    // }}
+                                    style={{
+                                      minWidth: "fit-content",
+                                    }}
                                   />{" "}
                                 </div>
                               </div>
@@ -482,15 +618,15 @@ function CreateLiveWebinar() {
                                     setEndTime(e.target.value);
                                   }}
                                   placeholder="HH:MM"
-                                  // style={{
-                                  //   width: "fit-content",
-                                  // }}
+                                  style={{
+                                    width: "fit-content",
+                                  }}
                                 />
                                 <input
                                   type="date"
                                   value={endDate}
                                   onChange={(e) => {
-                                    setEndDate(e.target.value);
+                                    handleEndDateChange(e);
                                   }}
                                   placeholder="Date"
                                 />{" "}

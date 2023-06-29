@@ -50,27 +50,60 @@ export default function Poll({ pollOptions, pollResult }) {
       {pollOptions.map((option, index) => {
         return (
           <div
-            className="chat-poll-option"
+            className="poll-chat-poll-option"
             key={index}
             // onClick={() => handleVote(index)}
           >
-            <p>{String.fromCharCode(65 + index)}</p>
-            <p>{option}</p>
-            <p>
-              {`${
-                isNaN(
-                  calculatePercentage(
-                    NewResult[String.fromCharCode(65 + index)],
-                    NewResult
-                  )
-                )
-                  ? 0
-                  : calculatePercentage(
+            <div
+              className="left-option"
+              style={{
+                width: `${
+                  isNaN(
+                    calculatePercentage(
                       NewResult[String.fromCharCode(65 + index)],
                       NewResult
                     )
-              }%`}
-            </p>
+                  )
+                    ? 0
+                    : calculatePercentage(
+                        NewResult[String.fromCharCode(65 + index)],
+                        NewResult
+                      )
+                }%`,
+                paddingBottom: ".25rem",
+                paddingTop: ".25rem",
+
+                backgroundColor: "#D9D9D9",
+              }}
+            >
+              <p style={{ fontSize: "12px", fontWeight: "bold" }}>
+                {String.fromCharCode(65 + index)}
+              </p>
+              {/* <p style={{ marginRight: "-60px" }}>
+                Option {String.fromCharCode(65 + index)}
+              </p> */}
+            </div>
+            <div className="right-option">
+              <p style={{ marginRight: "5px" }}>
+                {`${
+                  isNaN(
+                    calculatePercentage(
+                      NewResult[String.fromCharCode(65 + index)],
+                      NewResult
+                    )
+                  )
+                    ? 0
+                    : calculatePercentage(
+                        NewResult[String.fromCharCode(65 + index)],
+                        NewResult
+                      )
+                }%`}
+              </p>
+              <p style={{ fontWeight: "bold" }}> ({option})</p>
+            </div>
+
+            {/* <p>{String.fromCharCode(65 + index)}</p>
+            <p>{option}</p> */}
           </div>
         );
       })}
