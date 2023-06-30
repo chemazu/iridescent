@@ -187,6 +187,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                           <Link to={`/livewebinar/watch/${item.streamKey}`}>
                             <Button
                               style={{
+                                marginRight:"10px",
                                 backgroundColor:
                                   themeData.themestyles.buttontextcolor,
                                 borderRadius:

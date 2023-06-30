@@ -30,14 +30,14 @@ const PresenterValidation = ({ school }) => {
         setIsValid(true);
           setIsLoading(false);
         if (res.data.timeLeft > 0) {
-          if (res.data.school === school.schoolDetails.name) {
+          // if (res.data.school === school.schoolDetails.name) {
           setIsValid(true);
           setIsLoading(false);
-        } else {
-          setIsValid(false);
-          setIsLoading(false);
+        // } else {
+        //   setIsValid(false);
+        //   setIsLoading(false);
 
-        }
+        // }
         }
       }
       // setIsLoading(false);

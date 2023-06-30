@@ -105,10 +105,15 @@ function WatchStream({ schoolname }) {
   const toggleAudio = () => {
     const audioTracks = myVideoRef.current.srcObject.getAudioTracks();
 
-    audioTracks.forEach((track) => {
-      track.enabled = !isAudioEnabled;
-    });
-    setIsAudioEnabled(!isAudioEnabled);
+    if (audioTracks.length > 0) {
+      audioTracks.forEach((track) => {
+        track.enabled = !isAudioEnabled;
+      });
+      setIsAudioEnabled(!isAudioEnabled);
+    } else {
+      // Handle the case when there are no audio tracks in the stream
+      console.log("No audio tracks found");
+    }
   };
 
   const handleOptionClick = (index) => {
@@ -270,8 +275,32 @@ function WatchStream({ schoolname }) {
   };
 
   // send message
+  // const sendMessage = () => {
+  //   if (chatMessage !== null) {
+  //     socket.emit(
+  //       "message",
+  //       {
+  //         user: watcherUsername || 1,
+  //         msg: chatMessage,
+  //         timeStamp: Date.now(),
+  //         type: "text",
+  //       },
+  //       roomid
+  //     );
+  //     setDefaultChat([
+  //       ...defaultChat,
+  //       {
+  //         user: watcherUsername || 1,
+  //         msg: chatMessage,
+  //         timeStamp: Date.now(),
+  //         type: "text",
+  //       },
+  //     ]);
+  //   }
+  //   setChatMessage("");
+  // };
   const sendMessage = () => {
-    if (chatMessage !== null) {
+    if (chatMessage.trim() !== "") { // Check if the trimmed chatMessage is not empty
       socket.emit(
         "message",
         {
@@ -310,15 +339,19 @@ function WatchStream({ schoolname }) {
     socket.on("timerEnded", (questionControl, remainingTime) => {
       setTimerHolder({});
       handlePollSubmit();
-      // check if they have submitted
-      if (specialChat[0].type === "poll") {
-        handlePollSubmit();
-      }
-      // check if they have submitted
+      if (specialChat && specialChat.length > 0) {
+        if (specialChat[0].type === "poll") {
+          handlePollSubmit();
+        }
+        // check if they have submitted
 
-      if (specialChat[0].type === "quiz") {
-        handleUniqueSubmission(answers, "quiz");
+        if (specialChat[0].type === "quiz") {
+          handleUniqueSubmission(answers, "quiz");
+        }
+      } else {
+        // Handle the case when specialChat is not defined or empty
       }
+      // check if they have submitted
 
       // hanlePollQuizTimeOut();
     });
@@ -512,6 +545,7 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     socket.on("broadcaster-disconnected", () => {
       setDisconnect(true);
+      setSpecialChat([]);
       removeStream();
     });
     return () => {
@@ -526,7 +560,7 @@ function WatchStream({ schoolname }) {
     return () => {
       socket.off("special close");
     };
-  });
+  }, [roomid, specialChat]);
   useEffect(() => {
     if (schoolname?.length > 0) {
       getSchoolLandingPageContents(schoolname);

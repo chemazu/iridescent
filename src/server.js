@@ -184,8 +184,12 @@ io.on("connection", (socket) => {
     pollQuizHolder[roomId].push(message);
   });
   socket.on("special close", (roomid, index) => {
+    delete pollQuizHolder[roomid];
+    clearInterval(timerControl[roomid]);
+    delete timerControl[roomid];
+    delete timers[roomid];
+
     socket.broadcast.to(roomid).emit("special close", index);
-    pollQuizHolder[roomid] = [];
   });
   socket.on("special submit", (type, result, roomId, user) => {
     socket.broadcast.to(roomId).emit("special submit", type, result, user);
@@ -220,20 +224,16 @@ io.on("connection", (socket) => {
           clearInterval(timer);
           pollQuizHolder[roomid] = [];
           io.in(roomid).emit("timerEnded");
-  
+
           // Clean up the timer after it ends
           delete timers[roomid];
         }
       }
 
       // Broadcast the remaining time to all connected clients in the room
-      
-
-    
     }, 1000);
   });
 
-   
   socket.on("updatedPollResult", (roomid, updatedResults) => {
     io.in(roomid).emit("updatedPollResult", updatedResults);
   });
@@ -245,7 +245,6 @@ io.on("connection", (socket) => {
     Object.entries(newBroadcasterHolder).forEach(
       async ([roomId, broadcaster]) => {
         if (broadcaster.socketId === socketId) {
-
           // The disconnected socket was a broadcaster
           delete pollQuizHolder[roomId];
           delete timers[roomId];

@@ -41,7 +41,7 @@ export default function Stream() {
 
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [attendies, setAttendies] = useState(0);
+  const [attendies, setAttendies] = useState(1);
   const [audioVisuals, setAudioVisuals] = useState({
     video: true,
     audio: true,
@@ -54,7 +54,6 @@ export default function Stream() {
   const [quizSubmission, setQuizSubmission] = useState({});
   const [pollResultHolder, setPollResultHolder] = useState([]);
   const [answers, setAnswers] = useState([]);
-  
 
   const [durationValue, setDurationValue] = useState(""); // State to track the input value
   const [durationUnit, setDurationUnit] = useState("secs"); // State to track the selected unit
@@ -104,15 +103,17 @@ export default function Stream() {
     socket.emit("endstream", roomid);
 
     // Disable camera
-   if(myVideoRef.current){ let videoTracks = myVideoRef.current.srcObject.getVideoTracks();
-    videoTracks.forEach((track) => (track.enabled = false));
+    if (myVideoRef.current) {
+      let videoTracks = myVideoRef.current.srcObject.getVideoTracks();
+      videoTracks.forEach((track) => (track.enabled = false));
 
-    // Stop audio and video tracks
-    let tracks = myVideoRef.current.srcObject.getTracks();
-    tracks.forEach((track) => track.stop());
+      // Stop audio and video tracks
+      let tracks = myVideoRef.current.srcObject.getTracks();
+      tracks.forEach((track) => track.stop());
 
-    // Set video source object to null
-    myVideoRef.current.srcObject = null;}
+      // Set video source object to null
+      myVideoRef.current.srcObject = null;
+    }
 
     // Stop all media tracks from the user media stream
     navigator.mediaDevices
@@ -308,6 +309,7 @@ export default function Stream() {
       };
       socket.emit("specialchat", messageData, roomid);
       setQuizSubmission(false);
+      setQuizResultHolder([]);
 
       socket.emit("message", messageData, roomid);
       socket.emit("startTimer", timerData);
@@ -393,8 +395,33 @@ export default function Stream() {
     }
   };
 
+  // const sendMessage = () => {
+  //   if (chatMessage !== null) {
+  //     socket.emit(
+  //       "message",
+  //       {
+  //         user: presenterDetails?.username,
+  //         msg: chatMessage,
+  //         timeStamp: Date.now(),
+  //         type: "text",
+  //       },
+  //       roomid
+  //     );
+
+  //     setDefaultChat([
+  //       ...defaultChat,
+  //       {
+  //         user: presenterDetails?.username,
+  //         msg: chatMessage,
+  //         timeStamp: Date.now(),
+  //         type: "text",
+  //       },
+  //     ]);
+  //   }
+  //   setChatMessage("");
+  // };
   const sendMessage = () => {
-    if (chatMessage !== null) {
+    if (chatMessage && chatMessage.trim() !== "") {
       socket.emit(
         "message",
         {
@@ -405,7 +432,7 @@ export default function Stream() {
         },
         roomid
       );
-
+  
       setDefaultChat([
         ...defaultChat,
         {
@@ -418,6 +445,7 @@ export default function Stream() {
     }
     setChatMessage("");
   };
+
   const handleKeyDown = (event) => {
     if (event.keyCode === 13) {
       sendMessage();
@@ -591,7 +619,7 @@ export default function Stream() {
 
     setTimerHolder(false);
 
-    socket.emit("special close", roomid, index);
+    socket.emit("special close", roomid);
 
     // confirm the index again in
   };
@@ -605,7 +633,6 @@ export default function Stream() {
       .catch((error) => console.error(error));
   };
 
- 
   const convertToSeconds = (value, unit) => {
     let seconds = parseFloat(value);
 
@@ -665,7 +692,6 @@ export default function Stream() {
     socket.on("timer elapsed for room", (roomTimer) => {
       setTimeLeft(roomTimer);
       handleExitStream();
-
     });
 
     return () => {
@@ -684,7 +710,6 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("special submit", (type, result, user) => {
-
       if (type === "poll") {
         handleStudentPollSubmit(result);
       }
@@ -692,7 +717,6 @@ export default function Stream() {
       if (type === "quiz") {
         if (answerHolder) {
           let studentRes = analyseStudentResult(answerHolder, result);
-    
 
           let newSubmission = {
             user,
@@ -701,15 +725,17 @@ export default function Stream() {
           // let newResult = [...quizResultHolder, newSubmission];
           // setQuizResultHolder(newResult);
           // setQuizSubmission(true);
-          const userHasSubmitted = quizResultHolder.some(submission => submission.user === user);
+          const userHasSubmitted = quizResultHolder.some(
+            (submission) => submission.user === user
+          );
 
-        if (!userHasSubmitted) {
-          let newResult = [...quizResultHolder, newSubmission];
-          setQuizResultHolder(newResult);
-          setQuizSubmission(true);
-        } else {
-          console.log("User has already submitted");
-        }
+          if (!userHasSubmitted) {
+            let newResult = [...quizResultHolder, newSubmission];
+            setQuizResultHolder(newResult);
+            setQuizSubmission(true);
+          } else {
+            console.log("User has already submitted");
+          }
         }
       }
     });
@@ -755,11 +781,21 @@ export default function Stream() {
   }, [roomid, timerHolder]);
   useEffect(() => {
     socket.on("timerEnded", () => {
+      if (specialChat && specialChat.length > 0) {
 
-      if (specialChat[0].type === "poll") {
-        hanlePollQuizTimeOut();
+        if (specialChat[0].type === "poll") {
+          hanlePollQuizTimeOut();
+    setTimerHolder(false);
+
+        }
+        if (specialChat[0].type === "poll") {
+          hanlePollQuizTimeOut();
+    setTimerHolder(false);
+
+        }
+      } else {
+        // Handle the case when specialChat is not defined or empty
       }
-      setTimerHolder(false);
     });
     return () => {
       socket.off("timerEnded");
@@ -838,7 +874,6 @@ export default function Stream() {
   const handleInitializePeer = () => {
     setStartController(true);
   };
-  
 
   const toggleScreenSharing = () => {
     if (screenSharing) {
@@ -855,7 +890,6 @@ export default function Stream() {
 
           screenStreamRef.current = stream;
           // setScreenStream(stream);
-        
 
           const screenSharingTrack = stream.getVideoTracks()[0];
           screenSharingTrack.addEventListener(
@@ -1314,7 +1348,7 @@ export default function Stream() {
                       Attendies{" "}
                       <strong>
                         {"("}
-                        {attendies}
+                        {attendies-1}
                         {")"}
                       </strong>
                     </span>
@@ -1456,7 +1490,8 @@ export default function Stream() {
                                   </div>
                                   <div className="bottom">
                                     <div className="quiz-progress">
-                                      {quizSubmission ? (
+                                      {quizSubmission ||
+                                      item.submissionStatus ? (
                                         <p>Quiz Over</p>
                                       ) : (
                                         <p>Quiz in Progress</p>

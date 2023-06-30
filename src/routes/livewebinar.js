@@ -138,6 +138,7 @@ router.post(
     }
   }
 );
+ 
 
 // confirm a live stream
 
@@ -327,7 +328,7 @@ router.get("/studentPayment/:schoolname", studentAuth, async (req, res) => {
   }
 });
 
-// Start the server
+// clear the server
 
 // router.get("/purge", async () => {
 // await LiveWebinar.deleteMany({});
