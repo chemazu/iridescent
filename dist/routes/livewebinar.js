@@ -52,20 +52,7 @@ const createCourseThumbnailPhoto = (0, _multer.default)({
     cb(undefined, true);
   }
 
-}); // const uploadFileToCloudinary = (file, options) => {
-//   return new Promise((resolve, reject) => {
-//     cloudinary.v2.uploader.upload(file, options, (error, response) => {
-//       if (error) {
-//         reject(error);
-//       } else {
-//         resolve(response);
-//         console.log(response);
-//       }
-//     });
-//   });
-// };
-// Create a live stream
-
+});
 router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, _expressValidator.body)("title", "title is required").not().isEmpty(), (0, _expressValidator.body)("description", "description is required").not().isEmpty(), (0, _expressValidator.body)("isRecurring", "isRecurring is required").not().isEmpty(), (0, _expressValidator.body)("fee", "fee is required").not().isEmpty(), (0, _expressValidator.body)("category", "category is required").not().isEmpty(), (0, _expressValidator.body)("startTime", "startTime is required").not().isEmpty(), (0, _expressValidator.body)("currency", "currency is required").not().isEmpty()], async (req, res) => {
   const errors = (0, _expressValidator.validationResult)(req.body);
 
@@ -99,7 +86,33 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
   const imageToBeUploaded = (0, _dataUri.default)(`${fileType}`, req.file.buffer).content;
   const uploadResponse = await _cloudinary.default.v2.uploader.upload(imageToBeUploaded, {
     folder: `tuturly/webinar/${title}`
-  });
+  }); // {
+  //   isRecurring: 'false',
+  //   title: 'one',
+  //   category: 'Business',
+  //   description: 'egg',
+  //   fee: '1000',
+  //   currency: 'USD',
+  //   customRep: '',
+  //   recurringFrequency: '',
+  //   webinarReps: '',
+  //   startTime: 'Tue Jun 27 2023 13:40:00 GMT+0100 (West Africa Standard Time)',
+  //   endDate: 'Invalid Date'
+  // }
+  // {
+  //   isRecurring: 'true',
+  //   title: '10000',
+  //   category: 'Automobiles',
+  //   description: 'popop',
+  //   fee: '10322',
+  //   currency: 'USD',
+  //   customRep: '',
+  //   recurringFrequency: 'weekly',
+  //   webinarReps: 'Every 2 weeks',
+  //   startTime: 'Thu Jun 29 2023 13:50:00 GMT+0100 (West Africa Standard Time)',
+  //   endDate: 'Thu Jun 29 2023 19:50:00 GMT+0100 (West Africa Standard Time)'
+  // }
+
   const newStream = new _Livewebinar.default({
     title,
     description,
@@ -117,17 +130,11 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
     recurringFrequency,
     webinarReps,
     endTime,
-    school
-  }); // let options = {
-  //   folder: `tuturly/livewebinar/${title}`,
-  //   resource_type: "image",
-  // };
+    school,
+    timeleft: 2700
+  });
 
   try {
-    // const [thumbnailUploadResponse] = await uploadFileToCloudinary(
-    //   image,
-    //   options
-    // );
     const savedStream = await newStream.save();
     res.json({
       message: "Stream created successfully",
@@ -142,52 +149,114 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
   }
 }); // confirm a live stream
 
-router.get("/watch/:streamKey", async (req, res) => {
+router.get("/stream/:streamKey", _auth.default, async (req, res) => {
   const {
     streamKey
   } = req.params;
+  let user = req.user.id;
+
+  try {
+    const livestream = await _Livewebinar.default.findOne({
+      streamKey,
+      creator: user
+    }).populate("creator").populate("school");
+
+    if (livestream) {
+      const payment = await _PaymentPlans.default.findOne({
+        _id: livestream.creator.selectedplan
+      });
+      const timestamp = Date.now();
+
+      if (payment) {
+        livestream.streamStarted = timestamp;
+        await livestream.save();
+        res.json({
+          title: livestream.title,
+          streamkey: livestream.streamKey,
+          isLive: livestream.isLive,
+          firstname: livestream.creator.firstname,
+          lastname: livestream.creator.lastname,
+          username: livestream.creator.username,
+          school: livestream.school.name,
+          planname: payment.planname,
+          timeLeft: livestream.timeleft,
+          avatar: livestream.creator.avatar
+        });
+      } else {
+        res.status(400).json({
+          error: "Payment plan not found"
+        });
+      }
+    } else {
+      res.status(400).json({
+        error: "Stream not found"
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      error: "Server error"
+    });
+  }
+});
+router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
+  const {
+    streamKey
+  } = req.params;
+  let studentId = req.student.id;
 
   try {
     const livestream = await _Livewebinar.default.findOne({
       streamKey
     }).populate("creator").populate("school");
-    let payment = await _PaymentPlans.default.findOne(livestream.creator.selectedplan);
-    const timestamp = Date.now();
-    console.log(livestream);
 
-    if (livestream && payment) {
-      livestream.streamStarted = timestamp;
-
-      if (livestream.timeleft === 0) {
-        livestream.timeleft = 2700;
-      }
-
-      await livestream.save();
-      res.json({
-        title: livestream.title,
-        streamkey: livestream.streamKey,
-        isLive: livestream.isLive,
-        firstname: livestream.creator.firstname,
-        lastname: livestream.creator.lastname,
-        username: livestream.creator.username,
-        school: livestream.school.name,
-        planname: payment.planname,
-        timeLeft: livestream.timeleft
+    if (livestream) {
+      const payment = await _StudentWebinar.default.findOne({
+        student: studentId,
+        webinarBought: livestream._id,
+        boughtfrom: livestream.school._id
       });
-    } // check if they are validate for the livestream registered to the course or check a password
-    // res.json({ error: "Stream not found" });
 
+      if (payment) {
+        // livestream.streamStarted = timestamp;
+        // if (livestream.timeleft === 0) {
+        //   livestream.timeleft = 2700;
+        // }
+        await livestream.save();
+        res.json({
+          title: livestream.title,
+          streamkey: livestream.streamKey,
+          isLive: livestream.isLive,
+          firstname: livestream.creator.firstname,
+          lastname: livestream.creator.lastname,
+          username: livestream.creator.username,
+          school: livestream.school.name,
+          planname: payment.planname,
+          timeLeft: livestream.timeleft
+        });
+      } else {
+        res.status(400).json({
+          error: "Payment plan not found"
+        });
+      }
+    } else {
+      res.status(400).json({
+        error: "Stream not found"
+      });
+    }
   } catch (error) {
-    // res.json({ error: "Server error" });
-    console.log(error);
+    res.status(400).json({
+      error: "Server error"
+    });
   }
 }); // get live streams
 
 router.get("/streams", _auth.default, async (req, res) => {
   // the query only returns the webinars whose startTime is greater than or equal to the current date/time
   let streams = await _Livewebinar.default.find({
-    creator: req.user.id // startTime: { $gte: new Date() },
-
+    creator: req.user.id,
+    startTime: {
+      $gte: new Date()
+    }
   }).sort({
     startTime: 1
   });
@@ -252,12 +321,49 @@ router.get("/studentdetails", _studentAuth.default, async (req, res) => {
   res.json({
     username: user.username
   });
-}); // Start the server
-// router.get("/purge", async () => {
-// await LiveWebinar.deleteMany({});
-//   await StudentWebinar.deleteMany({});
-//   console.log("All documents deleted successfully.");
-// });
+}); // get user payment details
 
+router.get("/studentPayment/:schoolname", _studentAuth.default, async (req, res) => {
+  try {
+    let studentId = req.student.id;
+    const schoolname = req.params.schoolname;
+    const school = await _School.default.findOne({
+      name: schoolname
+    });
+
+    if (!school) {
+      return res.status(400).json({
+        errors: [{
+          msg: "school not found"
+        }]
+      });
+    }
+
+    const studentPayment = await _StudentWebinar.default.findOne({
+      student: studentId,
+      boughtfrom: school._id
+    }).populate("course");
+
+    if (studentPayment) {
+      res.json(studentPayment);
+    } else {
+      return res.status(400).json({
+        errors: [{
+          msg: "payment not found"
+        }]
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json(error);
+  }
+}); // clear the server
+
+router.get("/purge", async (req, res) => {
+  let a = await _Livewebinar.default.find();
+  res.json(a); // await StudentWebinar.deleteMany({});
+
+  console.log("All documents deleted successfully.");
+});
 var _default = router;
 exports.default = _default;

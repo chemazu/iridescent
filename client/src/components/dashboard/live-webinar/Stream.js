@@ -432,7 +432,7 @@ export default function Stream() {
         },
         roomid
       );
-  
+
       setDefaultChat([
         ...defaultChat,
         {
@@ -782,16 +782,13 @@ export default function Stream() {
   useEffect(() => {
     socket.on("timerEnded", () => {
       if (specialChat && specialChat.length > 0) {
-
         if (specialChat[0].type === "poll") {
           hanlePollQuizTimeOut();
-    setTimerHolder(false);
-
+          setTimerHolder(false);
         }
-        if (specialChat[0].type === "poll") {
+        if (specialChat[0].type === "quiz") {
           hanlePollQuizTimeOut();
-    setTimerHolder(false);
-
+          setTimerHolder(false);
         }
       } else {
         // Handle the case when specialChat is not defined or empty
@@ -1348,7 +1345,7 @@ export default function Stream() {
                       Attendies{" "}
                       <strong>
                         {"("}
-                        {attendies-1}
+                        {attendies - 1}
                         {")"}
                       </strong>
                     </span>

@@ -59,10 +59,7 @@ const liveWebinarSchema = new _mongoose.default.Schema({
     min: 0,
     max: 6
   }],
-  recurringStartDate: {
-    type: Date
-  },
-  recurringEndDate: {
+  endTime: {
     type: Date
   },
   fee: {
@@ -78,8 +75,7 @@ const liveWebinarSchema = new _mongoose.default.Schema({
     required: true
   },
   timeleft: {
-    type: Number,
-    default: 0
+    type: Number
   },
   streamStarted: {},
   creator: {

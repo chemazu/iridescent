@@ -262,6 +262,7 @@ router.get("/course/module/:courseId", async (req, res) => {
 // })
 
 const checkIfCourseIsPurchasedByCourseId = async (studentId, itemId, type) => {
+  console.log(studentId, itemId, type);
   if (type === "course") {
     const courseExists = await StudentCourse.findOne({
       student: studentId,
@@ -281,9 +282,7 @@ const checkIfCourseIsPurchasedByCourseId = async (studentId, itemId, type) => {
       student: studentId,
       webinarBought: itemId,
     });
-    // let liveWebinar = await LiveWebinar.findById(itemId);
-    // const viewerIndex = liveWebinar.viewers.indexOf(studentId);
-    // return viewerIndex !== -1 ? true : false;
+    console.log(webinarExist);
     return webinarExist === null ? false : true;
   }
 };
@@ -304,10 +303,15 @@ router.post(
           )
         );
       }
+      console.log(coursesIdToCheck, "checker");
       const validateCourseResult = await Promise.all(coursesIdToCheck);
+      console.log(validateCourseResult, "checker 2");
+
       const containsCourseAlreadyPurchased = validateCourseResult.some(
         (result) => result === true
       );
+      console.log(containsCourseAlreadyPurchased, "checker 3");
+
       res.json({
         validation_result: containsCourseAlreadyPurchased,
       });
@@ -403,7 +407,7 @@ router.post(
         // provision course to the student and create new
         // StudentCourse
         for (let i = 0; i <= purchased_course.length - 1; i++) {
-          console.log(purchased_course[i]);
+          console.log(purchased_course[i], "here");
           const [course, product, webinar] = await Promise.all([
             Course.findOne({ _id: purchased_course[i].itemId }),
             Product.findOne({ _id: purchased_course[i].itemId }),
@@ -444,39 +448,47 @@ router.post(
             // purchasedCourseId.push(purchased_course[i].itemId)
           }
           if (webinar) {
-            console.log("webinar purchased");
-            webinar.viewers.push(req.student.id);
-            const studentWebinar = new StudentWebinar({
-              student: req.student.id, // with the model instantiation
-              webinarBought: purchased_course[i].itemId,
-              boughtfrom: school._id,
-            });
+            // webinar.viewers.push(req.student.id);
+            // const findWebPurchase = await StudentWebinar.findOne({
+            //   student: req.student.id, // with the model instantiation
+            //   webinarBought: purchased_course[i].itemId,
+            // });
+            // if (findWebPurchase) {
+            //   console.log(findWebPurchase,"web purchse")
+            // } else {
+              let flag = await StudentWebinar.find()
+              console.log(flag,"flag")
+              const studentWebinar = new StudentWebinar({
+                student: req.student.id, // with the model instantiation
+                webinarBought: purchased_course[i].itemId,
+                boughtfrom: school._id,
+              });
 
-            const order = new Order({
-              reference: transaction_reference,
-              orderfrom: req.student.id,
-              orderedcourse: purchased_course[i].itemId,
-              boughtfrom: school.createdBy._id,
-              amount: purchased_course[i].itemPrice,
-              createdVia: "callback",
-              ordertype: purchased_course[i].itemType,
-              tutor: webinar.tutor !== null ? webinar.tutor : null,
-              // actual earning function is used to
-              // ensure only the amount after commission of sales are removed is
-              // deducted...
-              actualearning: determineActualEarningPerCourseOrder(
-                purchased_course[i].itemPrice,
-                userPaymentPlan.percentchargepercoursesale
-              ),
-            });
-            // update webinar viewers list
-            await webinar.save();
+              const order = new Order({
+                reference: transaction_reference,
+                orderfrom: req.student.id,
+                orderedcourse: purchased_course[i].itemId,
+                boughtfrom: school.createdBy._id,
+                amount: purchased_course[i].itemPrice,
+                createdVia: "callback",
+                ordertype: purchased_course[i].itemType,
+                tutor: webinar.tutor !== null ? webinar.tutor : null,
+                // actual earning function is used to
+                // ensure only the amount after commission of sales are removed is
+                // deducted...
+                actualearning: determineActualEarningPerCourseOrder(
+                  purchased_course[i].itemPrice,
+                  userPaymentPlan.percentchargepercoursesale
+                ),
+              });
+              // update webinar viewers list
+              // await webinar.save();
 
-            await studentWebinar.save();
-            //create Order for schools admin/tutor
-            await order.save();
+              await studentWebinar.save();
+              //create Order for schools admin/tutor
+              await order.save();
+ 
           } else {
-            console.log("student product was created");
             const studentProduct = new StudentProduct({
               student: req.student.id, // with the model instantiation
               productBought: purchased_course[i].itemId,

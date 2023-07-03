@@ -639,9 +639,7 @@ function CreateLiveWebinar({ school }) {
 
                     <strong>Webinar information</strong>
                     <div className="form-image">
-                      {/* <LiveWebinarDropZone
-                        acceptWebinarImage={acceptWebinarImage}
-                      /> */}
+                     
                       <input
                         style={{ display: "none" }}
                         ref={thumbnailInputRef}

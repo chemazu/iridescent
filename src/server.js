@@ -1,6 +1,7 @@
 import path from "path";
 import express from "express";
 import connectDB from "./config/connection";
+ 
 import cloudinary from "cloudinary";
 
 import { Server } from "socket.io";
@@ -55,6 +56,8 @@ cloudinary.v2.config({
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+ 
 
 const server = http.createServer(app);
 export const io = new Server(server, {
@@ -320,6 +323,7 @@ app.use(
 
 // call database instance
 connectDB();
+ 
 
 // app.get('/', (req, res) => {
 //   res.send("welcome to our api")

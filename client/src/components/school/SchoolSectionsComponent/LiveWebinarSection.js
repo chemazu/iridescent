@@ -25,12 +25,14 @@ export default function LiveWebinarSection({ schoolname, theme }) {
   let backendSectionData = { isusingsecondarystyles: true };
   const getPurchasedWebinars = async () => {
     try {
-      if (localStorage.getItem("studentToken")) {
-        setAuthToken(localStorage.getItem("studentToken"));
+      if (localStorage.getItem("token")) {
+        console.log("first")
+        setAuthToken(localStorage.getItem("token"));
+        const res = await axios.get(`/api/v1/studentwebinar/${schoolname}`);
+        setPurchasedWebinar(res.data);
+        setPurchasedWebinarLoading(false);
       }
-      const res = await axios.get(`/api/v1/studentwebinar/${schoolname}`);
-      setPurchasedWebinar(res.data);
-      setPurchasedWebinarLoading(false);
+     
     } catch (error) {
       // eslint-disable-next-line
       if (error.response.status == "400") {
@@ -45,6 +47,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
   };
   const getWebinars = async () => {
     setLoading(true);
+    console.log(schoolname)
 
     let res = await axios.get(
       `/api/v1/livewebinar/schoolstreams/${schoolname}`
@@ -75,10 +78,8 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     today.getDate() - today.getDay() + 6
   );
 
-  const streams = userStreams?.filter((stream) => {
-    const streamDate = new Date(stream.startTime);
-    return streamDate >= startOfWeek && streamDate <= endOfWeek;
-  });
+  const streams = userStreams 
+  console.log(userStreams)
   function handleTimeDisplay(time) {
     const timestamp = new Date(time);
     const dateStr = timestamp.toLocaleString("en-US", {

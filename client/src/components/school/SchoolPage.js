@@ -46,6 +46,7 @@ import LiveWebinarSection from "./SchoolSectionsComponent/LiveWebinarSection";
 // 8. textandchecklist
 // 9. headertextandimage
 // 10. headertextheroimage
+// 11. Live Webinar
 
 export const SchoolPage = ({
   getLoggedInUser,

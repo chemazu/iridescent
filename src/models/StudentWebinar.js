@@ -22,7 +22,7 @@ const studentWebinarSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-studentWebinarSchema.index({ student: 1, productBought: 1 }, { unique: true });
+studentWebinarSchema.index({ student: 1, webinarBought: 1 }, { unique: true });
 
 const StudentWebinar = mongoose.model("studentWebinar", studentWebinarSchema);
 

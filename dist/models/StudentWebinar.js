@@ -31,7 +31,7 @@ const studentWebinarSchema = new _mongoose.default.Schema({
 });
 studentWebinarSchema.index({
   student: 1,
-  productBought: 1
+  webinarBought: 1
 }, {
   unique: true
 });

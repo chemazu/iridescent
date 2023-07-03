@@ -25,6 +25,7 @@ const router = express.Router();
 const tokenSecret = process.env.JWTSECRET;
 
 router.get("/me", auth, async (req, res) => {
+  
   try {
     const userId = req.user.id;
     const user = await User.findById(userId)
