@@ -63,7 +63,16 @@ function CreateLiveWebinar({ school }) {
       setTime(selectedTime);
     }
   };
-
+  const getSchoolUrl = (schoolname) => {
+    const host = window.location.host;
+    if (host.includes("localhost")) {
+      return `http://${schoolname}.${host}`;
+    }
+    const baseDomain = host.split(".")[1];
+    return baseDomain.includes("localhost")
+      ? `http://${schoolname}.${baseDomain}`
+      : `https://${schoolname}.${baseDomain}.com`;
+  };
   const domain = process.env.REACT_APP_CURRENT_URL;
   const handleDateChange = (e) => {
     const selectedDate = new Date(e.target.value);
@@ -160,7 +169,7 @@ function CreateLiveWebinar({ school }) {
 
   function copyText(textToCopy) {
     navigator.clipboard
-      .writeText(`https://${school.name}.${domain}/live/preview/${textToCopy}`)
+      .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
       .then(() => {})
       .catch((error) => {
         console.error("Error copying text: ", error);
@@ -380,7 +389,7 @@ function CreateLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {`https://${school?.name}.${domain}/live/preview/${streamLink}`}
+                    {`${getSchoolUrl(school.name)}/live/preview/${streamLink}`}
                   </p>
                 </ModalBody>
                 <ModalFooter>
