@@ -343,7 +343,31 @@ const DashboardNavbar = ({
                         </span>
                       </NavLink>
                     </NavItem>
-
+                    <NavItem
+                      className={classnames("navbar-item-link", {
+                        selected: currentPage.counter === 34,
+                      })}
+                    >
+                      <NavLink
+                        tag={Link}
+                        to="/dashboard/livewebinar"
+                        onClick={(e) => updatePage(34)}
+                      >
+                        <img
+                          src={broadcast}
+                          style={{
+                            marginRight: "17px",
+                            width: "20px",
+                            marginLeft: "-4px",
+                          }}
+                          alt="live webinar"
+                          className="fas fa-book-reader"
+                        />
+                        <span className="navlink-text d-none-sm">
+                          Live Webinar
+                        </span>
+                      </NavLink>
+                    </NavItem>
                     <NavItem
                       className={classnames("navbar-item-link", {
                         selected: currentPage.counter === 103,
@@ -431,32 +455,6 @@ const DashboardNavbar = ({
                         <i className="fas fa-book-reader"></i>{" "}
                         <span className="navlink-text d-none-sm">
                           Tutorials
-                        </span>
-                      </NavLink>
-                    </NavItem>
-                    <NavItem
-                      className={classnames("navbar-item-link", {
-                        selected: currentPage.counter === 34,
-                      })}
-                    >
-                      <NavLink
-                        tag={Link}
-                        to="/dashboard/livewebinar"
-                        onClick={(e) => updatePage(34)}
-                      >
-                        <img
-                          src={broadcast}
-                          style={{
-                            marginRight: "17px",
-                            width: "20px",
-                            marginLeft:"-4px"
-                     
-                          }}
-                          alt="live webinar"
-                          className="fas fa-book-reader"
-                        />
-                        <span className="navlink-text d-none-sm">
-                          Live Webinar
                         </span>
                       </NavLink>
                     </NavItem>

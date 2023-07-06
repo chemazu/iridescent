@@ -1,55 +1,45 @@
 import React, { useState, useEffect } from "react";
-import { connect, useDispatch } from "react-redux";
-
+import { connect } from "react-redux";
 import { useParams, withRouter } from "react-router-dom";
 import axios from "axios";
-
-import Stream from "./Stream";
-import setAuthToken from "../../../utilities/setAuthToken";
 import { Spinner } from "reactstrap";
 import InvalidStream from "./InvalidStream";
+import Stream from "./Stream";
+import setAuthToken from "../../../utilities/setAuthToken";
 
 const PresenterValidation = ({ school }) => {
   const { roomid } = useParams();
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [timeout, setTimeout] = useState(false);
+
   // get school name
-  if (localStorage.getItem("tutorToken")) {
-    setAuthToken(localStorage.getItem("tutorToken"));
-  }
+  useEffect(() => {
+    const validateWebinar = async () => {
+      setIsLoading(true);
 
-  const validateWebinar = async () => {
-    setIsLoading(true);
-
-    try {
-      if (localStorage.getItem("tutorToken")) {
-        setAuthToken(localStorage.getItem("tutorToken"));
-      }
-      let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
-      if (res) {
-        setIsValid(true);
-          setIsLoading(false);
-        if (res.data.timeLeft > 0) {
-          // if (res.data.school === school.schoolDetails.name) {
+      try {
+        if (localStorage.getItem("tutorToken")) {
+          setAuthToken(localStorage.getItem("tutorToken"));
+        }
+        let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
+        if (res) {
           setIsValid(true);
           setIsLoading(false);
-        // } else {
-        //   setIsValid(false);
-        //   setIsLoading(false);
-
-        // }
+          if (res.data.timeLeft > 0) {
+            setIsValid(true);
+            setIsLoading(false);
+          } else {
+            setTimeout(true);
+          }
         }
+      } catch (error) {
+        console.log(error);
+        setIsValid(false);
+        setIsLoading(false);
       }
-      // setIsLoading(false);
-      // setIsValid(false);
-    } catch (error) {
-      console.log(error);
-      setIsValid(false);
-      setIsLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
     validateWebinar();
   }, [roomid]);
 
@@ -69,12 +59,16 @@ const PresenterValidation = ({ school }) => {
     );
   }
 
-  if (!isValid) {
-    return <InvalidStream/>;
+  if (timeout) {
+    return <>TimeOut increase plan for longer webinars</>;
   }
+
+  if (!isValid) {
+    return <InvalidStream />;
+  }
+
   return <Stream />;
 };
-
 const mapStateToProps = (state) => ({
   school: state.school,
   user: state.auth.user,

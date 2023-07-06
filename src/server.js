@@ -1,7 +1,7 @@
 import path from "path";
 import express from "express";
 import connectDB from "./config/connection";
- 
+
 import cloudinary from "cloudinary";
 
 import { Server } from "socket.io";
@@ -57,8 +57,6 @@ cloudinary.v2.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
- 
-
 const server = http.createServer(app);
 export const io = new Server(server, {
   cors: {
@@ -76,11 +74,16 @@ const newBroadcasterHolder = {};
 let screenSharing = false;
 const freeTimers = {};
 let pollQuizHolder = {};
+let broadcasterScreen = {};
 io.on("connection", (socket) => {
   socket.on("broadcaster", async (roomId, peerId) => {
     newBroadcasterHolder[roomId] = { peerId, socketId: socket.id };
     socket.join(roomId);
     socket.broadcast.to(roomId).emit("broadcaster");
+  });
+  socket.on("disablevideo", (roomId, status) => {
+    io.in(roomId).emit("disablevideo", status);
+    broadcasterScreen[roomId] = status;
   });
   socket.on("freeTimer", async (roomId) => {
     if (freeTimers[roomId] || timerControl[roomId]) {
@@ -152,7 +155,8 @@ io.on("connection", (socket) => {
         "currentStatus",
         roomSize,
         roomTimer,
-        pollQuizHolder[roomId]
+        pollQuizHolder[roomId],
+        broadcasterScreen[roomId]
       );
     } else {
       io.to(socket.id).emit("no stream");
@@ -323,7 +327,6 @@ app.use(
 
 // call database instance
 connectDB();
- 
 
 // app.get('/', (req, res) => {
 //   res.send("welcome to our api")

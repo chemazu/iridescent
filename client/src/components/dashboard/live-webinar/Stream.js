@@ -1,13 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
+ 
+
 import Peer from "peerjs";
 import axios from "axios";
 import socket from "../../../utilities/client-socket-connect";
-import { Col, Container, Row, Button, Card, Modal } from "reactstrap";
+import { Col, Container, Row, Button, Card, Modal, Progress } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import smiley from "../../../images/emojisvg.svg";
 import { useAlert } from "react-alert";
 import DashboardNavbar from "../DashboardNavbar";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams, useHistory,   } from "react-router-dom";
+ 
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
@@ -19,6 +22,8 @@ export default function Stream() {
   const myVideoRef = useRef();
   const peerRef = useRef();
   const screenStreamRef = useRef(null);
+  const [audioDevices, setAudioDevices] = useState([]);
+  const [videoDevices, setVideoDevices] = useState([]);
 
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
@@ -38,7 +43,7 @@ export default function Stream() {
   const [pollTitle, setPollTitle] = useState("");
   const [defaultChat, setDefaultChat] = useState([]);
   const [specialChat, setSpecialChat] = useState([]);
-
+  const [timeOutModal, setTimeOutModal] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attendies, setAttendies] = useState(1);
@@ -129,7 +134,19 @@ export default function Stream() {
     }
     history.push("/dashboard/livewebinar");
   };
-
+  function copyText() {
+    navigator.clipboard
+      .writeText(
+        `https://${presenterDetails.school}.${process.env.REACT_APP_CURRENT_URL}/live/preview/${presenterDetails.id}`
+      )
+      .then(() => {})
+      .catch((error) => {
+        console.error("Error copying text: ", error);
+      });
+    alert.show("Link Copied", {
+      type: "success",
+    });
+  }
   const validateWebinar = async () => {
     if (localStorage.getItem("tutorToken")) {
       setAuthToken(localStorage.getItem("tutorToken"));
@@ -138,10 +155,13 @@ export default function Stream() {
     try {
       let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
       if (res) {
+        console.log(res);
         setPresenterDetails({
           name: `${res.data.firstname} ${res.data.lastname} `,
           username: res.data.username,
           avatar: res.data.avatar,
+          id: res.data.id,
+          school: res.data.school,
         });
         setPlanname(res.data.planname);
 
@@ -669,6 +689,7 @@ export default function Stream() {
     };
   }, [roomid, attendies]);
 
+
   useEffect(() => {
     socket.on("roomTimerStarted", (roomTimer) => {
       setTimeLeft(roomTimer);
@@ -701,12 +722,17 @@ export default function Stream() {
   useEffect(() => {
     socket.on("roomTimerTick", (roomTimer) => {
       setTimeLeft(roomTimer);
+      console.log(roomTimer);
+      if (roomTimer === 600) {
+        console.log(roomTimer, "fsd");
+        setTimeOutModal(true);
+      }
     });
 
     return () => {
       socket.off("roomTimerTick");
     };
-  }, [roomid, timeLeft]);
+  }, [roomid, timeLeft, timeOutModal]);
 
   useEffect(() => {
     socket.on("special submit", (type, result, user) => {
@@ -867,6 +893,26 @@ export default function Stream() {
     // };
   }, [screenSharing, audioVisuals, startController, roomid, planname]);
 
+  useEffect(() => {
+    async function getMediaDevices() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioDevices = devices.filter(
+          (device) => device.kind === "audioinput"
+        );
+        const videoDevices = devices.filter(
+          (device) => device.kind === "videoinput"
+        );
+        setAudioDevices(audioDevices);
+        setVideoDevices(videoDevices);
+      } catch (error) {
+        console.error("Error enumerating media devices:", error);
+      }
+    }
+
+    getMediaDevices();
+  }, []);
+
   // trigger intialize Peeer
   const handleInitializePeer = () => {
     setStartController(true);
@@ -918,11 +964,20 @@ export default function Stream() {
           <Col className="page-actions__col">
             <div className="live-webinar">
               <div className="stream-webinar-content">
-                {/* <Modal isOpen={timerHolder}>
-                  <div>
-                    <h2>Webinar TimedOut</h2>
+                <Modal isOpen={timeOutModal}>
+                  <div className="close-time-out">
+                    <h4
+                      onClick={() => {
+                        setTimeOutModal(false);
+                      }}
+                      style={{ alignSelf: "end" }}
+                    >
+                      <i className="fa fa-times"></i>
+                    </h4>
+
+                    <h2 style={{ alignSelf: "center" }}>10 minutes left</h2>
                   </div>
-                </Modal> */}
+                </Modal>
                 <Modal isOpen={pollStatus} className="poll-modal-wrapper">
                   <div className="poll-modal">
                     <div className="top">
@@ -1113,7 +1168,7 @@ export default function Stream() {
                       </div>
                       <Button
                         type="button"
-                        className="cancel-button"
+                        className="cancel-button cancel-big"
                         style={{ width: "100%" }}
                         onClick={handleCreateQuiz}
                       >
@@ -1261,7 +1316,13 @@ export default function Stream() {
                 </Modal>
                 <Modal isOpen={quizConfirmation} className="confirm-poll-modal">
                   <div className="top">
-                    <h4 onClick={() => setQuizStatus(false)}>
+                    <h4
+                      onClick={() => {
+                        setViewDuration(true);
+
+                        setQuizConfirmation(false);
+                      }}
+                    >
                       {" "}
                       <i className="fa fa-times"></i>
                     </h4>
@@ -1354,22 +1415,44 @@ export default function Stream() {
                   <div className="live-webinar-interface">
                     <div className="video-background">
                       {startController ? (
-                        <video
-                          ref={myVideoRef}
-                          muted
-                          // style={{ width: "300px", height: "200px" }}
-                        />
+                        <>
+                          {!audioVisuals.video && (
+                            <div
+                              className="waiting-image-presenter"
+                              style={{
+                              
+                              }}
+                            >
+                              <img
+                                style={{ borderRadius: "50%"  }}
+                                src={
+                                  presenterDetails?.avatar ||
+                                  "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
+                                }
+                                alt="user avatar"
+                                className="img-fluid"
+                              />
+                            </div>
+                          )}
+                          <video
+                            ref={myVideoRef}
+                            muted
+                            // style={{ width: "300px", height: "200px" }}
+                          />
+                        </>
                       ) : (
-                        <div className="waiting-room">
-                          <div className="waiting-image">
-                            <img
-                              src={
-                                presenterDetails?.avatar ||
-                                "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
-                              }
-                              alt="user avatar"
-                              className="img-fluid"
-                            />
+                        <>
+                          <div className="waiting-room">
+                            <div className="waiting-image">
+                              <img
+                                src={
+                                  presenterDetails?.avatar ||
+                                  "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
+                                }
+                                alt="user avatar"
+                                className="img-fluid"
+                              />
+                            </div>
                           </div>
                           <div className="waiting-controls">
                             <div
@@ -1391,10 +1474,24 @@ export default function Stream() {
                                     : null // No additional style for the active state
                                 }
                               ></i>
+                              <p
+                                style={
+                                  !audioVisuals.audio
+                                    ? {
+                                        textDecoration: "line-through",
+                                      }
+                                    : null // No additional style for the active state
+                                }
+                              >
+                                {audioDevices.length > 0 &&
+                                  audioDevices[0].label}
+                              </p>
                             </div>
                             <div
                               className="control-object"
                               onClick={() => {
+                        socket.emit("disablevideo",roomid,!audioVisuals.video)
+
                                 setAudioVisuals({
                                   video: !audioVisuals.video,
                                   audio: true,
@@ -1412,9 +1509,21 @@ export default function Stream() {
                                     : null // No additional style for the active state
                                 }
                               ></i>
+                              <p
+                                style={
+                                  !audioVisuals.video
+                                    ? {
+                                        textDecoration: "line-through",
+                                      }
+                                    : null // No additional style for the active state
+                                }
+                              >
+                                {videoDevices.length > 0 &&
+                                  videoDevices[0].label}
+                              </p>
                             </div>
                           </div>
-                        </div>
+                        </>
                       )}
                     </div>
                     {startController ? (
@@ -1593,8 +1702,21 @@ export default function Stream() {
                                         </p>
 
                                         <div className="poll-options">
-                                          {item.submissionStatus && (
+                                          {item.submissionStatus ? (
                                             <p>Poll Over !!!</p>
+                                          ) : (
+                                            <Progress
+                                              max={`${item.durationInSec}`}
+                                              value={
+                                                Number(
+                                                  timerHolder?.remainingTime
+                                                )
+                                                  ? Number(
+                                                      timerHolder?.remainingTime
+                                                    )
+                                                  : 0
+                                              }
+                                            />
                                           )}
                                           <Poll
                                             pollOptions={item.options}
@@ -1689,7 +1811,7 @@ export default function Stream() {
                 >
                   {" "}
                   <div className="presenter-controls">
-                    <div className="control-object more">
+                    <div className="control-object more" onClick={copyText}>
                       <i className="fa fa-ellipsis-h"></i>
 
                       <p>More</p>
@@ -1720,6 +1842,8 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
+                        socket.emit("disablevideo",roomid,!audioVisuals.video)
+
                         setAudioVisuals({
                           video: !audioVisuals.video,
                           audio: true,

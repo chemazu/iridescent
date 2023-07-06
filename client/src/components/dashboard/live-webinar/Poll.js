@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ListGroup } from "reactstrap";
 
 export default function Poll({ pollOptions, pollResult }) {
   const [votes, setVotes] = useState(new Array(pollOptions.length).fill(0));
@@ -76,9 +77,12 @@ export default function Poll({ pollOptions, pollResult }) {
                 backgroundColor: "#D9D9D9",
               }}
             >
-              <p style={{ fontSize: "12px", fontWeight: "bold" }}>
-                {String.fromCharCode(65 + index)}
-              </p>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <p style={{ fontSize: "12px", fontWeight: "bold" }}>
+                  {String.fromCharCode(65 + index)}
+                </p>
+                <p>({NewResult[String.fromCharCode(65 + index)] || 0})</p>
+              </div>
               {/* <p style={{ marginRight: "-60px" }}>
                 Option {String.fromCharCode(65 + index)}
               </p> */}

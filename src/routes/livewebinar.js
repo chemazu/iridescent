@@ -7,6 +7,7 @@ import multer, { memoryStorage } from "multer";
 import { Router } from "express";
 import LiveWebinar from "../models/Livewebinar";
 import School from "../models/School";
+import Course from "../models/Course";
 
 import { body, validationResult } from "express-validator";
 import User from "../models/User";
@@ -14,6 +15,7 @@ import Student from "../models/Student";
 import PaymentPlans from "../models/PaymentPlans";
 import dataUri from "../utilities/dataUri";
 import StudentWebinar from "../models/StudentWebinar";
+import Order from "../models/Order";
 
 const router = Router();
 const storageDest = memoryStorage();
@@ -131,6 +133,7 @@ router.post(
         message: "Stream created successfully",
         streamKey: savedStream.streamKey,
         uniqueLink: savedStream.uniqueLink,
+        id: savedStream._id,
       });
     } catch (error) {
       console.error(error);
@@ -138,7 +141,91 @@ router.post(
     }
   }
 );
- 
+router.put(
+  "/:id",
+  [
+    auth,
+    createCourseThumbnailPhoto.single("file"),
+    body("title", "title is required").not().isEmpty(),
+    body("description", "description is required").not().isEmpty(),
+    body("isRecurring", "isRecurring is required").not().isEmpty(),
+    body("fee", "fee is required").not().isEmpty(),
+    body("category", "category is required").not().isEmpty(),
+    body("startTime", "startTime is required").not().isEmpty(),
+    body("currency", "currency is required").not().isEmpty(),
+  ],
+  async (req, res) => {
+    console.log("ferer");
+    const errors = validationResult(req.body);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array(),
+      });
+    }
+    const {
+      isRecurring,
+      startTime,
+      endTime,
+      title,
+      category,
+      description,
+      fee,
+      currency,
+      customRep,
+      recurringFrequency,
+      webinarReps,
+    } = req.body;
+
+    try {
+      const existingWebinar = await LiveWebinar.findById(req.params.id);
+      if (!existingWebinar) {
+        return res.status(404).json({ error: "Webinar not found" });
+      }
+
+      existingWebinar.title = title;
+      existingWebinar.description = description;
+      existingWebinar.isRecurring = isRecurring;
+      existingWebinar.startTime = startTime;
+      existingWebinar.endTime = endTime;
+      existingWebinar.category = category;
+      existingWebinar.fee = fee;
+      existingWebinar.currency = currency;
+      existingWebinar.customRep = customRep;
+      existingWebinar.recurringFrequency = recurringFrequency;
+      existingWebinar.webinarReps = webinarReps;
+
+      if (req.file) {
+        const fileType = `.${
+          req.file.originalname.split(".")[
+            req.file.originalname.split(".").length - 1
+          ]
+        }`;
+        const imageToBeUploaded = dataUri(`${fileType}`, req.file.buffer);
+        const uploadResponse = await cloudinary.v2.uploader.upload(
+          imageToBeUploaded.content,
+          {
+            folder: `tuturly/webinar/${title}`,
+          }
+        );
+
+        existingWebinar.thumbnail = uploadResponse.secure_url;
+        existingWebinar.webinarthumbnailid = uploadResponse.public_id;
+      }
+
+      const updatedWebinar = await existingWebinar.save();
+
+      res.json({
+        message: "Webinar updated successfully",
+        streamKey: updatedWebinar.streamKey,
+        uniqueLink: updatedWebinar.uniqueLink,
+        id: updatedWebinar._id,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: "Server error" });
+    }
+  }
+);
 
 // confirm a live stream
 
@@ -172,6 +259,7 @@ router.get("/stream/:streamKey", auth, async (req, res) => {
           planname: payment.planname,
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar,
+          id: livestream._id,
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });
@@ -183,10 +271,9 @@ router.get("/stream/:streamKey", auth, async (req, res) => {
     res.status(400).json({ error: "Server error" });
   }
 });
-router.get("/watch/:streamKey", studentAuth,async (req, res) => {
+router.get("/watch/:streamKey", studentAuth, async (req, res) => {
   const { streamKey } = req.params;
   let studentId = req.student.id;
-
 
   try {
     const livestream = await LiveWebinar.findOne({ streamKey })
@@ -194,24 +281,22 @@ router.get("/watch/:streamKey", studentAuth,async (req, res) => {
       .populate("school");
 
     if (livestream) {
-      
       const payment = await StudentWebinar.findOne({
         student: studentId,
-        webinarBought:livestream._id,
+        webinarBought: livestream._id,
         boughtfrom: livestream.school._id,
       });
-
-     
-   
-
-      if (payment) {
+      const planName = await PaymentPlans.findOne({
+        _id: livestream.creator.selectedplan,
+      });
+      if (payment || livestream.fee === 0) {
         // livestream.streamStarted = timestamp;
 
         // if (livestream.timeleft === 0) {
         //   livestream.timeleft = 2700;
         // }
 
-        await livestream.save();
+        // await livestream.save();
 
         res.json({
           title: livestream.title,
@@ -221,8 +306,9 @@ router.get("/watch/:streamKey", studentAuth,async (req, res) => {
           lastname: livestream.creator.lastname,
           username: livestream.creator.username,
           school: livestream.school.name,
-          planname: payment.planname,
+          planname: planName.planname,
           timeLeft: livestream.timeleft,
+          avatar: livestream.creator.avatar,
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });
@@ -238,9 +324,16 @@ router.get("/watch/:streamKey", studentAuth,async (req, res) => {
 // get live streams
 router.get("/streams", auth, async (req, res) => {
   // the query only returns the webinars whose startTime is greater than or equal to the current date/time
+  const currentDate = new Date();
+  const currentDateOnly = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate()
+  );
+
   let streams = await LiveWebinar.find({
     creator: req.user.id,
-    startTime: { $gte: new Date() },
+    startTime: { $gte: currentDateOnly },
   }).sort({ startTime: 1 });
 
   if (!streams) {
@@ -287,12 +380,9 @@ router.get("/studentdetails", studentAuth, async (req, res) => {
 // get user payment details
 
 router.get("/studentPayment/:schoolname", studentAuth, async (req, res) => {
- 
- 
   try {
     let studentId = req.student.id;
     const schoolname = req.params.schoolname;
- 
 
     const school = await School.findOne({
       name: schoolname,
@@ -326,15 +416,5 @@ router.get("/studentPayment/:schoolname", studentAuth, async (req, res) => {
     console.error(error);
     res.status(500).json(error);
   }
-});
-
-// clear the server
-
-router.get("/purge", async (req,res) => {
- 
-  await StudentWebinar.deleteMany({});
-  await LiveWebinar.deleteMany({});
-
-  console.log("All documents deleted successfully.");
 });
 export default router;

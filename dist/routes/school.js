@@ -456,6 +456,8 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
           // if (findWebPurchase) {
           //   console.log(findWebPurchase,"web purchse")
           // } else {
+          let flag = await _StudentWebinar.default.find();
+          console.log(flag, "flag");
           const studentWebinar = new _StudentWebinar.default({
             student: req.student.id,
             // with the model instantiation

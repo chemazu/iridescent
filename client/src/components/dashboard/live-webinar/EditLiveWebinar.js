@@ -16,16 +16,24 @@ import {
   Modal,
   ModalBody,
   ModalFooter,
+  Spinner,
 } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import DashboardNavbar from "../DashboardNavbar";
 
-import { Link, useHistory } from "react-router-dom";
+import { Link, useHistory, useParams } from "react-router-dom";
+import InvalidStream from "./InvalidStream";
 
-function CreateLiveWebinar({ school }) {
+function EditLiveWebinar({ school }) {
   const alert = useAlert();
   const history = useHistory();
+  const { id } = useParams();
+  let webinarId = id;
+
   const [recurring, setRecurring] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isValid, setIsValid] = useState(false);
+
   const thumbnailInputRef = useRef();
   const [showModal, setShowModal] = useState(false);
   const [time, setTime] = useState("");
@@ -44,9 +52,53 @@ function CreateLiveWebinar({ school }) {
   const [imageToCloudinary, setImageToCloudinary] = useState(null);
   const [recurringFrequency, setRecurringFrequency] = useState("");
   const [webinarReps, setWebinarReps] = useState("");
-  const [freeWebinar, setFreeWebinar] = useState(null);
-
   const dispatch = useDispatch();
+
+  const validateWebinar = async () => {
+    setIsLoading(true);
+
+    try {
+      console.log(webinarId);
+      let res = await axios.get(
+        `/api/v1/livewebinar/streamdetails/${webinarId}`
+      );
+
+      if (res.data) {
+        let { data } = res;
+        console.log(res);
+        setIsValid(true);
+
+        setTitle(data.title);
+        setTime(data.startTime.slice(11, 16));
+        setDate(data.startTime.slice(0, 10));
+        setEndTime(data.endTime?.slice(11, 16));
+        setEndDate(data.endTime?.slice(0, 10));
+        setCategory(data.category);
+        setDescription(data.description);
+
+        // setCustomRep("");
+        setCurrency(data.currency);
+        setFee(data.fee);
+        // setRecurringFrequency(recurringFrequency);
+        setImageToCloudinary(data.thumbnail);
+        setFileToSend(data.webinarthumbnailid);
+
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
+        setIsValid(false);
+      }
+
+      // if (res.data.school === schoolname && res.data.timeLeft > 0) {
+    } catch (error) {
+      console.log(error);
+      setIsLoading(false);
+      setIsValid(false);
+    }
+  };
+  // function to get
+  // update variables
+  // set loading
 
   const handleTimeChange = (e) => {
     const selectedTime = e.target.value; // Assuming the time value is in the correct format, e.g., "HH:mm"
@@ -111,6 +163,30 @@ function CreateLiveWebinar({ school }) {
     setWebinarReps("");
     setFileToSend(null);
   };
+  //   {
+  //     "isLive": false,
+  //     "viewers": [],
+  //     "isRecurring": false,
+  //     "recurringFrequency": "",
+  //     "recurringDays": [],
+  //     "fee": 1111,
+  //     "currency": "NGN",
+  //     "_id": "64a2ae62e1ac20348cddb2fb",
+  //     "title": "start",
+  //     "description": "erwrer",
+  //     "streamKey": "691493e1-82f8-45e7-a085-05dadac54538",
+  //     "streamUrl": "691493e1-82f8-45e7-a085-05dadac54538",
+  //     "startTime": "2023-07-05T15:17:00.000Z",
+  //     "thumbnail": "https://res.cloudinary.com/kolaniyi/image/upload/v1688383073/tuturly/webinar/start/izmteyal8qcras9pvat0.jpg",
+  //     "webinarthumbnailid": "tuturly/webinar/start/izmteyal8qcras9pvat0",
+  //     "category": "Business",
+  //     "creator": "637e9927fd030c0dda85554c",
+  //     "endTime": null,
+  //     "school": "637e997dfd030c0dda85554d",
+  //     "timeleft": 1601,
+  //     "__v": 0,
+  //     "streamStarted": 1688549168005
+  // }
   const filePickerEventHandle = (e) => {
     if (e.target.files.length === 0) {
       setFileToSend(null);
@@ -170,15 +246,27 @@ function CreateLiveWebinar({ school }) {
     });
     history.push("/dashboard/livewebinar");
   }
-  const convertToDate = (time, date) => {
+  let editTimer = () => {
     const [hours, minutes] = time.split(":");
     const [year, month, day] = date.split("-");
     const combinedDate = new Date(year, month - 1, day, hours, minutes);
-    if (isNaN(combinedDate.getTime())) {
-      return ""; // Return an empty string for an invalid date
-    }
-
     return combinedDate;
+  };
+
+  const convertToDate = (time, date) => {
+    console.log(time, date);
+    if (time || date) {
+      const [hours, minutes] = time.split(":");
+      const [year, month, day] = date.split("-");
+      const combinedDate = new Date(year, month - 1, day, hours, minutes);
+      if (isNaN(combinedDate.getTime())) {
+        return ""; // Return an empty string for an invalid date
+      }
+
+      return combinedDate;
+    } else {
+      return "";
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -214,7 +302,7 @@ function CreateLiveWebinar({ school }) {
       formData.append("recurringFrequency", recurringFrequency);
       formData.append("webinarReps", webinarReps);
       formData.append("file", fileToSend);
-      formData.append("startTime", convertToDate(time, date));
+      formData.append("startTime", editTimer());
       formData.append("endTime", convertToDate(endTime, endDate));
 
       const config = {
@@ -228,7 +316,7 @@ function CreateLiveWebinar({ school }) {
       }
       dispatch(startLoading());
       await axios
-        .post("/api/v1/livewebinar", body, config)
+        .put(`/api/v1/livewebinar/${webinarId}`, body, config)
         .then((res) => {
           console.log(res);
           setStreamLink(res.data.id);
@@ -353,7 +441,15 @@ function CreateLiveWebinar({ school }) {
     getCategoryListing();
     dateCheck();
   }, [endDate]);
-  return (
+  useEffect(() => {
+    validateWebinar();
+  }, [webinarId]);
+
+  return isLoading ? (
+    <div className="spinner">
+      <Spinner />
+    </div>
+  ) : isValid ? (
     <div className="dashboard-layout">
       <Container fluid>
         <Row>
@@ -370,7 +466,7 @@ function CreateLiveWebinar({ school }) {
                   }}
                   className="modal-header"
                 >
-                  Stream Created
+                  Stream Updated
                 </div>
                 <ModalBody>
                   <p
@@ -415,7 +511,7 @@ function CreateLiveWebinar({ school }) {
               <div className="live-webinar-content">
                 <div className="page-title">
                   <div className="page-title__text">
-                    Schedule your live webinar
+                    Edit your live webinar :<strong> {title}</strong>
                   </div>
                 </div>
                 <Card className="webinar-container">
@@ -708,21 +804,6 @@ function CreateLiveWebinar({ school }) {
                         onChange={(e) => setDescription(e.target.value)}
                       ></textarea>
                     </div>
-                    {/* <div className="time-constraints">
-                      <input
-                        type="checkbox"
-                        style={{
-                          width: "1.2rem",
-                          height: "1.2rem",
-                        }}
-                        checked={freeWebinar}
-                        onChange={() => {
-                          setFreeWebinar(!freeWebinar);
-                        }}
-                      />
-
-                      <span>Free Webinar</span>
-                    </div>
                     <div className="form-item double">
                       <strong>Webinar Fee</strong>
                       <div className="fee-wrapper">
@@ -748,63 +829,6 @@ function CreateLiveWebinar({ school }) {
                           }}
                         />
                       </div>
-                    </div> */}
-                    <div className="time-constraints">
-                      <input
-                        type="checkbox"
-                        style={{
-                          width: "1.2rem",
-                          height: "1.2rem",
-                        }}
-                        checked={freeWebinar}
-                        onChange={() => {
-                          if (!freeWebinar) {
-                            // Disable the "Webinar Fee" functionality when free webinar is checked
-                            setCurrency("NGN");
-                            setFee(0);
-                          }
-                          setFreeWebinar(!freeWebinar);
-                        }}
-                      />
-                      <span>Free Webinar</span>
-                    </div>
-
-                    <div
-                      className={`form-item double ${
-                        freeWebinar ? "disabled" : ""
-                      }`}
-                    >
-                      <strong>Webinar Fee</strong>
-                      <div className="fee-wrapper">
-                        <select
-                          value={currency}
-                          onChange={(e) => setCurrency(e.target.value)}
-                          disabled={freeWebinar}
-                        >
-                          <option value="" disabled selected hidden>
-                            Select Currency
-                          </option>
-                          <option value={"NGN"}>NGN</option>
-                          <option value={"USD"}>USD</option>
-                        </select>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          placeholder="Amount"
-                          value={fee}
-                          onChange={(e) => {
-                            if (!freeWebinar) {
-                              const value = e.target.value.replace(
-                                /[^0-9]/g,
-                                ""
-                              );
-                              setFee(value);
-                            }
-                          }}
-                          disabled={freeWebinar}
-                        />
-                      </div>
                     </div>
 
                     <div className="button-wrapper">
@@ -812,7 +836,7 @@ function CreateLiveWebinar({ school }) {
                         className="page-title_cta-btn"
                         onClick={handleSubmit}
                       >
-                        Schedule Webinar
+                       Save Changes
                       </Button>
                     </div>
                   </form>
@@ -823,6 +847,8 @@ function CreateLiveWebinar({ school }) {
         </Row>
       </Container>
     </div>
+  ) : (
+    <InvalidStream />
   );
 }
 const mapStateToProps = (state) => ({
@@ -830,4 +856,4 @@ const mapStateToProps = (state) => ({
   loggedInUsername: state?.auth?.user?.username,
 });
 
-export default connect(mapStateToProps)(CreateLiveWebinar);
+export default connect(mapStateToProps)(EditLiveWebinar);

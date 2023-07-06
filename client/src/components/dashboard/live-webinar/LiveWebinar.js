@@ -18,18 +18,15 @@ function LiveWebinar() {
     setLoading(true);
 
     let res = await axios.get("/api/v1/livewebinar/streams");
-    if(res){setUserStreams(res.data.streams);
-    setLoading(false);}
-    else{
-      console.log("error")
+    if (res) {
+      setUserStreams(res.data.streams);
+      setLoading(false);
+    } else {
+      console.log("error");
     }
   };
   const today = new Date();
   const streams = userStreams?.filter((stream) => {
-    const streamDate = new Date(stream.startTime);
-    return streamDate.toDateString() === today.toDateString();
-  });
-  const filteredStreams = userStreams?.filter((stream) => {
     const streamDate = new Date(stream.startTime);
     return streamDate.toDateString() === today.toDateString();
   });
@@ -107,8 +104,7 @@ function LiveWebinar() {
                   <div className="card-title">
                     <p className="page-title__text">Upcoming Webinars </p>
                     {/* {userStreams?.length >= 3 && ( */}
-                    {filteredStreams?.length > 3 && (
-
+                    {userStreams?.length > 3 && (
                       <span
                         onClick={() => {
                           setViewMore(!viewMore);
@@ -122,6 +118,7 @@ function LiveWebinar() {
                   <div className="card-content">
                     <div className="table-heading">
                       <p className="first">Time</p> <p>Title</p>
+                      <p>Actions</p>
                     </div>
                     {loading ? (
                       // <p>Loading animation...</p>
@@ -134,7 +131,7 @@ function LiveWebinar() {
                       </div>
                     ) : (
                       // userStreams.map((item, index) => {
-                        userStreams.map((item, index) => {
+                      userStreams.map((item, index) => {
                         return (
                           <>
                             <div
@@ -149,6 +146,19 @@ function LiveWebinar() {
                                 {handleTimeDisplay(item.startTime)}
                               </p>
                               <p>{item.title}</p>
+                              <div className="actions">
+                                <p>Share Link</p>
+                                <Link
+                                  to={`livewebinar/edit/${item._id}`}
+                                >
+                                <p>Edit Webinar</p></Link>
+                                {/* {new URL(window.location.href).origin} */}
+                                <Link
+                                  to={`livewebinar/stream/${item.streamKey}`}
+                                >
+                                  <p>Start Webinar</p>
+                                </Link>
+                              </div>
                             </div>
                             <hr
                               style={{

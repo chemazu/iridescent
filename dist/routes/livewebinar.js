@@ -139,7 +139,77 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
     res.json({
       message: "Stream created successfully",
       streamKey: savedStream.streamKey,
-      uniqueLink: savedStream.uniqueLink
+      uniqueLink: savedStream.uniqueLink,
+      id: savedStream._id
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "Server error"
+    });
+  }
+});
+router.put("/:id", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, _expressValidator.body)("title", "title is required").not().isEmpty(), (0, _expressValidator.body)("description", "description is required").not().isEmpty(), (0, _expressValidator.body)("isRecurring", "isRecurring is required").not().isEmpty(), (0, _expressValidator.body)("fee", "fee is required").not().isEmpty(), (0, _expressValidator.body)("category", "category is required").not().isEmpty(), (0, _expressValidator.body)("startTime", "startTime is required").not().isEmpty(), (0, _expressValidator.body)("currency", "currency is required").not().isEmpty()], async (req, res) => {
+  console.log("ferer");
+  const errors = (0, _expressValidator.validationResult)(req.body);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array()
+    });
+  }
+
+  const {
+    isRecurring,
+    startTime,
+    endTime,
+    title,
+    category,
+    description,
+    fee,
+    currency,
+    customRep,
+    recurringFrequency,
+    webinarReps
+  } = req.body;
+
+  try {
+    const existingWebinar = await _Livewebinar.default.findById(req.params.id);
+
+    if (!existingWebinar) {
+      return res.status(404).json({
+        error: "Webinar not found"
+      });
+    }
+
+    existingWebinar.title = title;
+    existingWebinar.description = description;
+    existingWebinar.isRecurring = isRecurring;
+    existingWebinar.startTime = startTime;
+    existingWebinar.endTime = endTime;
+    existingWebinar.category = category;
+    existingWebinar.fee = fee;
+    existingWebinar.currency = currency;
+    existingWebinar.customRep = customRep;
+    existingWebinar.recurringFrequency = recurringFrequency;
+    existingWebinar.webinarReps = webinarReps;
+
+    if (req.file) {
+      const fileType = `.${req.file.originalname.split(".")[req.file.originalname.split(".").length - 1]}`;
+      const imageToBeUploaded = (0, _dataUri.default)(`${fileType}`, req.file.buffer);
+      const uploadResponse = await _cloudinary.default.v2.uploader.upload(imageToBeUploaded.content, {
+        folder: `tuturly/webinar/${title}`
+      });
+      existingWebinar.thumbnail = uploadResponse.secure_url;
+      existingWebinar.webinarthumbnailid = uploadResponse.public_id;
+    }
+
+    const updatedWebinar = await existingWebinar.save();
+    res.json({
+      message: "Webinar updated successfully",
+      streamKey: updatedWebinar.streamKey,
+      uniqueLink: updatedWebinar.uniqueLink,
+      id: updatedWebinar._id
     });
   } catch (error) {
     console.error(error);
@@ -180,7 +250,8 @@ router.get("/stream/:streamKey", _auth.default, async (req, res) => {
           school: livestream.school.name,
           planname: payment.planname,
           timeLeft: livestream.timeleft,
-          avatar: livestream.creator.avatar
+          avatar: livestream.creator.avatar,
+          id: livestream._id
         });
       } else {
         res.status(400).json({
@@ -231,7 +302,8 @@ router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
           username: livestream.creator.username,
           school: livestream.school.name,
           planname: payment.planname,
-          timeLeft: livestream.timeleft
+          timeLeft: livestream.timeleft,
+          avatar: livestream.creator.avatar
         });
       } else {
         res.status(400).json({
@@ -252,10 +324,12 @@ router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
 
 router.get("/streams", _auth.default, async (req, res) => {
   // the query only returns the webinars whose startTime is greater than or equal to the current date/time
+  const currentDate = new Date();
+  const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
   let streams = await _Livewebinar.default.find({
     creator: req.user.id,
     startTime: {
-      $gte: new Date()
+      $gte: currentDateOnly
     }
   }).sort({
     startTime: 1
@@ -357,13 +431,74 @@ router.get("/studentPayment/:schoolname", _studentAuth.default, async (req, res)
     console.error(error);
     res.status(500).json(error);
   }
-}); // clear the server
-
-router.get("/purge", async (req, res) => {
-  let a = await _Livewebinar.default.find();
-  res.json(a); // await StudentWebinar.deleteMany({});
-
-  console.log("All documents deleted successfully.");
 });
+router.get('/users-data', async (req, res) => {
+  try {
+    const users = await _User.default.find();
+    const usersWithCourses = await _User.default.find().populate('courses');
+    const usersWithHighSales = await _User.default.aggregate([{
+      $lookup: {
+        from: 'orders',
+        // Assuming the collection name for Order model is 'orders'
+        localField: '_id',
+        foreignField: 'boughtfrom',
+        as: 'orders'
+      }
+    }, {
+      $group: {
+        _id: '$user',
+        totalSales: {
+          $sum: '$orders.amount'
+        }
+      }
+    }, {
+      $match: {
+        totalSales: {
+          $gte: 1000
+        } // Adjust the threshold as needed
+
+      }
+    }]);
+    const usersWithLowSales = await _User.default.aggregate([{
+      $lookup: {
+        from: 'orders',
+        // Assuming the collection name for Order model is 'orders'
+        localField: '_id',
+        foreignField: 'boughtfrom',
+        as: 'orders'
+      }
+    }, {
+      $group: {
+        _id: '$user',
+        totalSales: {
+          $sum: '$orders.amount'
+        }
+      }
+    }, {
+      $match: {
+        totalSales: {
+          $lte: 100
+        } // Adjust the threshold as needed
+
+      }
+    }]);
+    res.json({
+      allUsers: users // usersWithCourses,
+      // usersWithHighSales,
+      // usersWithLowSales,
+
+    });
+  } catch (error) {
+    res.status(500).json({
+      error: 'Failed to retrieve data'
+    });
+  }
+}); // clear the server
+// router.get("/purge", async (req,res) => {
+//   await StudentWebinar.deleteMany({});
+//   await LiveWebinar.deleteMany({});
+//   console.log("All documents deleted successfully.");
+// });
+
 var _default = router;
 exports.default = _default;

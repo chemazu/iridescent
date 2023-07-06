@@ -46,7 +46,13 @@ function WatchStream({ schoolname }) {
   const [defaultChat, setDefaultChat] = useState([]);
   const [watcherUsername, setWatcherUsername] = useState("");
   const [school, setSchool] = useState(null);
+  const [disableVideoStream, setDisableVideoStream] = useState(null);
+
   const [pageLoading, setPageLoading] = useState(true);
+  const [presenterAvatar, setPresenterAvatar] = useState(
+    "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
+  );
+
   const [reconnectLoading, setReconnectLoading] = useState(false);
   const [attendees, setAttendees] = useState(true);
   const [theme, setTheme] = useState(null);
@@ -260,7 +266,9 @@ function WatchStream({ schoolname }) {
         setIsLoading(false);
 
         setTitle(res.data.title);
+
         setPresenterName(`${res.data.firstname} ${res.data.lastname}`);
+        setPresenterAvatar(res.data.avatar);
       }
     } catch (error) {
       console.log(error.message);
@@ -300,7 +308,8 @@ function WatchStream({ schoolname }) {
   //   setChatMessage("");
   // };
   const sendMessage = () => {
-    if (chatMessage.trim() !== "") { // Check if the trimmed chatMessage is not empty
+    if (chatMessage.trim() !== "") {
+      // Check if the trimmed chatMessage is not empty
       socket.emit(
         "message",
         {
@@ -423,12 +432,16 @@ function WatchStream({ schoolname }) {
 
   useEffect(() => {
     socket.on("broadcaster", () => {
+      peerRef.current.destroy();
       setDisconnect(false);
       setWaiting(false);
       const NewPeer = new Peer();
       NewPeer.on("open", (user) => {
         socket.emit("watcher", roomid, user);
       });
+
+      setCurrentPeer(NewPeer);
+      peerRef.current = NewPeer;
       NewPeer.on("call", (call) => {
         // stop reconnecting loading
         setReconnectLoading(true);
@@ -488,15 +501,19 @@ function WatchStream({ schoolname }) {
   }, [roomid]);
 
   useEffect(() => {
-    socket.on("currentStatus", (roomSize, roomTimer, pollQuizHolder) => {
-      setAttendees(roomSize);
-      if (pollQuizHolder) {
-        setSpecialChat([...defaultChat, ...pollQuizHolder]);
+    socket.on(
+      "currentStatus",
+      (roomSize, roomTimer, pollQuizHolder, broadcasterScreen) => {
+        setAttendees(roomSize);
+        setDisableVideoStream(broadcasterScreen);
+        if (pollQuizHolder) {
+          setSpecialChat([...defaultChat, ...pollQuizHolder]);
+        }
+        if (roomTimer) {
+          setWebinarRoomTimer(roomTimer);
+        }
       }
-      if (roomTimer) {
-        setWebinarRoomTimer(roomTimer);
-      }
-    });
+    );
     return () => {
       socket.off("currentStatus");
     };
@@ -612,7 +629,15 @@ function WatchStream({ schoolname }) {
       socket.off("watcher");
     };
   });
+  useEffect(() => {
+    socket.on("disablevideo", (status) => {
+      setDisableVideoStream(status);
+    });
 
+    return () => {
+      socket.off("disablevideo");
+    };
+  }, [roomid, disableVideoStream]);
   useEffect(() => {
     socket.on("join stream", (roomSize, peerId) => {
       // Handle the join stream event
@@ -674,6 +699,12 @@ function WatchStream({ schoolname }) {
                       >
                         <div className="broadcaster-disconnected reconnect-loading">
                           <p>Waiting</p>
+
+                          <img
+                            src={presenterAvatar}
+                            alt=""
+                            style={{ borderRadius: "50%", width: "15%" }}
+                          />
                         </div>
                       </div>
                     </div>
@@ -749,10 +780,42 @@ function WatchStream({ schoolname }) {
                             >
                               <div className="broadcaster-disconnected reconnect-loading">
                                 <p> Broadcaster Disconnected</p>
+
+                                <img
+                                  src={presenterAvatar}
+                                  alt=""
+                                  style={{ borderRadius: "50%", width: "15%" }}
+                                />
                               </div>
                             </div>
                           ) : (
                             <div className="video-background">
+                              {!disableVideoStream && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    width: "100%",
+                                    height: "100%",
+                                    background: "#000",
+                                    zIndex: "4",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    borderRadius: "10px",
+
+                                  }}
+                                >
+                                  {" "}
+                                  <img
+                                    src={presenterAvatar}
+                                    alt=""
+                                    style={{
+                                      borderRadius: "50%",
+                                      width: "15%",
+                                    }}
+                                  />
+                                </div>
+                              )}
                               <video
                                 ref={myVideoRef}
                                 style={{ width: "100%" }}
@@ -1112,13 +1175,6 @@ function WatchStream({ schoolname }) {
                                           ""
                                         ) : (
                                           <Progress
-                                            // max={
-                                            //   Number(timerHolder.duration)
-                                            //     ? `${Number(
-                                            //         timerHolder?.duration
-                                            //       )}`
-                                            //     : "0"
-                                            // }
                                             max={`${singleChat.durationInSec}`}
                                             value={
                                               Number(timerHolder?.remainingTime)

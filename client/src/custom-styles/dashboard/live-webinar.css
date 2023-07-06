@@ -45,7 +45,7 @@
 }
 .webinar-container .card-content .table-heading {
   display: grid;
-  grid-template-columns: 3fr 5fr;
+  grid-template-columns: 2fr 2fr 3fr;
   grid-gap: 1rem;
   padding: 0.8rem 2.5%;
   padding-bottom: 0;
@@ -76,7 +76,8 @@
 
 .webinar-container .card-content .table-body {
   display: grid;
-  grid-template-columns: 3fr 5fr;
+  grid-template-columns: 2fr 2fr 3fr;
+
   width: 100%;
   grid-gap: 1rem;
 
@@ -90,7 +91,10 @@
   padding: 0.8rem 2.5%;
   padding-bottom: 0;
 }
-
+.webinar-container .card-content .table-body .actions {
+  display: flex;
+  justify-content: space-between;
+}
 .webinar-container .card-content hr {
   border: 0.5px solid #cecece;
   background-color: #cecece;
@@ -122,6 +126,10 @@
 }
 
 /* create webinar styles */
+.webinar-container .upload-image-container {
+  width: auto;
+  padding: 0 5px;
+}
 .time-constraints {
   padding-top: 1rem;
   color: #000;
@@ -283,7 +291,9 @@
   border: 0;
   width: 70%;
 }
-
+.disabled{
+  opacity: 30%;
+}
 .double input {
   border: 1px solid #525f7f;
   width: 40%;
@@ -432,22 +442,32 @@
   flex-direction: column;
   height: 100%;
 }
-.waiting-room .waiting-controls {
+.waiting-controls {
   display: flex;
   align-items: center;
 
   height: 10%;
   flex-grow: 1;
-  width: 20%;
+  width: 80%;
   justify-content: space-between;
   text-align: center;
   font-size: 16px;
+  padding: 2.5%;
 }
-.waiting-room .waiting-controls i {
+.waiting-controls .control-object {
+  display: flex;
+  align-items: center;
+}
+.waiting-controls .control-object p {
+  line-height: normal;
+  margin: 0;
+}
+.waiting-controls i {
   font-size: 36px;
   color: var(--site-theme-color);
+  margin-right: 0.5rem;
 }
-.waiting-room .waiting-controls i:hover {
+.waiting-controls i:hover {
   cursor: pointer;
 }
 .waiting-room .waiting-image {
@@ -606,7 +626,7 @@
 }
 .pc-top {
   border: 0.0625rem solid rgba(0, 0, 0, 0.05);
-border-radius: 0;
+  border-radius: 0;
   border-top-left-radius: 0.25rem;
   border-top-right-radius: 0.25rem;
 
@@ -618,7 +638,7 @@ border-radius: 0;
 .pc-bottom {
   border: 0.0625rem solid rgba(0, 0, 0, 0.05);
   border-top: 0;
-border-radius: 0;
+  border-radius: 0;
 
   border-bottom-left-radius: 0.25rem;
   border-bottom-right-radius: 0.25rem;
@@ -689,6 +709,7 @@ border-radius: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  height: 50vh !important;
 }
 .no-start p {
   font-size: 18px;
@@ -699,6 +720,9 @@ border-radius: 0;
 .no-start button {
   width: 70%;
   align-self: center;
+  background-color: var(--site-cta-color) !important;
+  color: var(--site-white-color);
+  border-radius: 35px;
 }
 .chat-interface {
   background: #eaedf6;
@@ -832,7 +856,8 @@ border-radius: 0;
 }
 .poll-modal {
   width: 100%;
-  padding: 3% 12%;padding-bottom: 5%;
+  padding: 3% 12%;
+  padding-bottom: 5%;
 }
 
 .poll-modal .top {
@@ -913,6 +938,9 @@ border-radius: 0;
   color: var(--site-cta-color);
   border: 1px solid var(--site-cta-color);
 }
+.cancel-big {
+  border-radius: 40px;
+}
 .poll-modal .add-button {
   color: #fff;
   background-color: var(--site-cta-color);
@@ -961,6 +989,7 @@ border-radius: 0;
   height: 65vh;
   border-radius: 10px;
 }
+
 .live-webinar-interface .chat-box .chat-interface {
   flex-grow: 1;
   position: relative;
@@ -1023,8 +1052,6 @@ border-radius: 0;
   right: 15%;
 }
 .poll-chat-poll-option .left-option {
- 
-  
 }
 .poll-chat-poll-option .left-option p {
   display: flex;
@@ -1152,6 +1179,7 @@ border-radius: 0;
 }
 .live-webinar-watch .watch-left .video-background {
   height: auto;
+  border-radius: 10px;
 }
 
 .watch-left .presenter-controls-wrapper {
@@ -1176,6 +1204,8 @@ border-radius: 0;
   padding: 3px;
 }
 .reconnect-loading {
+  border-radius: 10px;
+
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1187,17 +1217,20 @@ border-radius: 0;
   display: flex;
   justify-content: space-between;
 }
- .quiz-button-wrapper .quiz-button{
+.poll-modal .quiz-button-wrapper button {
+  width: 22.5%;
+}
+.quiz-button-wrapper .quiz-button {
   max-width: 30%;
-  background-color: var(--site-cta-color)  ;
-  color: var(--site-white-color)  ;
+  background-color: var(--site-cta-color);
+  color: var(--site-white-color);
   border: none;
   border-radius: 22px;
 }
- .quiz-button-wrapper .prev{
+.quiz-button-wrapper .prev {
   max-width: 30%;
-  color: var(--site-cta-color)  ;
-  background-color: var(--site-white-color)  ;
+  color: var(--site-cta-color);
+  background-color: var(--site-white-color);
   border: none;
   border-radius: 22px;
 }
@@ -1212,8 +1245,8 @@ border-radius: 0;
 }
 .chat-interface-quiz .inchat-poll .vote {
   max-width: 30%;
-  background-color: var(--site-cta-color) ;
-  color: var(--site-white-color) ;
+  background-color: var(--site-cta-color);
+  color: var(--site-white-color);
   border: none;
   border-radius: 22px;
   align-self: center;
@@ -1282,3 +1315,23 @@ border-radius: 0;
   width: 100%;
 
 } */
+.close-time-out {
+  padding: 2.5% 5%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.waiting-image-presenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  /* left: 50%; */
+  /* top: 50%; */
+  width: 100%;
+  /* background: orange; */
+  height: 100%;
+}
+.waiting-image-presenter img{
+  width: 20%;
+}

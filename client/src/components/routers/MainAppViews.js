@@ -55,6 +55,7 @@ import LiveWebinar from "../dashboard/live-webinar/LiveWebinar";
 import CreateLiveWebinar from "../dashboard/live-webinar/CreateLiveWebinar";
 import Stream from "../dashboard/live-webinar/Stream";
 import PresenterValidation from "../dashboard/live-webinar/PresenterValidation";
+import EditLiveWebinar from "../dashboard/live-webinar/EditLiveWebinar";
 
 export const MainAppViews = () => {
   return (
@@ -111,6 +112,11 @@ export const MainAppViews = () => {
           exact
           path="/dashboard/livewebinar/create"
           component={CreateLiveWebinar}
+        />
+        <PrivateRoute
+          exact
+          path="/dashboard/livewebinar/edit/:id"
+          component={EditLiveWebinar}
         />{" "}
         <PrivateRoute
           exact

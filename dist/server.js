@@ -135,6 +135,9 @@ io.on("connection", socket => {
     socket.join(roomId);
     socket.broadcast.to(roomId).emit("broadcaster");
   });
+  socket.on("disablevideo", roomId => {
+    io.in(roomId).emit("disablevideo");
+  });
   socket.on("freeTimer", async roomId => {
     if (freeTimers[roomId] || timerControl[roomId]) {
       return;

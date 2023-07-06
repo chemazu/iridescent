@@ -26,13 +26,12 @@ export default function LiveWebinarSection({ schoolname, theme }) {
   const getPurchasedWebinars = async () => {
     try {
       if (localStorage.getItem("token")) {
-        console.log("first")
+        console.log("first");
         setAuthToken(localStorage.getItem("token"));
         const res = await axios.get(`/api/v1/studentwebinar/${schoolname}`);
         setPurchasedWebinar(res.data);
         setPurchasedWebinarLoading(false);
       }
-     
     } catch (error) {
       // eslint-disable-next-line
       if (error.response.status == "400") {
@@ -47,7 +46,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
   };
   const getWebinars = async () => {
     setLoading(true);
-    console.log(schoolname)
+    console.log(schoolname);
 
     let res = await axios.get(
       `/api/v1/livewebinar/schoolstreams/${schoolname}`
@@ -78,8 +77,8 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     today.getDate() - today.getDay() + 6
   );
 
-  const streams = userStreams 
-  console.log(userStreams)
+  const streams = userStreams;
+  console.log(userStreams);
   function handleTimeDisplay(time) {
     const timestamp = new Date(time);
     const dateStr = timestamp.toLocaleString("en-US", {
@@ -188,7 +187,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                           <Link to={`/livewebinar/watch/${item.streamKey}`}>
                             <Button
                               style={{
-                                marginRight:"10px",
+                                marginRight: "10px",
                                 backgroundColor:
                                   themeData.themestyles.buttontextcolor,
                                 borderRadius:
@@ -220,25 +219,44 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                             Previous Webinar
                           </Button>
                         )}
-                        {!(authenticated && confirmPayment(item._id)) && (
-                          <Link
-                            to={`/live/preview/${item._id}`}
-                            style={{ marginRight: "1rem" }}
-                          >
-                            <Button
-                              style={{
-                                backgroundColor:
-                                  themeData.themestyles.buttontextcolor,
-                                borderRadius:
-                                  themeData.themestyles.buttonborderradius,
-                                color:
-                                  themeData.themestyles.buttonbackgroundcolor,
-                              }}
+                        {!(authenticated && confirmPayment(item._id)) &&
+                          (item.fee === 0 ? (
+                            <Link
+                              to={`/livewebinar/watch/${item.streamKey}`}
+                              style={{ marginRight: "1rem" }}
                             >
-                              Get Access{" "}
-                            </Button>
-                          </Link>
-                        )}
+                              <Button
+                                style={{
+                                  backgroundColor:
+                                    themeData.themestyles.buttontextcolor,
+                                  borderRadius:
+                                    themeData.themestyles.buttonborderradius,
+                                  color:
+                                    themeData.themestyles.buttonbackgroundcolor,
+                                }}
+                              >
+                                Free Webinar
+                              </Button>
+                            </Link>
+                          ) : (
+                            <Link
+                              to={`/live/preview/${item._id}`}
+                              style={{ marginRight: "1rem" }}
+                            >
+                              <Button
+                                style={{
+                                  backgroundColor:
+                                    themeData.themestyles.buttontextcolor,
+                                  borderRadius:
+                                    themeData.themestyles.buttonborderradius,
+                                  color:
+                                    themeData.themestyles.buttonbackgroundcolor,
+                                }}
+                              >
+                                Get Access{" "}
+                              </Button>
+                            </Link>
+                          ))}
                         {streams?.length > currentItem + 1 && (
                           <Button
                             style={{
