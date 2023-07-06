@@ -27,7 +27,7 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
       const res = await axios.get(
         `/api/v1/livewebinar/streamdetails/${liveItemId}`
       );
-   
+
       setLiveWebinar({ ...res.data, price: res.data.fee, type: "webinar" });
     } catch (error) {
       if (error.response.status === 404) {
@@ -203,7 +203,6 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                                 <img
                                   src={liveWebinar?.thumbnail}
                                   alt="product thumbnail previewer"
-                            
                                 />
                               </div>
                             </Col>
@@ -353,10 +352,16 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                                 border: "none",
                               }}
                               tag={Link}
-                              to={`/cart`}
+                              to={
+                                liveWebinar.price === 0
+                                  ? `/livewebinar/watch/${liveWebinar.streamKey}`
+                                  : `/cart`
+                              }
                               block
                             >
-                              Proceed To Checkout
+                              {liveWebinar.price === 0
+                                ? "Free Webinar"
+                                : "Proceed To Checkout"}
                             </Button>
                           </div>
                         </div>
@@ -415,11 +420,37 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                               border: `1px solid ${theme?.themestyles.buttonalttextcolor}`,
                             }}
                             tag={Link}
-                            to={`/cart`}
+                            to={
+                              liveWebinar.price === 0
+                                ? `/livewebinar/watch/${liveWebinar.streamKey}`
+                                : `/cart`
+                            }
                             className="action-btn add-to-cart-btn"
                           >
-                            Go To Cart
+                            {liveWebinar.price === 0
+                              ? "Free Webinar"
+                              : "Go To Cart"}
                           </Button>
+                        ) : liveWebinar.price === 0 ? (
+                          <Link
+                            style={{ width: "100%" }}
+                            to={`/livewebinar/watch/${liveWebinar.streamKey}`}
+                          >
+                            {" "}
+                            <Button
+                              style={{
+                                color: theme?.themestyles.buttonalttextcolor,
+                                backgroundColor:
+                                  theme?.themestyles.buttonaltbackgroundcolor,
+                                border: `1px solid ${theme?.themestyles.buttonalttextcolor}`,
+                              }}
+                              // onClick={addProductToCart}
+                              to={`/livewebinar/watch/${liveWebinar.streamKey}`}
+                              className="action-btn add-to-cart-btn"
+                            >
+                              Free Webinar
+                            </Button>
+                          </Link>
                         ) : (
                           <Button
                             style={{
@@ -428,6 +459,7 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                                 theme?.themestyles.buttonaltbackgroundcolor,
                               border: `1px solid ${theme?.themestyles.buttonalttextcolor}`,
                             }}
+                            // onClick={addProductToCart}
                             onClick={addProductToCart}
                             className="action-btn add-to-cart-btn"
                           >
@@ -438,18 +470,38 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                     </Col>
                     <Col className="mb-3" md="4" sm="4" xs="12">
                       <div className="action-container">
-                        <Button
-                          style={{
-                            color: theme?.themestyles.buttontextcolor,
-                            backgroundColor:
-                              theme?.themestyles.buttonbackgroundcolor,
-                            border: "none",
-                          }}
-                          onClick={handleGetProductClick}
-                          className="action-btn get-course-btn"
-                        >
-                          Get Access
-                        </Button>
+                        {liveWebinar.price === 0 ? (
+                          <Link
+                            style={{ width: "100%" }}
+                            to={`/livewebinar/watch/${liveWebinar.streamKey}`}
+                          >
+                            <Button
+                              style={{
+                                color: theme?.themestyles.buttontextcolor,
+                                backgroundColor:
+                                  theme?.themestyles.buttonbackgroundcolor,
+                                border: "none",
+                              }}
+                              to={`/livewebinar/watch/${liveWebinar.streamKey}`}
+                              className="action-btn get-course-btn"
+                            >
+                              Free Webinar
+                            </Button>
+                          </Link>
+                        ) : (
+                          <Button
+                            style={{
+                              color: theme?.themestyles.buttontextcolor,
+                              backgroundColor:
+                                theme?.themestyles.buttonbackgroundcolor,
+                              border: "none",
+                            }}
+                            onClick={handleGetProductClick}
+                            className="action-btn get-course-btn"
+                          >
+                            Get Access
+                          </Button>
+                        )}
                       </div>
                     </Col>
                   </Row>
