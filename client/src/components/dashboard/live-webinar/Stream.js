@@ -134,10 +134,22 @@ export default function Stream() {
     }
     history.push("/dashboard/livewebinar");
   };
+  const getSchoolUrl = (schoolname) => {
+    const host = window.location.host;
+    if (host.includes("localhost")) {
+      return `http://${schoolname}.${host}`;
+    }
+    const baseDomain = host.split(".")[1];
+    return baseDomain.includes("localhost")
+      ? `http://${schoolname}.${baseDomain}`
+      : `https://${schoolname}.${baseDomain}.com`;
+  };
   function copyText() {
     navigator.clipboard
       .writeText(
-        `https://${presenterDetails.school}.${process.env.REACT_APP_CURRENT_URL}/live/preview/${presenterDetails.id}`
+        `${getSchoolUrl(presenterDetails.school)}/live/preview/${
+          presenterDetails.id
+        }`
       )
       .then(() => {})
       .catch((error) => {
@@ -146,6 +158,7 @@ export default function Stream() {
     alert.show("Link Copied", {
       type: "success",
     });
+ 
   }
   const validateWebinar = async () => {
     if (localStorage.getItem("tutorToken")) {
