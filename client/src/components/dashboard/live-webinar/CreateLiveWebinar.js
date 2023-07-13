@@ -389,7 +389,7 @@ function CreateLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {`${getSchoolUrl(school.name)}/live/preview/${streamLink}`}
+                    {`${getSchoolUrl(school?.name)}/live/preview/${streamLink}`}
                   </p>
                 </ModalBody>
                 <ModalFooter>

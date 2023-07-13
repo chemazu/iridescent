@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
- 
 
 import Peer from "peerjs";
 import axios from "axios";
@@ -9,8 +8,8 @@ import "../../../custom-styles/dashboard/live-webinar.css";
 import smiley from "../../../images/emojisvg.svg";
 import { useAlert } from "react-alert";
 import DashboardNavbar from "../DashboardNavbar";
-import { useParams, useHistory,   } from "react-router-dom";
- 
+import { useParams, useHistory } from "react-router-dom";
+
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
@@ -68,6 +67,7 @@ export default function Stream() {
   const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
   const [screenStream, setScreenStream] = useState(null);
+  const [mobileChat, setMobileChat] = useState(false);
 
   //
 
@@ -158,7 +158,6 @@ export default function Stream() {
     alert.show("Link Copied", {
       type: "success",
     });
- 
   }
   const validateWebinar = async () => {
     if (localStorage.getItem("tutorToken")) {
@@ -701,7 +700,6 @@ export default function Stream() {
       socket.off("watcher-exit");
     };
   }, [roomid, attendies]);
-
 
   useEffect(() => {
     socket.on("roomTimerStarted", (roomTimer) => {
@@ -1365,11 +1363,11 @@ export default function Stream() {
                     </Button>
                   </div>
                 </Modal>
-                <div className="page-title" style={{ display: "block" }}>
-                  <div
-                    className="time-constraints"
-                    style={{ visibility: startController ? "" : "hidden" }}
+                <div
+                    className="time-constraints mobile-control mobile-time-constraints"
+                    style={{ display: startController ? "" : "none" }}
                   >
+                    <i className="fas fa-bars toggler-style mobile-control" aria-hidden="true"></i>
                     <div className="time-tracker">
                       <p>Time Remaining</p>
                       {planname && timeLeft ? (
@@ -1395,49 +1393,83 @@ export default function Stream() {
                       End Webinar &nbsp; <i className="fa fa-times"></i>
                     </Button>
                   </div>
-
-                  <div className="page-title__text">
-                    {isLoading ? "..." : title}
-                    {/* <br />
-                    <span>Chukwuemeka Chemazu</span> */}
-                  </div>
+                <div className="page-title" style={{ display: "block" }}>
                   <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      paddingBottom: "1rem",
-                    }}
+                    className="time-constraints desktop-control"
+                    style={{ visibility: startController ? "" : "hidden" }}
                   >
-                    <span>{isLoading ? "..." : presenterDetails?.name}</span>
-                    <span
+                    <i className="fas fa-bars toggler-style mobile-control" aria-hidden="true"></i>
+                    <div className="time-tracker">
+                      <p>Time Remaining</p>
+                      {planname && timeLeft ? (
+                        planname === "free" ? (
+                          !isLoading && (
+                            <CountdownTimer
+                              duration={timeLeft}
+                              onCompletion={handlePlanTimeOut}
+                            />
+                          )
+                        ) : (
+                          ""
+                        )
+                      ) : (
+                        <span>00:00:00</span>
+                      )}
+                    </div>
+
+                    <Button
+                      className="page-title_cta-btn"
+                      onClick={handleExitStream}
+                    >
+                      End Webinar &nbsp; <i className="fa fa-times"></i>
+                    </Button>
+                  </div>
+                  <div className="title-bar">
+                    <div className="page-title__text">
+                      {isLoading ? "..." : title}
+                      {/* <br />
+                    <span>Chukwuemeka Chemazu</span> */}
+                    </div>
+                    <div
                       style={{
-                        width: "30%",
-                        textAlign: "right",
-                        visibility: startController ? "" : "hidden",
+                        display: "flex",
+                        justifyContent: "space-between",
                       }}
                     >
-                      Attendies{" "}
-                      <strong>
-                        {"("}
-                        {attendies - 1}
-                        {")"}
-                      </strong>
-                    </span>
+                      <span>{isLoading ? "..." : presenterDetails?.name}</span>
+                      <span
+                        style={{
+                          width: "30%",
+                          textAlign: "right",
+                          visibility: startController ? "" : "hidden",
+                        }}
+                        className="attendies-span"
+                      >
+                        Attendies{" "}
+                        <strong>
+                          {"("}
+                          {attendies - 1}
+                          {")"}
+                        </strong>
+                      </span>
+                    </div>
                   </div>
-
                   <div className="live-webinar-interface">
-                    <div className="video-background">
+                    <div
+                      className={`video-background ${
+                        startController
+                          ? mobileChat
+                            ? "video-background-inactive"
+                            : "video-background-active"
+                          : ""
+                      }`}
+                    >
                       {startController ? (
                         <>
                           {!audioVisuals.video && (
-                            <div
-                              className="waiting-image-presenter"
-                              style={{
-                              
-                              }}
-                            >
+                            <div className="waiting-image-presenter" style={{}}>
                               <img
-                                style={{ borderRadius: "50%"  }}
+                                style={{ borderRadius: "50%" }}
                                 src={
                                   presenterDetails?.avatar ||
                                   "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
@@ -1447,11 +1479,7 @@ export default function Stream() {
                               />
                             </div>
                           )}
-                          <video
-                            ref={myVideoRef}
-                            muted
-                            // style={{ width: "300px", height: "200px" }}
-                          />
+                          <video ref={myVideoRef} muted />
                         </>
                       ) : (
                         <>
@@ -1503,7 +1531,11 @@ export default function Stream() {
                             <div
                               className="control-object"
                               onClick={() => {
-                        socket.emit("disablevideo",roomid,!audioVisuals.video)
+                                socket.emit(
+                                  "disablevideo",
+                                  roomid,
+                                  !audioVisuals.video
+                                );
 
                                 setAudioVisuals({
                                   video: !audioVisuals.video,
@@ -1540,161 +1572,481 @@ export default function Stream() {
                       )}
                     </div>
                     {startController ? (
-                      <div className="chat-box">
-                        <div className="chat-interface">
-                          <div className="chat-interface-text">
-                            {defaultChat.map((item, index) => {
-                              return item.type === "quiz" ? (
-                                <></>
-                              ) : (
-                                <>
-                                  {item.type === "poll" ? (
-                                    <></>
-                                  ) : (
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "flex-end",
-                                      }}
-                                    >
-                                      <p
+                      <>
+                        <Card
+                          className="presenter-controls-wrapper mobile-control"
+                          style={{ display: startController ? "" : "none" }}
+                        >
+                          {" "}
+                          <div className="presenter-controls">
+                            {/* <div
+                              className="control-object more"
+                              onClick={copyText}
+                            >
+                              <i className="fa fa-ellipsis-h"></i>
+
+                              <p>More</p>
+                            </div> */}
+                            <div
+                              className="control-object "
+                              onClick={() => {
+                                setAudioVisuals({
+                                  audio: !audioVisuals.audio,
+                                  video: true,
+                                });
+                              }}
+                            >
+                              <i
+                                className="fas fa-microphone"
+                                style={
+                                  !audioVisuals.audio
+                                    ? {
+                                        background: "#cecece",
+                                        color: "#888",
+                                      }
+                                    : null // No additional style for the active state
+                                }
+                              ></i>
+
+                              <p>Mic</p>
+                            </div>
+                            <div
+                              className="control-object"
+                              onClick={() => {
+                                socket.emit(
+                                  "disablevideo",
+                                  roomid,
+                                  !audioVisuals.video
+                                );
+
+                                setAudioVisuals({
+                                  video: !audioVisuals.video,
+                                  audio: true,
+                                });
+                              }}
+                              // onClick={toggleVideo}
+                            >
+                              <i
+                                className="fas fa-video"
+                                style={
+                                  !audioVisuals.video
+                                    ? {
+                                        background: "#cecece",
+                                        color: "#888",
+                                      }
+                                    : null // No additional style for the active state
+                                }
+                              ></i>
+
+                              <p>Webcam</p>
+                            </div>
+                            {screenSharing ? (
+                              <div
+                                className="control-object more share"
+                                onClick={toggleScreenSharing}
+                              >
+                                <i className="fa fa-desktop"></i>
+                                <p>Stop Screen Share</p>
+                              </div>
+                            ) : (
+                              <div
+                                className="control-object more share"
+                                onClick={toggleScreenSharing}
+                              >
+                                <i className="fa fa-desktop"></i>
+                                <p>Share screen</p>
+                              </div>
+                            )}
+                            {/* <div
+                              className="control-object"
+                              onClick={() => {
+                                if (!timerHolder) {
+                                  setPollStatus(true);
+                                } else {
+                                  alert.show("ASSESSMENT ONGOING");
+                                }
+                              }}
+                            >
+                              <i className="fas fa-poll poll"></i>
+
+                              <p>Polls</p>
+                            </div> */}
+                            {/* <div
+                              className="control-object"
+                              onClick={() => {
+                                if (!timerHolder) {
+                                  setQuizStatus(true);
+                                } else {
+                                  alert.show("ASSESSMENT ONGOING");
+                                }
+                              }}
+                            >
+                              <i className="fas fa-book-open"></i>
+
+                              <p>Pop Quiz</p>
+                            </div> */}
+                          </div>
+                        </Card>
+
+                        <div className="chat-box desktop-control">
+                          <div className="chat-interface">
+                            <div className="chat-interface-text">
+                              {defaultChat.map((item, index) => {
+                                return item.type === "quiz" ? (
+                                  <></>
+                                ) : (
+                                  <>
+                                    {item.type === "poll" ? (
+                                      <></>
+                                    ) : (
+                                      <div
                                         style={{
-                                          marginBottom: "0",
-                                          alignSelf:
-                                            item.user ===
-                                            presenterDetails?.username
-                                              ? ""
-                                              : "flex-start",
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          alignItems: "flex-end",
                                         }}
                                       >
-                                        {item.user}
-                                      </p>
-                                      <div
-                                        key={index}
-                                        className={`${
-                                          item.user ===
-                                          presenterDetails?.username
-                                            ? "user-bubble"
-                                            : "chat-bubble"
-                                        }`}
-                                      >
-                                        {item.msg}
-                                      </div>
-                                    </div>
-                                  )}
-                                </>
-                              );
-                            })}
-                            <div ref={chatInterfaceRef} />
-                          </div>
-                          <div className="chat-interface-quiz">
-                            {/* {specialChat.map((i) => (
-                              <p>dsd</p>
-                            ))} */}
-                            {specialChat.map((item, index) => {
-                              return item.type === "quiz" ? (
-                                <div className="inchat-poll   inchat-quiz">
-                                  <div className="top">
-                                    <span>
-                                      Pop Quiz{" "}
-                                      <i className="fas fa-book-open poll"></i>
-                                    </span>
-                                    <i
-                                      className="fa fa-times"
-                                      onClick={() => {
-                                        removePollQuizFromChat(index);
-                                      }}
-                                    ></i>
-                                  </div>
-                                  <div className="bottom">
-                                    <div className="quiz-progress">
-                                      {quizSubmission ||
-                                      item.submissionStatus ? (
-                                        <p>Quiz Over</p>
-                                      ) : (
-                                        <p>Quiz in Progress</p>
-                                      )}
-
-                                      <CountdownTimer
-                                        // duration={convertToSeconds(
-                                        //   item.duration?.durationValue,
-                                        //   item.duration?.durationUnit
-                                        // )}
-                                        duration={
-                                          Number(timerHolder.remainingTime)
-                                            ? Number(timerHolder.remainingTime)
-                                            : 0
-                                        }
-                                        // onCompletion={handleQuizTimeOut}
-                                        style={
-                                          {
-                                            // color: "rgb(82, 95, 127)",
-                                            // fontSize: "1rem",
-                                            // fontWeight: "300",
-                                            // lineHeight: "1.7",
-                                          }
-                                        }
-                                      />
-                                    </div>{" "}
-                                    {quizSubmission && (
-                                      <div className="quiz-submission">
-                                        <p>
-                                          ({quizResultHolder.length}
-                                          )Submitted
+                                        <p
+                                          style={{
+                                            marginBottom: "0",
+                                            alignSelf:
+                                              item.user ===
+                                              presenterDetails?.username
+                                                ? ""
+                                                : "flex-start",
+                                          }}
+                                        >
+                                          {item.user}
                                         </p>
-                                        <p>View Results</p>
-                                      </div>
-                                    )}{" "}
-                                    {quizSubmission && (
-                                      <div className="quiz-submitted">
-                                        <p>
-                                          ({quizResultHolder?.length}
-                                          )Submitted
-                                        </p>
-                                        <div className="quiz-result-wrapper">
-                                          <div className="quiz-result">
-                                            {quizResultHolder.map(
-                                              (item, index) => {
-                                                return (
-                                                  <div
-                                                    className="single-quiz-result"
-                                                    key={index}
-                                                  >
-                                                    <p>{index + 1}.</p>
-                                                    <p
-                                                      style={{
-                                                        width: "55%",
-                                                        wordWrap: "break-word",
-                                                      }}
-                                                    >
-                                                      {item.user}
-                                                    </p>
-                                                    <p>{item.result}%</p>
-                                                  </div>
-                                                );
-                                              }
-                                            )}
-                                          </div>
+                                        <div
+                                          key={index}
+                                          className={`${
+                                            item.user ===
+                                            presenterDetails?.username
+                                              ? "user-bubble"
+                                              : "chat-bubble"
+                                          }`}
+                                        >
+                                          {item.msg}
                                         </div>
                                       </div>
                                     )}
+                                  </>
+                                );
+                              })}
+                              <div ref={chatInterfaceRef} />
+                            </div>
+                            <div className="chat-interface-quiz">
+                              {/* {specialChat.map((i) => (
+                              <p>dsd</p>
+                            ))} */}
+                              {specialChat.map((item, index) => {
+                                return item.type === "quiz" ? (
+                                  <div className="inchat-poll   inchat-quiz">
+                                    <div className="top">
+                                      <span>
+                                        Pop Quiz{" "}
+                                        <i className="fas fa-book-open poll"></i>
+                                      </span>
+                                      <i
+                                        className="fa fa-times"
+                                        onClick={() => {
+                                          removePollQuizFromChat(index);
+                                        }}
+                                      ></i>
+                                    </div>
+                                    <div className="bottom">
+                                      <div className="quiz-progress">
+                                        {quizSubmission ||
+                                        item.submissionStatus ? (
+                                          <p>Quiz Over</p>
+                                        ) : (
+                                          <p>Quiz in Progress</p>
+                                        )}
+
+                                        <CountdownTimer
+                                          // duration={convertToSeconds(
+                                          //   item.duration?.durationValue,
+                                          //   item.duration?.durationUnit
+                                          // )}
+                                          duration={
+                                            Number(timerHolder.remainingTime)
+                                              ? Number(
+                                                  timerHolder.remainingTime
+                                                )
+                                              : 0
+                                          }
+                                          // onCompletion={handleQuizTimeOut}
+                                          style={
+                                            {
+                                              // color: "rgb(82, 95, 127)",
+                                              // fontSize: "1rem",
+                                              // fontWeight: "300",
+                                              // lineHeight: "1.7",
+                                            }
+                                          }
+                                        />
+                                      </div>{" "}
+                                      {quizSubmission && (
+                                        <div className="quiz-submission">
+                                          <p>
+                                            ({quizResultHolder.length}
+                                            )Submitted
+                                          </p>
+                                          <p>View Results</p>
+                                        </div>
+                                      )}{" "}
+                                      {quizSubmission && (
+                                        <div className="quiz-submitted">
+                                          <p>
+                                            ({quizResultHolder?.length}
+                                            )Submitted
+                                          </p>
+                                          <div className="quiz-result-wrapper">
+                                            <div className="quiz-result">
+                                              {quizResultHolder.map(
+                                                (item, index) => {
+                                                  return (
+                                                    <div
+                                                      className="single-quiz-result"
+                                                      key={index}
+                                                    >
+                                                      <p>{index + 1}.</p>
+                                                      <p
+                                                        style={{
+                                                          width: "55%",
+                                                          wordWrap:
+                                                            "break-word",
+                                                        }}
+                                                      >
+                                                        {item.user}
+                                                      </p>
+                                                      <p>{item.result}%</p>
+                                                    </div>
+                                                  );
+                                                }
+                                              )}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {item.type === "poll" ? (
-                                    <div className="inchat-poll">
-                                      <div className="top">
-                                        <span>
-                                          Poll{" "}
+                                ) : (
+                                  <>
+                                    {item.type === "poll" ? (
+                                      <div className="inchat-poll">
+                                        <div className="top">
+                                          <span>
+                                            Poll{" "}
+                                            <i
+                                              className="fas fa-poll poll"
+                                              style={{
+                                                color: "yellow",
+                                                marginLeft: "5px",
+                                              }}
+                                            ></i>
+                                          </span>
                                           <i
-                                            className="fas fa-poll poll"
-                                            style={{
-                                              color: "yellow",
-                                              marginLeft: "5px",
+                                            className="fa fa-times"
+                                            onClick={() => {
+                                              removePollQuizFromChat(index);
                                             }}
                                           ></i>
+                                        </div>
+                                        <div className="bottom">
+                                          <p
+                                            style={{
+                                              fontSize: "12px",
+                                              fontWeight: "500",
+                                              marginBottom: "5px",
+                                            }}
+                                          >
+                                            {item.title}
+                                          </p>
+
+                                          <div className="poll-options">
+                                            {item.submissionStatus ? (
+                                              <p>Poll Over !!!</p>
+                                            ) : (
+                                              <Progress
+                                                max={`${item.durationInSec}`}
+                                                value={
+                                                  Number(
+                                                    timerHolder?.remainingTime
+                                                  )
+                                                    ? Number(
+                                                        timerHolder?.remainingTime
+                                                      )
+                                                    : 0
+                                                }
+                                              />
+                                            )}
+                                            <Poll
+                                              pollOptions={item.options}
+                                              pollResult={
+                                                pollResultHolder[index]
+                                              }
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <></>
+                                    )}
+                                  </>
+                                );
+                              })}
+                              {/* <div ref={chatInterfaceRef} /> */}
+                            </div>
+                          </div>
+
+                          <div className="chat-control">
+                            {showEmojiPicker && (
+                              <div
+                                className="emoji-wrapper"
+                                style={{
+                                  position: "absolute",
+                                  bottom: "90px",
+
+                                  width: "100%",
+                                }}
+                              >
+                                <Picker
+                                  previewPosition="none"
+                                  showPreview="false"
+                                  data={data}
+                                  onClickOutside={() => {
+                                    setShowEmojiPicker(false);
+                                  }}
+                                  onEmojiSelect={(emoji) => {
+                                    handleSelectEmoji(emoji);
+                                  }}
+                                  perLine="7"
+                                />
+                              </div>
+                            )}
+                            <div
+                              className="action-wrapper"
+                              style={{ justifyContent: "center" }}
+                              onClick={() => {
+                                handleToggleEmojiPicker();
+                              }}
+                            >
+                              <img src={smiley} alt="emoji" />
+                            </div>
+                            <input
+                              value={chatMessage}
+                              onChange={(e) => {
+                                setChatMessage(e.target.value);
+                              }}
+                              onKeyDown={handleKeyDown}
+                              placeholder="Type a message"
+                            />
+                            <Button
+                              onClick={() => {
+                                sendMessage();
+                                // setChatMessage("");
+                              }}
+                            >
+                              Send
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="mobile-control presenter-room-info">
+                          <div
+                            style={{ display: "flex", alignItems: "center" }}
+                          >
+                            <i className="fa fa-gift"></i>
+                            <p
+                              style={{
+                                margin: 0,
+                                marginLeft: "2px",
+                                lineHeight: "normal",
+                              }}
+                              onClick={() => {
+                                setMobileChat(!mobileChat);
+                              }}
+                            >
+                              <strong> Gift</strong>
+                            </p>
+                          </div>
+                          <p>
+                            Attendies{" "}
+                            <strong>
+                              {"("}
+                              {attendies - 1}
+                              {")"}
+                            </strong>
+                          </p>
+                        </div>
+                        {mobileChat ? (
+                          // <div className="mobile-control" onClick={()=>{setMobileChat(true)}}>
+
+                          <div
+                            className="chat-box mobile-control mobile-chat-box"
+                            onClick={() => {
+                              setMobileChat(true);
+                            }}
+                          >
+                            <div className="chat-interface">
+                              <div className="chat-interface-text">
+                                {defaultChat.map((item, index) => {
+                                  return item.type === "quiz" ? (
+                                    <></>
+                                  ) : (
+                                    <>
+                                      {item.type === "poll" ? (
+                                        <></>
+                                      ) : (
+                                        <div
+                                          style={{
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "flex-end",
+                                          }}
+                                        >
+                                          <p
+                                            style={{
+                                              marginBottom: "0",
+                                              alignSelf:
+                                                item.user ===
+                                                presenterDetails?.username
+                                                  ? ""
+                                                  : "flex-start",
+                                            }}
+                                          >
+                                            {item.user}
+                                          </p>
+                                          <div
+                                            key={index}
+                                            className={`${
+                                              item.user ===
+                                              presenterDetails?.username
+                                                ? "user-bubble"
+                                                : "chat-bubble"
+                                            }`}
+                                          >
+                                            {item.msg}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })}
+                                <div ref={chatInterfaceRef} />
+                              </div>
+                              <div className="chat-interface-quiz">
+                                {/* {specialChat.map((i) => (
+                              <p>dsd</p>
+                            ))} */}
+                                {specialChat.map((item, index) => {
+                                  return item.type === "quiz" ? (
+                                    <div className="inchat-poll   inchat-quiz">
+                                      <div className="top">
+                                        <span>
+                                          Pop Quiz{" "}
+                                          <i className="fas fa-book-open poll"></i>
                                         </span>
                                         <i
                                           className="fa fa-times"
@@ -1704,102 +2056,218 @@ export default function Stream() {
                                         ></i>
                                       </div>
                                       <div className="bottom">
-                                        <p
-                                          style={{
-                                            fontSize: "12px",
-                                            fontWeight: "500",
-                                            marginBottom: "5px",
-                                          }}
-                                        >
-                                          {item.title}
-                                        </p>
-
-                                        <div className="poll-options">
-                                          {item.submissionStatus ? (
-                                            <p>Poll Over !!!</p>
+                                        <div className="quiz-progress">
+                                          {quizSubmission ||
+                                          item.submissionStatus ? (
+                                            <p>Quiz Over</p>
                                           ) : (
-                                            <Progress
-                                              max={`${item.durationInSec}`}
-                                              value={
-                                                Number(
-                                                  timerHolder?.remainingTime
-                                                )
-                                                  ? Number(
-                                                      timerHolder?.remainingTime
-                                                    )
-                                                  : 0
-                                              }
-                                            />
+                                            <p>Quiz in Progress</p>
                                           )}
-                                          <Poll
-                                            pollOptions={item.options}
-                                            pollResult={pollResultHolder[index]}
+
+                                          <CountdownTimer
+                                            // duration={convertToSeconds(
+                                            //   item.duration?.durationValue,
+                                            //   item.duration?.durationUnit
+                                            // )}
+                                            duration={
+                                              Number(timerHolder.remainingTime)
+                                                ? Number(
+                                                    timerHolder.remainingTime
+                                                  )
+                                                : 0
+                                            }
+                                            // onCompletion={handleQuizTimeOut}
+                                            style={
+                                              {
+                                                // color: "rgb(82, 95, 127)",
+                                                // fontSize: "1rem",
+                                                // fontWeight: "300",
+                                                // lineHeight: "1.7",
+                                              }
+                                            }
                                           />
-                                        </div>
+                                        </div>{" "}
+                                        {quizSubmission && (
+                                          <div className="quiz-submission">
+                                            <p>
+                                              ({quizResultHolder.length}
+                                              )Submitted
+                                            </p>
+                                            <p>View Results</p>
+                                          </div>
+                                        )}{" "}
+                                        {quizSubmission && (
+                                          <div className="quiz-submitted">
+                                            <p>
+                                              ({quizResultHolder?.length}
+                                              )Submitted
+                                            </p>
+                                            <div className="quiz-result-wrapper">
+                                              <div className="quiz-result">
+                                                {quizResultHolder.map(
+                                                  (item, index) => {
+                                                    return (
+                                                      <div
+                                                        className="single-quiz-result"
+                                                        key={index}
+                                                      >
+                                                        <p>{index + 1}.</p>
+                                                        <p
+                                                          style={{
+                                                            width: "55%",
+                                                            wordWrap:
+                                                              "break-word",
+                                                          }}
+                                                        >
+                                                          {item.user}
+                                                        </p>
+                                                        <p>{item.result}%</p>
+                                                      </div>
+                                                    );
+                                                  }
+                                                )}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     </div>
                                   ) : (
-                                    <></>
-                                  )}
-                                </>
-                              );
-                            })}
-                            {/* <div ref={chatInterfaceRef} /> */}
-                          </div>
-                        </div>
+                                    <>
+                                      {item.type === "poll" ? (
+                                        <div className="inchat-poll">
+                                          <div className="top">
+                                            <span>
+                                              Poll{" "}
+                                              <i
+                                                className="fas fa-poll poll"
+                                                style={{
+                                                  color: "yellow",
+                                                  marginLeft: "5px",
+                                                }}
+                                              ></i>
+                                            </span>
+                                            <i
+                                              className="fa fa-times"
+                                              onClick={() => {
+                                                removePollQuizFromChat(index);
+                                              }}
+                                            ></i>
+                                          </div>
+                                          <div className="bottom">
+                                            <p
+                                              style={{
+                                                fontSize: "12px",
+                                                fontWeight: "500",
+                                                marginBottom: "5px",
+                                              }}
+                                            >
+                                              {item.title}
+                                            </p>
 
-                        <div className="chat-control">
-                          {showEmojiPicker && (
-                            <div
-                              className="emoji-wrapper"
-                              style={{
-                                position: "absolute",
-                                bottom: "90px",
-
-                                width: "100%",
-                              }}
-                            >
-                              <Picker
-                                previewPosition="none"
-                                showPreview="false"
-                                data={data}
-                                onClickOutside={() => {
-                                  setShowEmojiPicker(false);
-                                }}
-                                onEmojiSelect={(emoji) => {
-                                  handleSelectEmoji(emoji);
-                                }}
-                                perLine="7"
-                              />
+                                            <div className="poll-options">
+                                              {item.submissionStatus ? (
+                                                <p>Poll Over !!!</p>
+                                              ) : (
+                                                <Progress
+                                                  max={`${item.durationInSec}`}
+                                                  value={
+                                                    Number(
+                                                      timerHolder?.remainingTime
+                                                    )
+                                                      ? Number(
+                                                          timerHolder?.remainingTime
+                                                        )
+                                                      : 0
+                                                  }
+                                                />
+                                              )}
+                                              <Poll
+                                                pollOptions={item.options}
+                                                pollResult={
+                                                  pollResultHolder[index]
+                                                }
+                                              />
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <></>
+                                      )}
+                                    </>
+                                  );
+                                })}
+                                {/* <div ref={chatInterfaceRef} /> */}
+                              </div>
                             </div>
-                          )}
-                          <div
-                            className="action-wrapper"
-                            style={{ justifyContent: "center" }}
-                            onClick={() => {
-                              handleToggleEmojiPicker();
-                            }}
-                          >
-                            <img src={smiley} alt="emoji" />
+
+                            <div className="chat-control">
+                              {showEmojiPicker && (
+                                <div
+                                  className="emoji-wrapper"
+                                  style={{
+                                    position: "absolute",
+                                    bottom: "90px",
+
+                                    width: "100%",
+                                  }}
+                                >
+                                  <Picker
+                                    previewPosition="none"
+                                    showPreview="false"
+                                    data={data}
+                                    onClickOutside={() => {
+                                      setShowEmojiPicker(false);
+                                    }}
+                                    onEmojiSelect={(emoji) => {
+                                      handleSelectEmoji(emoji);
+                                    }}
+                                    perLine="7"
+                                  />
+                                </div>
+                              )}
+                              <div
+                                className="action-wrapper"
+                                style={{ justifyContent: "center" }}
+                                onClick={() => {
+                                  handleToggleEmojiPicker();
+                                }}
+                              >
+                                <img src={smiley} alt="emoji" />
+                              </div>
+                              <input
+                                value={chatMessage}
+                                onChange={(e) => {
+                                  setChatMessage(e.target.value);
+                                }}
+                                onKeyDown={handleKeyDown}
+                                placeholder="Type a message"
+                              />
+                              <Button
+                                onClick={() => {
+                                  sendMessage();
+                                  // setChatMessage("");
+                                }}
+                              >
+                                Send
+                              </Button>
+                            </div>
                           </div>
-                          <input
-                            value={chatMessage}
-                            onChange={(e) => {
-                              setChatMessage(e.target.value);
-                            }}
-                            onKeyDown={handleKeyDown}
-                            placeholder="Type a message"
-                          />
-                          <Button
+                        ) : (
+                          <div
+                            className="mobile-control mobile-message"
                             onClick={() => {
-                              sendMessage();
-                              // setChatMessage("");
+                              setMobileChat(true);
                             }}
                           >
-                            Send
-                          </Button>
-                        </div>
-                      </div>
+                            <div className="message-bubble">
+                              <i class="fa fa-envelope" aria-hidden="true"></i>
+                              <h4>New Message</h4>
+                              <p>0</p>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="chat-box no-start">
                         <p>
@@ -1819,8 +2287,8 @@ export default function Stream() {
                   </div>
                 </div>
                 <Card
-                  className="presenter-controls-wrapper"
-                  style={{ visibility: startController ? "" : "hidden" }}
+                  className="presenter-controls-wrapper desktop-control"
+                  style={{ display: startController ? "" : "none" }}
                 >
                   {" "}
                   <div className="presenter-controls">
@@ -1855,7 +2323,11 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        socket.emit("disablevideo",roomid,!audioVisuals.video)
+                        socket.emit(
+                          "disablevideo",
+                          roomid,
+                          !audioVisuals.video
+                        );
 
                         setAudioVisuals({
                           video: !audioVisuals.video,

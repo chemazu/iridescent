@@ -20,21 +20,29 @@ const StreamValidation = ({ schoolname, user, getLoggedInUser }) => {
   const { roomid } = useParams();
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [webinarTimeOut, setWebinarTimeOut] = useState(false);
 
   const validateWebinar = async () => {
     setIsLoading(true);
 
     try {
       let res = await axios.get(`/api/v1/livewebinar/watch/${roomid}`);
-      console.log(res, "fere");
+      console.log(res, "fere",schoolname);
+
       if (res) {
         if (res.data.school === schoolname && res.data.timeLeft > 0) {
           // if (res.data.school === schoolname) {
+            console.log(res, "fere",schoolname);
 
           setIsValid(true);
           setIsLoading(false);
+        }
+        if (res.data.school === schoolname && res.data.timeLeft <= 0) {
+          setWebinarTimeOut(true);
+          setIsValid(true);
+          setIsLoading(false);
         } else {
-          setIsValid(false);
+          // setIsValid(false);
 
           setIsLoading(false);
         }
@@ -65,7 +73,10 @@ const StreamValidation = ({ schoolname, user, getLoggedInUser }) => {
       </div>
     );
   }
-
+  if (webinarTimeOut) {
+    return <>timed out</>;
+    // return <WatchStream />;
+  }
   if (!isValid) {
     return <InvalidStream />;
     // return <WatchStream />;

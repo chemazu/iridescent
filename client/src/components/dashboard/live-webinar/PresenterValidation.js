@@ -61,6 +61,8 @@ const PresenterValidation = ({ school }) => {
 
   if (timeout) {
     return <>TimeOut increase plan for longer webinars</>;
+  // return <Stream />;
+
   }
 
   if (!isValid) {

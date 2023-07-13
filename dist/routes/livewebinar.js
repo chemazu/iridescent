@@ -21,6 +21,8 @@ var _Livewebinar = _interopRequireDefault(require("../models/Livewebinar"));
 
 var _School = _interopRequireDefault(require("../models/School"));
 
+var _Course = _interopRequireDefault(require("../models/Course"));
+
 var _expressValidator = require("express-validator");
 
 var _User = _interopRequireDefault(require("../models/User"));
@@ -32,6 +34,8 @@ var _PaymentPlans = _interopRequireDefault(require("../models/PaymentPlans"));
 var _dataUri = _interopRequireDefault(require("../utilities/dataUri"));
 
 var _StudentWebinar = _interopRequireDefault(require("../models/StudentWebinar"));
+
+var _Order = _interopRequireDefault(require("../models/Order"));
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -286,13 +290,16 @@ router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
         webinarBought: livestream._id,
         boughtfrom: livestream.school._id
       });
+      const planName = await _PaymentPlans.default.findOne({
+        _id: livestream.creator.selectedplan
+      });
 
-      if (payment) {
+      if (payment || livestream.fee === 0) {
         // livestream.streamStarted = timestamp;
         // if (livestream.timeleft === 0) {
         //   livestream.timeleft = 2700;
         // }
-        await livestream.save();
+        // await livestream.save();
         res.json({
           title: livestream.title,
           streamkey: livestream.streamKey,
@@ -301,7 +308,7 @@ router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
           lastname: livestream.creator.lastname,
           username: livestream.creator.username,
           school: livestream.school.name,
-          planname: payment.planname,
+          planname: planName.planname,
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar
         });
@@ -431,74 +438,10 @@ router.get("/studentPayment/:schoolname", _studentAuth.default, async (req, res)
     console.error(error);
     res.status(500).json(error);
   }
-});
-router.get('/users-data', async (req, res) => {
-  try {
-    const users = await _User.default.find();
-    const usersWithCourses = await _User.default.find().populate('courses');
-    const usersWithHighSales = await _User.default.aggregate([{
-      $lookup: {
-        from: 'orders',
-        // Assuming the collection name for Order model is 'orders'
-        localField: '_id',
-        foreignField: 'boughtfrom',
-        as: 'orders'
-      }
-    }, {
-      $group: {
-        _id: '$user',
-        totalSales: {
-          $sum: '$orders.amount'
-        }
-      }
-    }, {
-      $match: {
-        totalSales: {
-          $gte: 1000
-        } // Adjust the threshold as needed
-
-      }
-    }]);
-    const usersWithLowSales = await _User.default.aggregate([{
-      $lookup: {
-        from: 'orders',
-        // Assuming the collection name for Order model is 'orders'
-        localField: '_id',
-        foreignField: 'boughtfrom',
-        as: 'orders'
-      }
-    }, {
-      $group: {
-        _id: '$user',
-        totalSales: {
-          $sum: '$orders.amount'
-        }
-      }
-    }, {
-      $match: {
-        totalSales: {
-          $lte: 100
-        } // Adjust the threshold as needed
-
-      }
-    }]);
-    res.json({
-      allUsers: users // usersWithCourses,
-      // usersWithHighSales,
-      // usersWithLowSales,
-
-    });
-  } catch (error) {
-    res.status(500).json({
-      error: 'Failed to retrieve data'
-    });
-  }
-}); // clear the server
-// router.get("/purge", async (req,res) => {
-//   await StudentWebinar.deleteMany({});
-//   await LiveWebinar.deleteMany({});
-//   console.log("All documents deleted successfully.");
-// });
+}); // router.get("/purge",async ()=>{
+//   await StudentWebinar.deleteMany({})
+//   await LiveWebinar.deleteMany({})
+// })
 
 var _default = router;
 exports.default = _default;

@@ -6,6 +6,7 @@ import "../../../custom-styles/dashboard/live-webinar.css";
 import bellicon from "../../../images/flat-yellow-bell.png";
 
 import DashboardNavbar from "../DashboardNavbar";
+import NotificationNavbar from "../NotificationNavbar";
 import { Link } from "react-router-dom";
 
 function LiveWebinar() {
@@ -61,8 +62,9 @@ function LiveWebinar() {
           <DashboardNavbar />
           <Col className="page-actions__col">
             <div className="live-webinar">
-              {/* <NotificationNavbar /> */}
               <div className="live-webinar-content">
+              {/* <NotificationNavbar /> */}
+
                 <div className="page-title">
                   <div className="page-title__text">Live Webinar</div>
                   <div className="page-title_cta">

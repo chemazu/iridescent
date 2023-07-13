@@ -126,6 +126,7 @@ const newBroadcasterHolder = {};
 let screenSharing = false;
 const freeTimers = {};
 let pollQuizHolder = {};
+let broadcasterScreen = {};
 io.on("connection", socket => {
   socket.on("broadcaster", async (roomId, peerId) => {
     newBroadcasterHolder[roomId] = {
@@ -135,8 +136,9 @@ io.on("connection", socket => {
     socket.join(roomId);
     socket.broadcast.to(roomId).emit("broadcaster");
   });
-  socket.on("disablevideo", roomId => {
-    io.in(roomId).emit("disablevideo");
+  socket.on("disablevideo", (roomId, status) => {
+    io.in(roomId).emit("disablevideo", status);
+    broadcasterScreen[roomId] = status;
   });
   socket.on("freeTimer", async roomId => {
     if (freeTimers[roomId] || timerControl[roomId]) {
@@ -201,7 +203,7 @@ io.on("connection", socket => {
         roomTimer = freeTimers[roomId];
       }
 
-      io.to(socket.id).emit("currentStatus", roomSize, roomTimer, pollQuizHolder[roomId]);
+      io.to(socket.id).emit("currentStatus", roomSize, roomTimer, pollQuizHolder[roomId], broadcasterScreen[roomId]);
     } else {
       io.to(socket.id).emit("no stream");
     }

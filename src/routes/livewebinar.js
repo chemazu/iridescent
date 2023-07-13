@@ -309,6 +309,7 @@ router.get("/watch/:streamKey", studentAuth, async (req, res) => {
           planname: planName.planname,
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar,
+
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });
@@ -418,9 +419,9 @@ router.get("/studentPayment/:schoolname", studentAuth, async (req, res) => {
   }
 });
 
-// router.get("/purge",async ()=>{
-//   await StudentWebinar.deleteMany({})
-//   await LiveWebinar.deleteMany({})
-
-// })
+// router.get("/purge", async () => {
+//   await StudentWebinar.deleteMany({});
+//   await LiveWebinar.deleteMany({});
+//   console.log("all records deleted");
+// });
 export default router;

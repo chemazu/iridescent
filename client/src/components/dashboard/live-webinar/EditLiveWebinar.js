@@ -52,6 +52,9 @@ function EditLiveWebinar({ school }) {
   const [imageToCloudinary, setImageToCloudinary] = useState(null);
   const [recurringFrequency, setRecurringFrequency] = useState("");
   const [webinarReps, setWebinarReps] = useState("");
+  const [freeWebinar, setFreeWebinar] = useState(null);
+  const [prevFee, setPrevFee] = useState(null);
+
   const dispatch = useDispatch();
 
   const validateWebinar = async () => {
@@ -79,6 +82,7 @@ function EditLiveWebinar({ school }) {
         // setCustomRep("");
         setCurrency(data.currency);
         setFee(data.fee);
+        setPrevFee(data.fee);
         // setRecurringFrequency(recurringFrequency);
         setImageToCloudinary(data.thumbnail);
         setFileToSend(data.webinarthumbnailid);
@@ -804,7 +808,7 @@ function EditLiveWebinar({ school }) {
                         onChange={(e) => setDescription(e.target.value)}
                       ></textarea>
                     </div>
-                    <div className="form-item double">
+                    {/* <div className="form-item double">
                       <strong>Webinar Fee</strong>
                       <div className="fee-wrapper">
                         <select
@@ -829,14 +833,76 @@ function EditLiveWebinar({ school }) {
                           }}
                         />
                       </div>
+                    </div> */}
+                    <div className="time-constraints">
+                      <input
+                        type="checkbox"
+                        style={{
+                          width: "1.2rem",
+                          height: "1.2rem",
+                        }}
+                        checked={freeWebinar}
+                        onChange={() => {
+                          if (!freeWebinar) {
+                            // Disable the "Webinar Fee" functionality when free webinar is checked
+                            setCurrency("NGN");
+                            setFee(0);
+                            setFreeWebinar(!freeWebinar);
+
+                          } else {
+                            console.log(fee)
+                            setFreeWebinar(!freeWebinar);
+                            setFee(prevFee);
+                          }
+                        }}
+                      />
+                      <span>Free Webinar</span>
                     </div>
 
+                    <div
+                      className={`form-item double ${
+                        freeWebinar ? "disabled" : ""
+                      }`}
+                    >
+                      <strong>Webinar Fee</strong>
+                      <div className="fee-wrapper">
+                        <select
+                          value={currency}
+                          onChange={(e) => setCurrency(e.target.value)}
+                          disabled={freeWebinar}
+                        >
+                          <option value="" disabled selected hidden>
+                            Select Currency
+                          </option>
+                          <option value={"NGN"}>NGN</option>
+                          <option value={"USD"}>USD</option>
+                        </select>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          placeholder="Amount"
+                          value={fee}
+                          onChange={(e) => {
+                            if (!freeWebinar) {
+                              const value = e.target.value.replace(
+                                /[^0-9]/g,
+                                ""
+                              );
+                              setFee(value);
+                            }
+                          }}
+                          disabled={freeWebinar}
+                        />
+                      </div>
+                    </div>
                     <div className="button-wrapper">
                       <Button
                         className="page-title_cta-btn"
                         onClick={handleSubmit}
+                    
                       >
-                       Save Changes
+                        Save Changes
                       </Button>
                     </div>
                   </form>

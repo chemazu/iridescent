@@ -530,7 +530,7 @@ router.post(
         message:
           purchased_course.length > 1
             ? `${student.firstname} purchased Courses or Products or registered for Webinars`
-            : `${student.firstname} purchased a Course or a Product registered for a Webinar `,
+            : `${student.firstname} purchased a Course or a Product or registered for a Webinar `,
         title: `${student.firstname}`,
         type: "course purchase",
       });

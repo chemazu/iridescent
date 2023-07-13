@@ -29,7 +29,6 @@ function WatchStream({ schoolname }) {
   let [currentPeer, setCurrentPeer] = useState(null);
   const myVideoRef = useRef();
   const peerRef = useRef(null);
-
   const chatInterfaceRef = useRef(null);
   const [title, setTitle] = useState("");
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -42,23 +41,20 @@ function WatchStream({ schoolname }) {
   const [answers, setAnswers] = useState([]);
   const [timerHolder, setTimerHolder] = useState({});
   const [pollAnswerHolder, setPollAnswerHolder] = useState([]);
-  // const [submitStatusHolder, setSubmitStatusHolder] = useState(false);
   const [defaultChat, setDefaultChat] = useState([]);
   const [watcherUsername, setWatcherUsername] = useState("");
   const [school, setSchool] = useState(null);
   const [disableVideoStream, setDisableVideoStream] = useState(null);
-
   const [pageLoading, setPageLoading] = useState(true);
+  const [VideoFill, setVideoFill] = useState(false);
   const [presenterAvatar, setPresenterAvatar] = useState(
     "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
   );
-
   const [reconnectLoading, setReconnectLoading] = useState(false);
   const [attendees, setAttendees] = useState(true);
   const [theme, setTheme] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [specialChat, setSpecialChat] = useState([]);
-
   const [pollResults, setPollResults] = useState(null);
   const [waiting, setWaiting] = useState(false);
   const [disconnect, setDisconnect] = useState(false);
@@ -693,10 +689,7 @@ function WatchStream({ schoolname }) {
                   </div>
                   <div className="live-webinar-watch">
                     <div className="watch-left">
-                      <div
-                        className="video-background"
-                        style={{ height: "50vh" }}
-                      >
+                      <div className="video-background watcher-video-bg">
                         <div className="broadcaster-disconnected reconnect-loading">
                           <p>Waiting</p>
 
@@ -772,7 +765,7 @@ function WatchStream({ schoolname }) {
                           <Spinner />
                         </div>
                       ) : (
-                        <div>
+                        <div className="video-background-parent">
                           {disconnect ? (
                             <div
                               className="video-background"
@@ -789,8 +782,8 @@ function WatchStream({ schoolname }) {
                               </div>
                             </div>
                           ) : (
-                            <div className="video-background">
-                              {!disableVideoStream && (
+                            <div className="video-background" style={{background:"linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%)"}}>
+                              {/* {disableVideoStream && (
                                 <div
                                   style={{
                                     position: "absolute",
@@ -798,11 +791,12 @@ function WatchStream({ schoolname }) {
                                     height: "100%",
                                     background: "#000",
                                     zIndex: "4",
-                                    display: "flex",
+                                    display: disableVideoStream
+                                      ? "none"
+                                      : "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
                                     borderRadius: "10px",
-
                                   }}
                                 >
                                   {" "}
@@ -815,10 +809,39 @@ function WatchStream({ schoolname }) {
                                     }}
                                   />
                                 </div>
-                              )}
+                              )} */}
+                              <div className="mobile-control mobile-header">
+                            <div className="mobile-presenter-info">
+                              <img
+                                src={presenterAvatar}
+                                alt=""
+                                style={{ borderRadius: "50%", width: "15%" }}
+                              />
+                              <p>{presenterName}</p>
+                            </div>
+
+                            <div className="room-info">
+                              <div>
+                                <i className="fa fa-eye" />
+                                {attendees}
+                              </div>
+                              <i
+                                onClick={() => {
+                                  handleExitStream();
+                                }}
+                                className="fa fa-times"
+                              ></i>
+                            </div>
+                          </div>
                               <video
                                 ref={myVideoRef}
-                                style={{ width: "100%" }}
+                                style={{
+                                  width: "100%",
+                                  objectFit: VideoFill ? "cover" : "contain",
+                                  height: VideoFill ? "100vh" : "",
+
+
+                                }}
                                 muted={false}
                                 typeof="video/mp4"
                               />
@@ -914,8 +937,9 @@ function WatchStream({ schoolname }) {
                     {disconnect ? (
                       <div className="chat-box"></div>
                     ) : (
-                      <div className="chat-box">
+                      <div className="chat-box watcher-chat-box">
                         <div className="chat-interface">
+                          
                           <div className="chat-interface-text">
                             {defaultChat.map((singleChat, index) => {
                               return singleChat.type === "quiz" ? (
@@ -933,6 +957,7 @@ function WatchStream({ schoolname }) {
                                       }}
                                     >
                                       <p
+                                        className="watcher-username"
                                         style={{
                                           marginBottom: "0",
                                           alignSelf:
@@ -1299,6 +1324,19 @@ function WatchStream({ schoolname }) {
                           >
                             <img src={smiley} alt="emoji" />
                           </div>
+                          <div
+                            className="expand-wrapper"
+                            onClick={() => {
+                              setVideoFill(!VideoFill);
+                            }}
+                          >
+                            <i
+                              className="fa fa-expand"
+                              aria-hidden="true"
+                              style={{ color: "#fff" }}
+                            ></i>
+                          </div>
+
                           <input
                             value={chatMessage}
                             onChange={(e) => {
@@ -1312,6 +1350,7 @@ function WatchStream({ schoolname }) {
                               marginLeft: ".5rem",
                             }}
                           />
+
                           <Button
                             onClick={() => {
                               sendMessage();

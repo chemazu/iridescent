@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useStore, connect } from "react-redux";
+import broadcast from "../../images/broadcast.svg"
 import {
   LOAD_NOTIFICATION_DATA,
   UPDATE_DASHBOARD_PAGE_COUNTER,
@@ -289,6 +290,33 @@ const NotificationNavbar = ({ user, notificationState }) => {
                   <span className="navlink-text">Create Product</span>
                 </NavLink>
               </NavItem>
+              <NavItem
+                className={classnames("vertical-navbar-item-link", {
+                  "notification-link-item__selected":
+                    currentPage.counter === 102,
+                })}
+              >
+                  <NavLink
+                        tag={Link}
+                        to="/dashboard/livewebinar"
+                        onClick={(e) => updatePage(34)}
+                      >
+                        <img
+                          src={broadcast}
+                          style={{
+                            marginRight: "17px",
+                            width: "20px",
+                            marginLeft: "-4px",
+                          }}
+                          alt="live webinar"
+                          className="fas fa-book-reader"
+                        />
+                        <span className="navlink-text">
+                          Live Webinar
+                        </span>
+                      </NavLink>
+              </NavItem>
+              
 
               <NavItem
                 className={classnames("vertical-navbar-item-link", {

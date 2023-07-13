@@ -40,6 +40,12 @@
 .webinar-container {
   padding: 3rem 4rem;
 }
+.webinar-container img {
+  width: auto;
+}
+.webinar-container .form-image {
+  width: auto;
+}
 .webinarform strong {
   color: #000;
 }
@@ -291,7 +297,7 @@
   border: 0;
   width: 70%;
 }
-.disabled{
+.disabled {
   opacity: 30%;
 }
 .double input {
@@ -405,7 +411,9 @@
   position: relative;
   height: 100%;
 }
-
+.watcher-video-bg {
+  height: 50vh;
+}
 .video-background video {
   display: block;
   width: 100%;
@@ -1259,9 +1267,39 @@
 
 /* media queries */
 
-@media screen and (max-width: 480px) {
+/* .startImage{
+  background-color: #000;
+  height: 100%;
+  width: 100%;
+
+} */
+.close-time-out {
+  padding: 2.5% 5%;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.waiting-image-presenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  /* left: 50%; */
+  /* top: 50%; */
+  width: 100%;
+  /* background: orange; */
+  height: 100%;
+}
+.waiting-image-presenter img {
+  width: 20%;
+}
+.mobile-control {
+  display: none;
+}
+@media screen and (max-width: 812px) {
   .live-webinar-interface {
     flex-direction: column;
+    position: relative;
   }
 
   .live-webinar-interface .video-background {
@@ -1269,17 +1307,20 @@
   }
   .live-webinar-interface .chat-box {
     width: 100%;
+    height: auto !important;
   }
   .presenter-controls-wrapper {
     width: 100%;
   }
   .presenter-controls {
     flex-wrap: wrap;
-    justify-content: space-between;
-    width: 100%;
+    justify-content: space-evenly;
+    width: 98%;
+    position: absolute;
+    bottom: 9px;
   }
   .presenter-controls .control-object {
-    width: auto;
+    width: 25%;
   }
   .webinar-container {
     padding: 1rem 1.5rem;
@@ -1308,30 +1349,266 @@
   .recurring-frequency-wrapper select {
     width: auto;
   }
-}
-/* .startImage{
-  background-color: #000;
-  height: 100%;
-  width: 100%;
+  .webinar-container .card-content .table-body {
+    align-items: center;
+  }
+  .webinar-container .card-content .table-body .actions {
+    flex-direction: column;
+  }
+  .waiting-controls {
+    width: auto;
+    justify-content: space-evenly;
+    padding: 5%;
+  }
+  .waiting-controls .control-object p {
+    display: none;
+  }
+  .webinar-time-prompt {
+    flex-direction: column;
+  }
+  .webinar-time-prompt p {
+    text-align: center;
+    padding: 5% 0;
+  }
+  .webinar-time-prompt a {
+    padding-bottom: 5%;
+  }
 
-} */
-.close-time-out {
-  padding: 2.5% 5%;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
+  .date-wrapper input[type="date"] {
+    width: auto;
+    box-sizing: border-box;
+    margin-right: 5px;
+  }
+  .double select {
+    width: auto;
+  }
+  .stream-webinar-content {
+    width: 100%;
+    height: 100%;
+  }
+  .live-webinar {
+    padding-top: 0;
+    height: 100%;
+  }
+  .stream-webinar-content .page-title {
+    padding: 0 17px;
+    margin: 0;
+    height: 100%;
+  }
+  .desktop-control {
+    display: none;
+  }
+  .mobile-control {
+    display: flex;
+  }
+  .no-start p {
+    padding: 0 10%;
+    padding-top: 5%;
+  }
+  .page-title .time-constraints {
+    justify-content: space-between;
+    display: none;
+  }
+  .attendies-span {
+    display: none;
+  }
+  .live-webinar-interface .video-background {
+    max-height: 80vh;
+    /* height: 80vh; */
+    background: #000;
+    /* padding-top: 50%; */
+  }
+  .live-webinar-interface .video-background-active {
+    height: 80vh;
+    padding-top: 50%;
+  }
+  .live-webinar-interface .video-background video {
+    height: auto;
+    width: 100%;
+    /* max-width: 85vw; */
+    border-radius: 0;
+  }
+  .live-webinar-interface .video-background-inactive {
+    height: 30vh;
+    padding-top: 5%;
+    background-color: transparent;
+  }
+  .live-webinar-interface .video-background-inactive video {
+    width: 100%;
+    height: 20vh;
+    max-width: none;
+    background-color: transparent;
+  }
+  .live-webinar-interface .mobile-chat-box {
+    height: 55vh !important;
+  }
+  .presenter-room-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .mobile-message {
+    display: flex;
+    justify-content: center;
+    padding-bottom: 10%;
+  }
+  .message-bubble {
+    display: flex;
+    align-items: center;
+    background: #7c98fb;
+    width: 60%;
+    justify-content: space-between;
+    border-radius: 20px;
+    padding: 2.5% 5%;
+  }
+  .message-bubble h4 {
+    margin: 0;
+    font-size: 1rem;
+  }
+  .message-bubble p {
+    margin: 0;
+    padding: 2.5% 5%;
+    background: red;
+    border-radius: 5px;
+  }
+  .mobile-time-constraints {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    padding: 10px 17px;
+  }
+  .mobile-time-constraints button {
+    background-color: var(--site-cta-color) !important;
+    color: var(--site-white-color) !important;
+    border: none;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+  }
+  .mobile-time-constraints .time-tracker {
+    margin: 0;
+  }
+  .mobile-time-constraints i {
+    font-size: 1.5rem;
+  }
+  .watch-webinar-content .page-title {
+    display: none;
+    height: auto !important;
+  }
+  .live-webinar-watch {
+    flex-direction: column;
+  }
+  .live-webinar-watch .watch-left {
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+  }
+  .live-webinar-watch .watch-left .video-background {
+    height: 100vh;
+    /* background-color: yellow; */
+    /* linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%) */
+  }
+  .live-webinar-watch .watch-left .video-background video {
+    /* object-fit: cover; */
+    height: auto;
+    border-radius: 0;
+  }
+  .live-webinar-watch .watch-left .video-background-parent {
+    height: 100%;
+  }
+  .live-webinar-watch .user-bubble {
+    background: transparent;
+    color: var(--site-white-color);
+  }
+  .live-webinar-watch .watcher-username {
+    color: var(--site-white-color);
+  }
+  .live-webinar-watch .chat-control {
+    background: transparent !important;
+    border: 0;
+  }
+ .watcher-chat-box .user-bubble::before {
+    background: transparent;
+  }
+  .watcher-chat-box .user-bubble::after {
+    background: transparent;
+  }
+  .watcher-chat-box .chat-bubble{
+    background: transparent;
+  }
+  .watcher-chat-box .chat-bubble::before {
+    background: transparent;
+  }
+  .watcher-chat-box .chat-bubble::after {
+    background: transparent;
+  }
+  .watcher-chat-box .chat-bubble::after {
+    background: transparent;
+  }
+  .live-webinar-watch .watcher-chat-box {
+    width: 100%;
+    bottom: 0;
+    height: 50%;
+    /* position: revert; */
+  }
+  .watch-left .presenter-controls {
+    display: none;
+  }
+  .watcher-chat-box .chat-interface {
+    background: transparent;
+  }
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    padding: 5%;
+  }
+  .mobile-presenter-info {
+    display: flex;
+    align-items: center;
+    
+  }
+  .mobile-presenter-info img{
+    margin-right: 10px;
+  }
+  .mobile-presenter-info p {
+    line-height: normal;
+    margin: 0;
+    font-weight: bold;
+    color: var(--site-white-color);
+  }
+  .room-info {
+    display: flex;
+    align-items: center;
+  }
+  .room-info{
+    color: var(--site-white-color);
+    padding-right: 10px;
+
+  }
+  .room-info div{
+    display: flex;
+    align-items: center;
+    padding: 7.5% 10%;
+    border-radius: 2px;
+    margin-right: 7.5px;
+    background-color: #676362;
+  }
+  .room-info div i {
+    margin-right: 3px;
+  }
+  .watcher-chat-box .action-wrapper {
+    width: 10%;
+  }
+.reconnect-loading{
+  height: 100vh;
 }
-.waiting-image-presenter {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  /* left: 50%; */
-  /* top: 50%; */
-  width: 100%;
-  /* background: orange; */
-  height: 100%;
 }
-.waiting-image-presenter img{
-  width: 20%;
+
+.title-bar {
+  padding-bottom: 12px;
 }

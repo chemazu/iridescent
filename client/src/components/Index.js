@@ -22,7 +22,7 @@ export const Index = ({ match: { params } }) => {
 
   return (
     <>
-      <Header />z
+      <Header />
       <Howitworks />
       <WhyTuturly />
       <Tools />
