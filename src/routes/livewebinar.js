@@ -346,11 +346,17 @@ router.get("/streams", auth, async (req, res) => {
 router.get("/schoolstreams/:schoolName", async (req, res) => {
   let { schoolName } = req.params;
   let school = await School.findOne({ name: schoolName });
+  const currentDate = new Date();
+  const currentDateOnly = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    currentDate.getDate()
+  );
 
   let streams = await LiveWebinar.find({
     creator: school.createdBy,
-    // startTime: { $gte: new Date() },
-  }).sort({ startTime: 1 });
+    startTime: { $gte: currentDateOnly },
+  }).populate("creator").sort({ startTime: 1 });
 
   if (!streams) {
     return res.json({ error: "Stream not found" });

@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useStore } from "react-redux";
 import "../../../custom-styles/schoollandingpagecomponents/livewebinarsectionstyles.css";
@@ -117,261 +117,227 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     <>
       {" "}
       {streams?.length > 0 && (
-  <section
- 
-  className="school-course-list"
->
-  <div className="courselist-container">
-    <div className="header-controller__and__controls">
-      <h3
-        className="header"
-       
-      >
-        Tuturly Course List
-      </h3>
-      <div className="controls">
-        <div
-          onClick={() => scroll(-30)}
-         
-          className="left-arrow-control"
-        >
-          <i className="fas fa-arrow-left"></i>
-        </div>
-        <div
-          onClick={() => scroll(30)}
-         
-          className="right-arrow-control"
-        >
-          <i className="fas fa-arrow-right"></i>
-        </div>
-      </div>
-    </div>
-    <div
-      ref={courseListContainerRef}
-      className="course-item-container pl-3"
-    >
-      {loading ? (
-        <>
-          <div
-            style={{
-              width: "50%",
-              margin: "20px auto",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#ffffff",
-            }}
-          >
-            <i
-              style={{ fontSize: "22px" }}
-              className="fas fa-circle-notch fa-spin"
-            ></i>
-          </div>
-        </>
-      ) : (
-        // <>
-        //   {streams?.length === 0 ? (
-        //     <p
-               
-        //       className="text-center mb-2 mt-2"
-        //     >
-        //       School Courses Not Found!
-        //     </p>
-        //   ) : (
-        //     <>
-        //       {streams.map((courseItem) => {
-        //         return (
-        //           <div
-        //             className="course__item mb-3"
-        //             key={courseItem._id}
-        //             style={{
-        //               boxShadow:
-        //                 themeData.themedefaultstyles
-        //                   .coursecardhasShadow === true
-        //                   ? "0px 7px 29px 0px rgba(100, 100, 111, 0.2)"
-        //                   : "none",
-        //             }}
-        //           >
-        //             <div className="item-img-container">
-        //               <Link
-        //                 to={`/dashboard/customize/live/preview/${courseItem._id}`}
-        //               >
-        //                 <img
-        //                   src={courseItem.thumbnail}
-        //                   alt="thumbnail img"
-        //                 />
-        //               </Link>
-        //             </div>
-        //             <div
-        //               style={{
-        //                 backgroundColor:
-        //                   themeData.themedefaultstyles
-        //                     .coursecardbackgroundcolor,
-        //               }}
-        //               className="course-item__details-container"
-        //             >
-        //               <Link
-        //              to={`/dashboard/customize/live/preview/${courseItem._id}`}
-        //               >
-        //                 <div
-        //                   style={{
-        //                     color:
-        //                       themeData.themedefaultstyles
-        //                         .coursecardtextcolor,
-        //                     fontFamily:
-        //                       themeData.themedefaultstyles.fontfamily,
-        //                   }}
-        //                   title={courseItem.title}
-        //                   className="course-item-name"
-        //                 >
-        //                   {courseItem.title}
-        //                 </div>
-        //               </Link>
-        //               <div
-        //                 style={{
-        //                   color:
-        //                     themeData.themedefaultstyles
-        //                       .coursecardtextcolor,
-        //                   fontFamily:
-        //                     themeData.themedefaultstyles.fontfamily,
-        //                 }}
-        //                 className="course-item-author-name"
-        //               >
-        //                 {`${courseItem.author.firstname} ${courseItem.author.lastname}`}
-        //               </div>
-        //               <div
-        //                 style={{
-        //                   color:
-        //                     themeData.themedefaultstyles
-        //                       .coursecardtextcolor,
-        //                   fontFamily:
-        //                     themeData.themedefaultstyles.fontfamily,
-        //                   borderColor:
-        //                     themeData.themedefaultstyles
-        //                       .coursecardtextcolor,
-        //                 }}
-        //                 className="course-item-level mt-1"
-        //               >
-        //                 {courseItem.level}
-        //               </div>
-        //               <div
-        //                 style={{
-        //                   color:
-        //                     themeData.themedefaultstyles
-        //                       .coursecardtextcolor,
-        //                   fontFamily:
-        //                     themeData.themedefaultstyles.fontfamily,
-        //                 }}
-        //                 className="course-item-price"
-        //               >
-        //                 &#8358;{courseItem.price}
-        //               </div>
-        //             </div>
-        //           </div>
-        //         );
-        //       })}
-        //     </>
-        //   )}
-        // </>
-        <>
-  {streams?.length === 0 ? (
-    <p className="text-center mb-2 mt-2">
-      School Courses Not Found!
-    </p>
-  ) : (
-    <>
-      {streams.map((courseItem) => { // Use appropriate type for `courseItem`
-        return (
-          <div
-            className="course__item mb-3"
-            key={courseItem._id}
-            style={{
-              boxShadow:
-                themeData.themedefaultstyles?.coursecardhasShadow === true
-                  ? "0px 7px 29px 0px rgba(100, 100, 111, 0.2)"
-                  : "none",
-            }}
-          >
-            <div className="item-img-container">
-              <Link
-                to={`/live/preview/${courseItem._id}`}
-              >
-                <img
-                  src={courseItem.thumbnail}
-                  alt="thumbnail img"
-                />
-              </Link>
+        <section className="school-course-list school-webinar-list">
+          <div className="courselist-container">
+            <div className="header-controller__and__controls">
+              <h3 className="header">UpComing Webinars</h3>
+              <div className="controls">
+                <div onClick={() => scroll(-30)} className="left-arrow-control">
+                  <i className="fas fa-arrow-left"></i>
+                </div>
+                <div onClick={() => scroll(30)} className="right-arrow-control">
+                  <i className="fas fa-arrow-right"></i>
+                </div>
+              </div>
             </div>
             <div
-              style={{
-                backgroundColor:
-                  themeData.themedefaultstyles?.coursecardbackgroundcolor,
-              }}
-              className="course-item__details-container"
+              ref={courseListContainerRef}
+              className="course-item-container pl-3"
             >
-              <Link
-                to={`live/preview/${courseItem._id}`}
-              >
-                <div
-                  style={{
-                    color:
-                      themeData.themedefaultstyles?.coursecardtextcolor,
-                    fontFamily:
-                      themeData.themedefaultstyles?.fontfamily,
-                  }}
-                  title={courseItem.title}
-                  className="course-item-name"
-                >
-                  {courseItem.title}
-                </div>
-              </Link>
-              <div
-                style={{
-                  color:
-                    themeData.themedefaultstyles?.coursecardtextcolor,
-                  fontFamily:
-                    themeData.themedefaultstyles?.fontfamily,
-                }}
-                className="course-item-author-name"
-              >
-                {`${courseItem.creator.firstname} ${courseItem.creator.lastname}`}
-              </div>
-              <div
-                style={{
-                  color:
-                    themeData.themedefaultstyles?.coursecardtextcolor,
-                  fontFamily:
-                    themeData.themedefaultstyles?.fontfamily,
-                  borderColor:
-                    themeData.themedefaultstyles?.coursecardtextcolor,
-                }}
-                className="course-item-level mt-1"
-              >
-                {courseItem.level}
-              </div>
-              <div
-                style={{
-                  color:
-                    themeData.themedefaultstyles?.coursecardtextcolor,
-                  fontFamily:
-                    themeData.themedefaultstyles?.fontfamily,
-                }}
-                className="course-item-price"
-              >
-                &#8358;{courseItem.price}
-              </div>
+              {loading ? (
+                <>
+                  <div
+                    style={{
+                      width: "50%",
+                      margin: "20px auto",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#ffffff",
+                    }}
+                  >
+                    <i
+                      style={{ fontSize: "22px" }}
+                      className="fas fa-circle-notch fa-spin"
+                    ></i>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {streams?.length === 0 ? (
+                    <p className="text-center mb-2 mt-2"></p>
+                  ) : (
+                    <>
+                      {streams.map((webinaritem) => {
+                        console.log(webinaritem);
+                        // Use appropriate type for `webinaritem`
+                        return (
+                          <div
+                            className="course__item webinar-item mb-3"
+                            key={webinaritem._id}
+                            style={{
+                              boxShadow:
+                                themeData.themedefaultstyles
+                                  ?.coursecardhasShadow === true
+                                  ? "0px 7px 29px 0px rgba(100, 100, 111, 0.2)"
+                                  : "none",
+                            }}
+                          >
+                            <div className="item-img-container">
+                              <Link to={`/live/preview/${webinaritem._id}`}>
+                                <img
+                                  src={webinaritem.thumbnail}
+                                  alt="thumbnail img"
+                                />
+                              </Link>
+                            </div>
+                            <div
+                              style={{
+                                backgroundColor:
+                                  themeData.themedefaultstyles
+                                    ?.coursecardbackgroundcolor,
+                              }}
+                              className="course-item__details-container"
+                            >
+                              <Link to={`live/preview/${webinaritem._id}`}>
+                                <div
+                                  style={{
+                                    color:
+                                      themeData.themedefaultstyles
+                                        ?.coursecardtextcolor,
+                                    fontFamily:
+                                      themeData.themedefaultstyles?.fontfamily,
+                                  }}
+                                  title={webinaritem.title}
+                                  className="course-item-name"
+                                >
+                                  {webinaritem.title}
+                                </div>
+                              </Link>
+                              <div
+                                style={{
+                                  color:
+                                    themeData.themedefaultstyles
+                                      ?.coursecardtextcolor,
+                                  fontFamily:
+                                    themeData.themedefaultstyles?.fontfamily,
+                                }}
+                                className="course-item-author-name"
+                              >
+                                by{" "}
+                                {`${webinaritem.creator.firstname} ${webinaritem.creator.lastname}`}
+                              </div>
+                              {/* <div
+                                style={{
+                                  color:
+                                    themeData.themedefaultstyles
+                                      ?.coursecardtextcolor,
+                                  fontFamily:
+                                    themeData.themedefaultstyles?.fontfamily,
+                                  borderColor:
+                                    themeData.themedefaultstyles
+                                      ?.coursecardtextcolor,
+                                }}
+                                className="course-item-level mt-1"
+                              >
+                                {webinaritem.category}
+                              </div> */}
+                              <div
+                                style={{
+                                  color:
+                                    themeData.themedefaultstyles
+                                      ?.coursecardtextcolor,
+                                  fontFamily:
+                                    themeData.themedefaultstyles?.fontfamily,
+                                }}
+                                className="course-item-price"
+                              >
+                                {webinaritem.fee <= 0 ? (
+                                  <p>Free Webinar</p>
+                                ) : (
+                                  <>&#8358; {webinaritem.fee}</>
+                                )}
+                              </div>
+                              <div
+                                style={{
+                                  justifyContent: "flex-end",
+                                  display: "flex",
+                                }}
+                              >
+                                {!(
+                                  authenticated &&
+                                  confirmPayment(webinaritem._id)
+                                ) &&
+                                  (webinaritem.fee === 0 ? (
+                                    <Link
+                                      to={`/livewebinar/watch/${webinaritem.streamKey}`}
+                                      style={{ marginRight: "1rem" }}
+                                    >
+                                      <Button
+                                        style={{
+                                          backgroundColor:
+                                            themeData.themestyles
+                                              .buttontextcolor,
+                                          borderRadius:
+                                            themeData.themestyles
+                                              .buttonborderradius,
+                                          color:
+                                            themeData.themestyles
+                                              .buttonbackgroundcolor,
+                                        }}
+                                      >
+                                        Free Webinar
+                                      </Button>
+                                    </Link>
+                                  ) : (
+                                    <Link
+                                      to={`/live/preview/${webinaritem._id}`}
+                                      style={{ marginRight: "1rem" }}
+                                    >
+                                      <Button
+                                        style={{
+                                          backgroundColor:
+                                            themeData.themestyles
+                                              .buttontextcolor,
+                                          borderRadius:
+                                            themeData.themestyles
+                                              .buttonborderradius,
+                                          color:
+                                            themeData.themestyles
+                                              .buttonbackgroundcolor,
+                                        }}
+                                      >
+                                        Get Access{" "}
+                                      </Button>
+                                    </Link>
+                                  ))}
+                                {/* <Link
+                                  to={`/live/preview/${webinaritem._id}`}
+                                  style={{ marginRight: "1rem" }}
+                                >
+                                  <Button
+                                    style={{
+                                      backgroundColor:
+                                        themeData.themestyles.buttontextcolor,
+                                      borderRadius:
+                                        themeData.themestyles
+                                          .buttonborderradius,
+                                      color:
+                                        themeData.themestyles
+                                          .buttonbackgroundcolor,
+                                    }}
+                                  >
+                                    Get Access{" "}
+                                  </Button>
+                                </Link> */}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </div>
-        );
-      })}
-    </>
-  )}
-</>
-
-      )}
-    </div>
-  </div>
-</section>
+          <AuthenticationModal
+            schoolName={schoolname}
+            authModal={authModal}
+            toggleAuthModal={toggleAuthModal}
+            theme={theme}
+          />
+        </section>
       )}
     </>
   );

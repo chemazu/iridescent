@@ -1510,6 +1510,7 @@
   }
   .live-webinar-watch .watch-left .video-background {
     height: 100vh;
+    border-radius: 0;
     /* background-color: yellow; */
     /* linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%) */
   }

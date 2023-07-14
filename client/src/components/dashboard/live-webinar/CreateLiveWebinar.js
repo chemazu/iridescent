@@ -169,7 +169,11 @@ function CreateLiveWebinar({ school }) {
 
   function copyText(textToCopy) {
     navigator.clipboard
-      .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
+      // .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
+      .writeText(
+        `https://${school.name}.tuturlybeta.com/live/preview/${textToCopy}`
+      )
+
       .then(() => {})
       .catch((error) => {
         console.error("Error copying text: ", error);
@@ -389,7 +393,7 @@ function CreateLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {`${getSchoolUrl(school?.name)}/live/preview/${streamLink}`}
+                    {`https://${school.name}.tuturlybeta.com/live/preview/${streamLink}`}
                   </p>
                 </ModalBody>
                 <ModalFooter>
