@@ -2401,17 +2401,7 @@ export default function Stream() {
 
                       <p>Pop Quiz</p>
                     </div>
-                    <div
-                      className="control-object"
-                      onClick={async () => {
-                        let res = await axios.get(`/api/v1/livewebinar/purge`);
-                        console.log(res,"DELETEWES");
-                      }}
-                    >
-                      <i className="fas fa-book-open"></i>
-
-                      <p>Res Wbes</p>
-                    </div>
+            
                   </div>
                 </Card>
               </div>
