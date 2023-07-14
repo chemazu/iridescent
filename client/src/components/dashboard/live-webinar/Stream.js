@@ -1364,41 +1364,47 @@ export default function Stream() {
                   </div>
                 </Modal>
                 <div
-                    className="time-constraints mobile-control mobile-time-constraints"
-                    style={{ display: startController ? "" : "none" }}
-                  >
-                    <i className="fas fa-bars toggler-style mobile-control" aria-hidden="true"></i>
-                    <div className="time-tracker">
-                      <p>Time Remaining</p>
-                      {planname && timeLeft ? (
-                        planname === "free" ? (
-                          !isLoading && (
-                            <CountdownTimer
-                              duration={timeLeft}
-                              onCompletion={handlePlanTimeOut}
-                            />
-                          )
-                        ) : (
-                          ""
+                  className="time-constraints mobile-control mobile-time-constraints"
+                  style={{ display: startController ? "" : "none" }}
+                >
+                  <i
+                    className="fas fa-bars toggler-style mobile-control"
+                    aria-hidden="true"
+                  ></i>
+                  <div className="time-tracker">
+                    <p>Time Remaining</p>
+                    {planname && timeLeft ? (
+                      planname === "free" ? (
+                        !isLoading && (
+                          <CountdownTimer
+                            duration={timeLeft}
+                            onCompletion={handlePlanTimeOut}
+                          />
                         )
                       ) : (
-                        <span>00:00:00</span>
-                      )}
-                    </div>
-
-                    <Button
-                      className="page-title_cta-btn"
-                      onClick={handleExitStream}
-                    >
-                      End Webinar &nbsp; <i className="fa fa-times"></i>
-                    </Button>
+                        ""
+                      )
+                    ) : (
+                      <span>00:00:00</span>
+                    )}
                   </div>
+
+                  <Button
+                    className="page-title_cta-btn"
+                    onClick={handleExitStream}
+                  >
+                    End Webinar &nbsp; <i className="fa fa-times"></i>
+                  </Button>
+                </div>
                 <div className="page-title" style={{ display: "block" }}>
                   <div
                     className="time-constraints desktop-control"
                     style={{ visibility: startController ? "" : "hidden" }}
                   >
-                    <i className="fas fa-bars toggler-style mobile-control" aria-hidden="true"></i>
+                    <i
+                      className="fas fa-bars toggler-style mobile-control"
+                      aria-hidden="true"
+                    ></i>
                     <div className="time-tracker">
                       <p>Time Remaining</p>
                       {planname && timeLeft ? (
@@ -2394,6 +2400,17 @@ export default function Stream() {
                       <i className="fas fa-book-open"></i>
 
                       <p>Pop Quiz</p>
+                    </div>
+                    <div
+                      className="control-object"
+                      onClick={async () => {
+                        let res = await axios.get(`/api/v1/livewebinar/purge`);
+                        console.log(res,"DELETEWES");
+                      }}
+                    >
+                      <i className="fas fa-book-open"></i>
+
+                      <p>Res Wbes</p>
                     </div>
                   </div>
                 </Card>

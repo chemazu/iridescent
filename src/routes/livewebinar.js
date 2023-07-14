@@ -419,9 +419,9 @@ router.get("/studentPayment/:schoolname", studentAuth, async (req, res) => {
   }
 });
 
-// router.get("/purge", async () => {
-//   await StudentWebinar.deleteMany({});
-//   await LiveWebinar.deleteMany({});
-//   console.log("all records deleted");
-// });
+router.get("/purge", async (req,res) => {
+  await StudentWebinar.deleteMany({});
+  await LiveWebinar.deleteMany({});
+  res.json("all records deleted");
+});
 export default router;
