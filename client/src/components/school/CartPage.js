@@ -123,7 +123,7 @@ export const CartPage = ({
         schoolname: schoolname,
       },
       onSuccess: async (transaction) => {
-        console.log("sucess",cart)
+      
         try {
           if (localStorage.getItem("studentToken")) {
             setAuthToken(localStorage.getItem("studentToken"));
@@ -179,7 +179,7 @@ console.log(body)
       },
     });
   };
-console.log(cart)
+ 
   const validateCourseBeforePurchase = async () => {
     try {
       if (localStorage.getItem("studentToken")) {
@@ -527,7 +527,7 @@ const mapStateToProps = (state) => ({
   student: state.student,
   schoolname: state.subdomain,
 });
-// ewe
+
 const mapDispatchToProps = (dispatch) => ({
   displayLoader: () => dispatch(startLoading()),
   removeLoader: () => dispatch(stopLoading()),

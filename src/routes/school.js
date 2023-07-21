@@ -384,7 +384,9 @@ router.post(
         const config = {
           headers: {
             // use payment secret key to validate the transaction
-            Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+            // Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+            Authorization:
+              "Bearer sk_test_028c735e6567db9ff7614c5636389f9801e49c6d",
           },
         };
 
@@ -457,38 +459,37 @@ router.post(
             // if (findWebPurchase) {
             //   console.log(findWebPurchase,"web purchse")
             // } else {
-              let flag = await StudentWebinar.find()
-              console.log(flag,"flag")
-              const studentWebinar = new StudentWebinar({
-                student: req.student.id, // with the model instantiation
-                webinarBought: purchased_course[i].itemId,
-                boughtfrom: school._id,
-              });
+            let flag = await StudentWebinar.find();
+            console.log(flag, "flag");
+            const studentWebinar = new StudentWebinar({
+              student: req.student.id, // with the model instantiation
+              webinarBought: purchased_course[i].itemId,
+              boughtfrom: school._id,
+            });
 
-              const order = new Order({
-                reference: transaction_reference,
-                orderfrom: req.student.id,
-                orderedcourse: purchased_course[i].itemId,
-                boughtfrom: school.createdBy._id,
-                amount: purchased_course[i].itemPrice,
-                createdVia: "callback",
-                ordertype: purchased_course[i].itemType,
-                tutor: webinar.tutor !== null ? webinar.tutor : null,
-                // actual earning function is used to
-                // ensure only the amount after commission of sales are removed is
-                // deducted...
-                actualearning: determineActualEarningPerCourseOrder(
-                  purchased_course[i].itemPrice,
-                  userPaymentPlan.percentchargepercoursesale
-                ),
-              });
-              // update webinar viewers list
-              // await webinar.save();
+            const order = new Order({
+              reference: transaction_reference,
+              orderfrom: req.student.id,
+              orderedcourse: purchased_course[i].itemId,
+              boughtfrom: school.createdBy._id,
+              amount: purchased_course[i].itemPrice,
+              createdVia: "callback",
+              ordertype: purchased_course[i].itemType,
+              tutor: webinar.tutor !== null ? webinar.tutor : null,
+              // actual earning function is used to
+              // ensure only the amount after commission of sales are removed is
+              // deducted...
+              actualearning: determineActualEarningPerCourseOrder(
+                purchased_course[i].itemPrice,
+                userPaymentPlan.percentchargepercoursesale
+              ),
+            });
+            // update webinar viewers list
+            // await webinar.save();
 
-              await studentWebinar.save();
-              //create Order for schools admin/tutor
-              await order.save();
- 
+            await studentWebinar.save();
+            //create Order for schools admin/tutor
+            await order.save();
           } else {
             const studentProduct = new StudentProduct({
               student: req.student.id, // with the model instantiation
