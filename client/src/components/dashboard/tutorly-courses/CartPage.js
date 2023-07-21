@@ -153,13 +153,13 @@ export const CartPage = ({
             purchased_course: cart,
             amount: cartItemSumWithDiscount,
           });
-
+          console.log(body);
           const res = await axios.post(
             "/api/v1/school/course/verify/purchase",
             body,
             config
           );
-          console.log(res,"verify")
+          console.log(res, "verify");
           if (res.data.status) {
             toggleTransactionModal();
             setPurchasedCourses(cart);
