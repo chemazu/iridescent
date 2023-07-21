@@ -527,7 +527,7 @@ const mapStateToProps = (state) => ({
   student: state.student,
   schoolname: state.subdomain,
 });
-
+// ewe
 const mapDispatchToProps = (dispatch) => ({
   displayLoader: () => dispatch(startLoading()),
   removeLoader: () => dispatch(stopLoading()),
