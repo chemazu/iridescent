@@ -148,7 +148,7 @@ console.log(body)
             body,
             config
           );
-          
+          console.log(res)
           if (res.data.status) {
             toggleTransactionModal();
             setPurchasedCourses(cart);
@@ -156,6 +156,7 @@ console.log(body)
           }
           removeLoader();
         } catch (error) {
+          console.log(error)
           removeLoader();
           if (error.response.status === 400) {
             const errors = error.response?.data?.errors;

@@ -312,7 +312,7 @@ const NotificationNavbar = ({ user, notificationState }) => {
                           className="fas fa-book-reader"
                         />
                         <span className="navlink-text">
-                          Live Webinar
+                          Tuturly Classroom
                         </span>
                       </NavLink>
               </NavItem>

@@ -159,6 +159,7 @@ export const CartPage = ({
             body,
             config
           );
+          console.log(res,"verify")
           if (res.data.status) {
             toggleTransactionModal();
             setPurchasedCourses(cart);
@@ -178,6 +179,7 @@ export const CartPage = ({
             }
           }
           if (error.response.status === 401) {
+            console.log(error, "wow");
             // redirect to dashbaord
             history.push("/dashboard/home");
           }

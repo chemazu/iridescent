@@ -428,7 +428,7 @@ function CreateLiveWebinar({ school }) {
               <div className="live-webinar-content">
                 <div className="page-title">
                   <div className="page-title__text">
-                    Schedule your live webinar
+                    Schedule your Classroom
                   </div>
                 </div>
                 <Card className="webinar-container">
@@ -436,7 +436,7 @@ function CreateLiveWebinar({ school }) {
                     <p>Back</p>
                   </Link>
                   <form className="webinarform">
-                    <strong>Webinar Date & Time</strong>
+                    <strong>Class Date & Time</strong>
                     <div className="time-constraints">
                       <p style={{ marginBottom: "0.5rem" }}>Recurring</p>
                       <input
@@ -660,7 +660,7 @@ function CreateLiveWebinar({ school }) {
                       </div>
                     )}
 
-                    <strong>Webinar information</strong>
+                    <strong>Classroom information</strong>
                     <div className="form-image">
                       <input
                         style={{ display: "none" }}
@@ -690,7 +690,7 @@ function CreateLiveWebinar({ school }) {
                     </div>
 
                     <div className="form-item">
-                      <strong className="title-strong">Webinar Title</strong>
+                      <strong className="title-strong"> Classroom Title</strong>
                       <input
                         type="text"
                         value={title}
@@ -779,7 +779,7 @@ function CreateLiveWebinar({ school }) {
                           setFreeWebinar(!freeWebinar);
                         }}
                       />
-                      <span>Free Webinar</span>
+                      <span>Free Class</span>
                     </div>
 
                     <div
@@ -787,7 +787,7 @@ function CreateLiveWebinar({ school }) {
                         freeWebinar ? "disabled" : ""
                       }`}
                     >
-                      <strong>Webinar Fee</strong>
+                      <strong>Classroom Fee</strong>
                       <div className="fee-wrapper">
                         <select
                           value={currency}
@@ -825,7 +825,7 @@ function CreateLiveWebinar({ school }) {
                         className="page-title_cta-btn"
                         onClick={handleSubmit}
                       >
-                        Schedule Webinar
+                        Schedule Class
                       </Button>
                     </div>
                   </form>

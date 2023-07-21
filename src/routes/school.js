@@ -396,6 +396,7 @@ router.post(
         return res.status(401).send({
           success: false,
           message: "Verification failed",
+          Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
         });
       }
 

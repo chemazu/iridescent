@@ -27,6 +27,10 @@ const liveWebinarSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isPublished: {
+    type: Boolean,
+    default: true,
+  },
   thumbnail: {
     type: String,
   },
@@ -56,7 +60,7 @@ const liveWebinarSchema = new mongoose.Schema({
       max: 6,
     },
   ],
- 
+
   endTime: {
     type: Date,
   },

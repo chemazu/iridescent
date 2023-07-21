@@ -21,7 +21,7 @@ const InvalidStream = ({ schoolName, school }) => {
     <>
       <div className="subdomain-not-found-page">
         <div className="subdomain-not-found-page__contents-container">
-          <h3>Invalid Stream ID</h3>
+          <h3>Invalid Class ID</h3>
           {school === null && (
             <>
               <p>

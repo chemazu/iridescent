@@ -657,12 +657,17 @@ export default function Stream() {
   };
 
   const onConnect = () => {
-    navigator.mediaDevices
-      .getUserMedia(audioVisuals)
-      .then((stream) => {
-        addVideoStream(myVideoRef.current, stream);
-      })
-      .catch((error) => console.error(error));
+    const hasAudio = audioVisuals.audio;
+    const hasVideo = audioVisuals.video;
+
+    if (hasAudio || hasVideo) {
+      navigator.mediaDevices
+        .getUserMedia(audioVisuals)
+        .then((stream) => {
+          addVideoStream(myVideoRef.current, stream);
+        })
+        .catch((error) => console.error(error));
+    }
   };
 
   const convertToSeconds = (value, unit) => {
@@ -733,7 +738,7 @@ export default function Stream() {
   useEffect(() => {
     socket.on("roomTimerTick", (roomTimer) => {
       setTimeLeft(roomTimer);
-      console.log(roomTimer);
+   
       if (roomTimer === 600) {
         console.log(roomTimer, "fsd");
         setTimeOutModal(true);
@@ -884,13 +889,18 @@ export default function Stream() {
         if (screenSharing && screenStreamRef.current) {
           call.answer(screenStreamRef.current);
         } else {
-          navigator.mediaDevices
-            // .getUserMedia({ audio: true, video: true })
-            .getUserMedia(audioVisuals)
+          const hasAudio = audioVisuals.audio;
+          const hasVideo = audioVisuals.video;
 
-            .then((stream) => {
-              call.answer(stream);
-            });
+          if (hasAudio || hasVideo) {
+            navigator.mediaDevices
+              // .getUserMedia({ audio: true, video: true })
+              .getUserMedia(audioVisuals)
+
+              .then((stream) => {
+                call.answer(stream);
+              });
+          }
         }
       });
     };
@@ -925,8 +935,14 @@ export default function Stream() {
   }, []);
 
   // trigger intialize Peeer
+
+  const handleTriggerLive = async () => {
+    let res = await axios.put(`/api/v1/livewebinar/live/${presenterDetails.id}`);
+    console.log(res);
+  };
   const handleInitializePeer = () => {
     setStartController(true);
+    handleTriggerLive()
   };
 
   const toggleScreenSharing = () => {
@@ -1047,6 +1063,7 @@ export default function Stream() {
                             ) {
                               setPollStatus(false);
                               setPollDuration(true);
+                              setPollResultHolder([])
                             } else {
                               alert.show("Please fill in all options.");
                             }
@@ -1507,7 +1524,7 @@ export default function Stream() {
                               onClick={() => {
                                 setAudioVisuals({
                                   audio: !audioVisuals.audio,
-                                  video: true,
+                                  video: audioVisuals.video,
                                 });
                               }}
                             >
@@ -1545,7 +1562,7 @@ export default function Stream() {
 
                                 setAudioVisuals({
                                   video: !audioVisuals.video,
-                                  audio: true,
+                                  audio: audioVisuals.audio,
                                 });
                               }}
                               // onClick={toggleVideo}
@@ -1598,7 +1615,7 @@ export default function Stream() {
                               onClick={() => {
                                 setAudioVisuals({
                                   audio: !audioVisuals.audio,
-                                  video: true,
+                                  video: audioVisuals.video,
                                 });
                               }}
                             >
@@ -1627,7 +1644,7 @@ export default function Stream() {
 
                                 setAudioVisuals({
                                   video: !audioVisuals.video,
-                                  audio: true,
+                                  audio: audioVisuals.audio,
                                 });
                               }}
                               // onClick={toggleVideo}
@@ -2308,7 +2325,7 @@ export default function Stream() {
                       onClick={() => {
                         setAudioVisuals({
                           audio: !audioVisuals.audio,
-                          video: true,
+                          video: audioVisuals.video,
                         });
                       }}
                     >
@@ -2337,7 +2354,7 @@ export default function Stream() {
 
                         setAudioVisuals({
                           video: !audioVisuals.video,
-                          audio: true,
+                          audio: audioVisuals.audio,
                         });
                       }}
                       // onClick={toggleVideo}
@@ -2401,7 +2418,6 @@ export default function Stream() {
 
                       <p>Pop Quiz</p>
                     </div>
-            
                   </div>
                 </Card>
               </div>

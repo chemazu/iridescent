@@ -450,7 +450,7 @@ function EditLiveWebinar({ school }) {
   }, [webinarId]);
 
   return isLoading ? (
-    <div className="spinner">
+    <div className="edit-spinner">
       <Spinner />
     </div>
   ) : isValid ? (
@@ -864,7 +864,7 @@ function EditLiveWebinar({ school }) {
                         freeWebinar ? "disabled" : ""
                       }`}
                     >
-                      <strong>Webinar Fee</strong>
+                      <strong>Classroom Fee</strong>
                       <div className="fee-wrapper">
                         <select
                           value={currency}

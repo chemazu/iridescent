@@ -359,10 +359,14 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
   let school = await _School.default.findOne({
     name: schoolName
   });
+  const currentDate = new Date();
+  const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
   let streams = await _Livewebinar.default.find({
-    creator: school.createdBy // startTime: { $gte: new Date() },
-
-  }).sort({
+    creator: school.createdBy,
+    startTime: {
+      $gte: currentDateOnly
+    }
+  }).populate("creator").sort({
     startTime: 1
   });
 
@@ -438,10 +442,11 @@ router.get("/studentPayment/:schoolname", _studentAuth.default, async (req, res)
     console.error(error);
     res.status(500).json(error);
   }
-}); // router.get("/purge",async ()=>{
-//   await StudentWebinar.deleteMany({})
-//   await LiveWebinar.deleteMany({})
-// })
-
+});
+router.get("/purge", async (req, res) => {
+  await _StudentWebinar.default.deleteMany({});
+  await _Livewebinar.default.deleteMany({});
+  res.json("all records deleted");
+});
 var _default = router;
 exports.default = _default;

@@ -141,6 +141,61 @@ router.post(
     }
   }
 );
+// toggle webinar publish
+
+router.put("/publish/:id", auth, async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.user.id;
+
+  try {
+    let webinar = await LiveWebinar.findOne({ _id: id });
+
+    if (!webinar) {
+      return res.status(404).json({ error: "Webinar not found" });
+    }
+
+    if (webinar.creator.toString() !== userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Remove the webinar
+    webinar.isPublished = !webinar.isPublished;
+    await webinar.save();
+
+    res.json({ message: "Webinar published successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+router.put("/live/:id", auth, async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.user.id;
+
+  try {
+    let webinar = await LiveWebinar.findOne({ _id: id });
+ 
+    if (!webinar) {
+      return res.status(404).json({ error: "Webinar not found" });
+    }
+
+    if (webinar.creator.toString() !== userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Remove the webinar
+    webinar.isLive = true;
+    await webinar.save();
+
+    res.json({ message: "Webinar published successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+// toggle is live
 router.put(
   "/:id",
   [
@@ -309,7 +364,6 @@ router.get("/watch/:streamKey", studentAuth, async (req, res) => {
           planname: planName.planname,
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar,
-
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });
@@ -356,7 +410,9 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
   let streams = await LiveWebinar.find({
     creator: school.createdBy,
     startTime: { $gte: currentDateOnly },
-  }).populate("creator").sort({ startTime: 1 });
+  })
+    .populate("creator")
+    .sort({ startTime: 1 });
 
   if (!streams) {
     return res.json({ error: "Stream not found" });
@@ -425,9 +481,36 @@ router.get("/studentPayment/:schoolname", studentAuth, async (req, res) => {
   }
 });
 
-router.get("/purge", async (req,res) => {
+router.get("/purge", async (req, res) => {
   await StudentWebinar.deleteMany({});
   await LiveWebinar.deleteMany({});
   res.json("all records deleted");
 });
+
+router.delete("/remove/:id", auth, async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.user.id;
+
+  try {
+    let webinar = await LiveWebinar.findOne({ _id: id });
+
+    if (!webinar) {
+      return res.status(404).json({ error: "Webinar not found" });
+    }
+
+    if (webinar.creator.toString() !== userId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    // Remove the webinar
+    await LiveWebinar.findByIdAndRemove(id);
+
+    res.json({ message: "Webinar removed successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;

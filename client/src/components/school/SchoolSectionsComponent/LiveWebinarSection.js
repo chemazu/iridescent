@@ -322,6 +322,9 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                                 </Link> */}
                               </div>
                             </div>
+                            {webinaritem.isLive && (
+                              <p className="live-button">Live</p>
+                            )}
                           </div>
                         );
                       })}

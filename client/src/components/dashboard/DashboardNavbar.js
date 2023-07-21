@@ -364,7 +364,7 @@ const DashboardNavbar = ({
                           className="fas fa-book-reader"
                         />
                         <span className="navlink-text d-none-sm">
-                          Live Webinar
+                          Tuturly Classroom
                         </span>
                       </NavLink>
                     </NavItem>

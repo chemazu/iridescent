@@ -515,7 +515,7 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
     (0, _tutuor.studentBoughtCourseNotification)(school.createdBy.email, `${student.firstname} ${student.lastname}`, purchased_course);
     const notification = new _Notifications.default({
       user: school.createdBy._id,
-      message: purchased_course.length > 1 ? `${student.firstname} purchased Courses or Products or registered for Webinars` : `${student.firstname} purchased a Course or a Product registered for a Webinar `,
+      message: purchased_course.length > 1 ? `${student.firstname} purchased Courses or Products or registered for Webinars` : `${student.firstname} purchased a Course or a Product or registered for a Webinar `,
       title: `${student.firstname}`,
       type: "course purchase"
     });

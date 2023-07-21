@@ -49,10 +49,39 @@
   border-radius: 25px;
   overflow: hidden;
   color: #fff;
+  position: relative;
 }
-.webinar-item .course-item-name{
+.webinar-item .course-item-name {
   color: #fff;
 }
-.school-webinar-list{
+.school-webinar-list {
   padding: 15px 0;
+}
+.webinar-item .live-button {
+  display: inline-block;
+  background-color: red;
+  color: #fff;
+  font-size: 16px;
+  padding: 5px 15px;
+  border-radius: 20px;
+  animation: pulse 1s infinite;
+  position: absolute;
+  z-index: 2;
+  top:10px;
+  right: 10px;
+  font-weight: bold;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
