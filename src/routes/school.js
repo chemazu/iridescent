@@ -402,8 +402,7 @@ router.post(
           success: false,
           message: "Verification failed",
           Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
-          transaction_reference
-
+          transaction_reference,
         });
       }
 
@@ -549,6 +548,50 @@ router.post(
     } catch (error) {
       console.log(error, "error in the payment flow");
       res.status(500).json(error);
+    }
+  }
+);
+
+router.post(
+  "/course/verify/chemazu",
+  studentAuth,
+  [
+    body("transaction_reference", "transaction reference can not be empty")
+      .not()
+      .isEmpty(),
+    body("schoolname", "school name cannot be empty").not().isEmpty(),
+    body("purchased_course", "purchased course cannot be empty")
+      .not()
+      .isEmpty(),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        errors: errors.array(),
+      });
+    }
+    const { transaction_reference, schoolname, purchased_course } = req.body;
+    let paystack_response = null;
+    try {
+      const config = {
+        headers: {
+          // use payment secret key to validate the transaction
+          Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+        },
+      };
+
+      paystack_response = await axios.get(
+        `https://api.paystack.co/transaction/verify/${transaction_reference}`,
+        config
+      );
+      res.json({ paystack_response });
+    } catch (error) {
+      return res.status(401).send({
+        success: false,
+        message: "Verification failed",
+        Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+      });
     }
   }
 );
