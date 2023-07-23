@@ -152,81 +152,7 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
       error: "Server error"
     });
   }
-}); // toggle webinar publish
-
-router.put("/publish/:id", _auth.default, async (req, res) => {
-  const {
-    id
-  } = req.params;
-  const userId = req.user.id;
-
-  try {
-    let webinar = await _Livewebinar.default.findOne({
-      _id: id
-    });
-
-    if (!webinar) {
-      return res.status(404).json({
-        error: "Webinar not found"
-      });
-    }
-
-    if (webinar.creator.toString() !== userId) {
-      return res.status(401).json({
-        error: "Unauthorized"
-      });
-    } // Remove the webinar
-
-
-    webinar.isPublished = !webinar.isPublished;
-    await webinar.save();
-    res.json({
-      message: "Webinar published successfully"
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Server error"
-    });
-  }
 });
-router.put("/live/:id", _auth.default, async (req, res) => {
-  const {
-    id
-  } = req.params;
-  const userId = req.user.id;
-
-  try {
-    let webinar = await _Livewebinar.default.findOne({
-      _id: id
-    });
-
-    if (!webinar) {
-      return res.status(404).json({
-        error: "Webinar not found"
-      });
-    }
-
-    if (webinar.creator.toString() !== userId) {
-      return res.status(401).json({
-        error: "Unauthorized"
-      });
-    } // Remove the webinar
-
-
-    webinar.isLive = true;
-    await webinar.save();
-    res.json({
-      message: "Webinar published successfully"
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Server error"
-    });
-  }
-}); // toggle is live
-
 router.put("/:id", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, _expressValidator.body)("title", "title is required").not().isEmpty(), (0, _expressValidator.body)("description", "description is required").not().isEmpty(), (0, _expressValidator.body)("isRecurring", "isRecurring is required").not().isEmpty(), (0, _expressValidator.body)("fee", "fee is required").not().isEmpty(), (0, _expressValidator.body)("category", "category is required").not().isEmpty(), (0, _expressValidator.body)("startTime", "startTime is required").not().isEmpty(), (0, _expressValidator.body)("currency", "currency is required").not().isEmpty()], async (req, res) => {
   console.log("ferer");
   const errors = (0, _expressValidator.validationResult)(req.body);
@@ -521,41 +447,6 @@ router.get("/purge", async (req, res) => {
   await _StudentWebinar.default.deleteMany({});
   await _Livewebinar.default.deleteMany({});
   res.json("all records deleted");
-});
-router.delete("/remove/:id", _auth.default, async (req, res) => {
-  const {
-    id
-  } = req.params;
-  const userId = req.user.id;
-
-  try {
-    let webinar = await _Livewebinar.default.findOne({
-      _id: id
-    });
-
-    if (!webinar) {
-      return res.status(404).json({
-        error: "Webinar not found"
-      });
-    }
-
-    if (webinar.creator.toString() !== userId) {
-      return res.status(401).json({
-        error: "Unauthorized"
-      });
-    } // Remove the webinar
-
-
-    await _Livewebinar.default.findByIdAndRemove(id);
-    res.json({
-      message: "Webinar removed successfully"
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Server error"
-    });
-  }
 });
 var _default = router;
 exports.default = _default;

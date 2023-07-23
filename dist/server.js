@@ -303,7 +303,6 @@ io.on("connection", socket => {
 
           if (liveWebinar) {
             liveWebinar.timeleft = freeTimers[roomId];
-            liveWebinar.isLive = false;
             await liveWebinar.save(); // clearInterval(timerControl[roomId]);
             // delete timerControl[roomId];
 
@@ -335,7 +334,6 @@ io.on("connection", socket => {
 
           if (liveWebinar) {
             liveWebinar.timeleft = freeTimers[roomId];
-            liveWebinar.isLive = false;
             await liveWebinar.save();
             clearInterval(timerControl[roomId]);
             delete timerControl[roomId];

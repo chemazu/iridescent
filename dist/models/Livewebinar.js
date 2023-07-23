@@ -35,10 +35,6 @@ const liveWebinarSchema = new _mongoose.default.Schema({
     type: Boolean,
     default: false
   },
-  isPublished: {
-    type: Boolean,
-    default: true
-  },
   thumbnail: {
     type: String
   },

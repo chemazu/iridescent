@@ -393,16 +393,9 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
       };
       paystack_response = await _axios.default.get(`https://api.paystack.co/transaction/verify/${transaction_reference}`, config);
     } catch (error) {
-      // return res.status(401).send({
-      //   success: false,
-      //   message: "Verification failed",
-      //   Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
-      // });
-      res.json({
+      return res.status(401).send({
         success: false,
-        message: "Verification failed",
-        Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
-        transaction_reference
+        message: "Verification failed"
       });
     }
 

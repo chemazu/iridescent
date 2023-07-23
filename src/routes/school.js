@@ -384,7 +384,8 @@ router.post(
         const config = {
           headers: {
             // use payment secret key to validate the transaction
-            Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+            // Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+            Authorization: `Bearer sk_test_028c735e6567db9ff7614c5636389f9801e49c6d`,
           },
         };
 
@@ -401,9 +402,10 @@ router.post(
         res.json({
           success: false,
           message: "Verification failed",
-          Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
-          transaction_reference
+          // Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+          Authorization: `Bearer sk_test_028c735e6567db9ff7614c5636389f9801e49c6d`,
 
+          transaction_reference,
         });
       }
 
