@@ -144,7 +144,7 @@ export const CartPage = ({
           });
 console.log(body)
           const res = await axios.post(
-            "/api/v1/school/course/verify/chemazu",
+            "/api/v1/school/course/verify/purchase",
             body,
             config
           );
