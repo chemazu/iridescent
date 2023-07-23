@@ -388,14 +388,23 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
       const config = {
         headers: {
           // use payment secret key to validate the transaction
-          Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`
+          // Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+          Authorization: `Bearer sk_test_028c735e6567db9ff7614c5636389f9801e49c6d`
         }
       };
       paystack_response = await _axios.default.get(`https://api.paystack.co/transaction/verify/${transaction_reference}`, config);
     } catch (error) {
-      return res.status(401).send({
+      // return res.status(401).send({
+      //   success: false,
+      //   message: "Verification failed",
+      //   Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+      // });
+      res.json({
         success: false,
-        message: "Verification failed"
+        message: "Verification failed",
+        // Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+        Authorization: `Bearer sk_test_028c735e6567db9ff7614c5636389f9801e49c6d`,
+        transaction_reference
       });
     }
 
