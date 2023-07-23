@@ -243,7 +243,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                                 className="course-item-price"
                               >
                                 {webinaritem.fee <= 0 ? (
-                                  <p>Free Webinar</p>
+                                  <p>Free Classroom</p>
                                 ) : (
                                   <>&#8358; {webinaritem.fee}</>
                                 )}
