@@ -571,6 +571,7 @@ router.post(
         errors: errors.array(),
       });
     }
+    // sfdfd
     const { transaction_reference, schoolname, purchased_course } = req.body;
     let paystack_response = null;
     try {
