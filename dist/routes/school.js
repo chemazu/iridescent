@@ -393,9 +393,16 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
       };
       paystack_response = await _axios.default.get(`https://api.paystack.co/transaction/verify/${transaction_reference}`, config);
     } catch (error) {
-      return res.status(401).send({
+      // return res.status(401).send({
+      //   success: false,
+      //   message: "Verification failed",
+      //   Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+      // });
+      res.json({
         success: false,
-        message: "Verification failed"
+        message: "Verification failed",
+        Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`,
+        transaction_reference
       });
     }
 
@@ -526,6 +533,42 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
   } catch (error) {
     console.log(error, "error in the payment flow");
     res.status(500).json(error);
+  }
+});
+router.post("/course/verify/chemazu", _studentAuth.default, [(0, _expressValidator.body)("transaction_reference", "transaction reference can not be empty").not().isEmpty(), (0, _expressValidator.body)("schoolname", "school name cannot be empty").not().isEmpty(), (0, _expressValidator.body)("purchased_course", "purchased course cannot be empty").not().isEmpty()], async (req, res) => {
+  const errors = (0, _expressValidator.validationResult)(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      errors: errors.array()
+    });
+  } // sfdfd
+
+
+  const {
+    transaction_reference,
+    schoolname,
+    purchased_course
+  } = req.body;
+  let paystack_response = null;
+
+  try {
+    const config = {
+      headers: {
+        // use payment secret key to validate the transaction
+        Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`
+      }
+    };
+    paystack_response = await _axios.default.get(`https://api.paystack.co/transaction/verify/${transaction_reference}`, config);
+    res.json({
+      paystack_response
+    });
+  } catch (error) {
+    return res.status(401).send({
+      success: false,
+      message: "Verification failed",
+      Authorization: `Bearer ${process.env.PAYSTACK_PRIVATE_KEY}`
+    });
   }
 });
 var _default = router;
