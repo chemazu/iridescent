@@ -148,7 +148,7 @@ console.log(body)
             body,
             config
           );
-          console.log(res)
+ 
           if (res.data.status) {
             toggleTransactionModal();
             setPurchasedCourses(cart);
