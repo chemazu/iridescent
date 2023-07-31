@@ -44,7 +44,9 @@ import studentProductRoute from "./routes/studentproduct";
 import rootCategoryRoute from "./routes/rootcategory";
 import logVisitRoute from "./routes/logvisit";
 import tutorRoute from "./routes/tutor";
+import classroomresourcesRoute from "./routes/classroomresources";
 import livewebinarRoute from "./routes/livewebinar";
+
 import LiveWebinar from "./models/Livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
 
@@ -374,6 +376,8 @@ app.use("/api/v1/rootcategory", rootCategoryRoute);
 app.use("/api/v1/log-visit", logVisitRoute);
 app.use("/api/v1/tutor", tutorRoute);
 app.use("/api/v1/livewebinar", livewebinarRoute);
+app.use("/api/v1/classroomresource", classroomresourcesRoute);
+
 app.use("/api/v1/studentwebinar", studentWebinarRoute);
 
 const root = require("path").join(__dirname, "../client", "build");

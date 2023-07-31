@@ -2,8 +2,14 @@
   border: 0;
   border-radius: 2rem;
 }
+.modal-button {
+  background-color: var(--site-cta-color) !important;
+  color: var(--site-white-color) !important;
+  border: none;
+  border-radius: 22px;
+}
 .live-webinar {
-  padding-top: 7vh;
+  padding-top: 4vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -11,6 +17,7 @@
   min-height: 100%;
   height: fit-content;
 }
+
 .live-webinar-content {
   width: 87%;
 }
@@ -1180,6 +1187,9 @@
 .live-webinar-watch .watch-left {
   width: 71%;
 }
+.live-webinar-watch .video-background video {
+  height: 52vh;
+}
 
 .live-webinar-watch .chat-box {
   width: 27.5%;
@@ -1200,12 +1210,15 @@
   width: 100%;
 
   padding: 0;
-  margin-top: 3rem;
+  margin-top: 1rem;
 }
 .watch-left .presenter-controls {
   width: 100%;
   padding-right: 10%;
   padding-left: 10%;
+}
+.watch-left .presenter-controls .control-object {
+  padding-top: 2%;
 }
 .emoji-wrapper div {
   width: 100%;
@@ -1309,7 +1322,7 @@
   background-color: #fff;
 
   position: absolute;
-  top:0.5rem;
+  top: 0.5rem;
   padding: 5% 10%;
   border-radius: 7.345px;
 
@@ -1359,7 +1372,6 @@
   border-radius: 20px;
   animation: pulse 1s infinite;
 
-
   font-weight: bold;
 }
 
@@ -1375,6 +1387,75 @@
   100% {
     transform: scale(1);
   }
+}
+.watch-screen {
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+.table-sort {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0.8rem 0;
+}
+.table-sort select {
+  border: 0;
+  padding-right: 2%;
+  font-size: 1rem;
+  font-weight: 300;
+  line-height: 1.7;
+}
+.filter-parent {
+  display: flex;
+  flex-direction: column;
+}
+.select-wrapper {
+  border: 1px solid #cecece;
+  padding: 3% 3%;
+  width: fit-content;
+}
+.filter-parent p {
+  margin: 0;
+  align-self: flex-start;
+}
+.classroom-resources {
+  display: flex;
+  align-items: baseline;
+  width: 40%;
+  justify-content: space-between;
+}
+.classroom-resources .single-resource-wrapper {
+  width: 100%;
+}
+
+.classroom-resources .single-resource {
+  width: 100%;
+text-align: center;
+display: flex;
+flex-direction: column;
+align-items: center;
+min-width: fit-content;
+color: #000;
+}
+.classroom-resources .single-resource:hover {
+ cursor: pointer;
+}
+.classroom-resources .single-resource p {
+  padding-top: .5rem;
+}
+.classroom-resources .single-resource-img {
+  padding: 20% 35%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 9.125px;
+  border: 0.332px solid #3d3c3c;
+  background: #f9fafd;
+  box-shadow: 0px 4px 13px 0px rgba(0, 0, 0, 0.11);
+  width: 30%;
+}
+.classroom-resources img {
+  max-height: 40px;
 }
 @media screen and (max-width: 812px) {
   .live-webinar-interface {

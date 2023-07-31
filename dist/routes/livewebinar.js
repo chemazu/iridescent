@@ -21,11 +21,7 @@ var _Livewebinar = _interopRequireDefault(require("../models/Livewebinar"));
 
 var _School = _interopRequireDefault(require("../models/School"));
 
-var _Course = _interopRequireDefault(require("../models/Course"));
-
 var _expressValidator = require("express-validator");
-
-var _User = _interopRequireDefault(require("../models/User"));
 
 var _Student = _interopRequireDefault(require("../models/Student"));
 
@@ -34,8 +30,6 @@ var _PaymentPlans = _interopRequireDefault(require("../models/PaymentPlans"));
 var _dataUri = _interopRequireDefault(require("../utilities/dataUri"));
 
 var _StudentWebinar = _interopRequireDefault(require("../models/StudentWebinar"));
-
-var _Order = _interopRequireDefault(require("../models/Order"));
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -79,71 +73,74 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
     recurringFrequency,
     webinarReps
   } = req.body;
-  const streamKey = (0, _uuid.v4)();
-  const streamUrl = `${streamKey}`;
-  const creator = req.user.id;
-  const creatorSchool = await _School.default.findOne({
-    createdBy: req.user.id
-  });
-  const school = creatorSchool._id;
-  const fileType = `.${req.file.originalname.split(".")[req.file.originalname.split(".").length - 1]}`;
-  const imageToBeUploaded = (0, _dataUri.default)(`${fileType}`, req.file.buffer).content;
-  const uploadResponse = await _cloudinary.default.v2.uploader.upload(imageToBeUploaded, {
-    folder: `tuturly/webinar/${title}`
-  }); // {
-  //   isRecurring: 'false',
-  //   title: 'one',
-  //   category: 'Business',
-  //   description: 'egg',
-  //   fee: '1000',
-  //   currency: 'USD',
-  //   customRep: '',
-  //   recurringFrequency: '',
-  //   webinarReps: '',
-  //   startTime: 'Tue Jun 27 2023 13:40:00 GMT+0100 (West Africa Standard Time)',
-  //   endDate: 'Invalid Date'
-  // }
-  // {
-  //   isRecurring: 'true',
-  //   title: '10000',
-  //   category: 'Automobiles',
-  //   description: 'popop',
-  //   fee: '10322',
-  //   currency: 'USD',
-  //   customRep: '',
-  //   recurringFrequency: 'weekly',
-  //   webinarReps: 'Every 2 weeks',
-  //   startTime: 'Thu Jun 29 2023 13:50:00 GMT+0100 (West Africa Standard Time)',
-  //   endDate: 'Thu Jun 29 2023 19:50:00 GMT+0100 (West Africa Standard Time)'
-  // }
-
-  const newStream = new _Livewebinar.default({
-    title,
-    description,
-    streamKey,
-    streamUrl,
-    startTime,
-    isRecurring,
-    currency,
-    fee,
-    thumbnail: uploadResponse.secure_url,
-    webinarthumbnailid: uploadResponse.public_id,
-    category,
-    creator,
-    customRep,
-    recurringFrequency,
-    webinarReps,
-    endTime,
-    school,
-    timeleft: 2700
-  });
 
   try {
+    const streamKey = (0, _uuid.v4)();
+    const streamUrl = `${streamKey}`;
+    const creator = req.user.id;
+    const creatorSchool = await _School.default.findOne({
+      createdBy: req.user.id
+    });
+    const school = creatorSchool._id; // the dummy image used as a placeholder for instant webinar  is a png file
+
+    const fileType = category === "instant" ? `.png` : `.${req.file.originalname.split(".")[req.file.originalname.split(".").length - 1]}`;
+    const imageToBeUploaded = (0, _dataUri.default)(`${fileType}`, req.file.buffer).content;
+    const uploadResponse = await _cloudinary.default.v2.uploader.upload(imageToBeUploaded, {
+      folder: `tuturly/webinar/${title}`
+    }); // {
+    //   isRecurring: 'false',
+    //   title: 'one',
+    //   category: 'Business',
+    //   description: 'egg',
+    //   fee: '1000',
+    //   currency: 'USD',
+    //   customRep: '',
+    //   recurringFrequency: '',
+    //   webinarReps: '',
+    //   startTime: 'Tue Jun 27 2023 13:40:00 GMT+0100 (West Africa Standard Time)',
+    //   endDate: 'Invalid Date'
+    // }
+    // {
+    //   isRecurring: 'true',
+    //   title: '10000',
+    //   category: 'Automobiles',
+    //   description: 'popop',
+    //   fee: '10322',
+    //   currency: 'USD',
+    //   customRep: '',
+    //   recurringFrequency: 'weekly',
+    //   webinarReps: 'Every 2 weeks',
+    //   startTime: 'Thu Jun 29 2023 13:50:00 GMT+0100 (West Africa Standard Time)',
+    //   endDate: 'Thu Jun 29 2023 19:50:00 GMT+0100 (West Africa Standard Time)'
+    // }
+
+    const newStream = new _Livewebinar.default({
+      title,
+      description,
+      streamKey,
+      streamUrl,
+      startTime,
+      isRecurring,
+      currency,
+      fee,
+      thumbnail: uploadResponse.secure_url,
+      webinarthumbnailid: uploadResponse.public_id,
+      category,
+      creator,
+      customRep,
+      recurringFrequency,
+      webinarReps,
+      endTime,
+      school,
+      timeleft: 2700
+    });
+
+    if (fee > 0) {}
+
     const savedStream = await newStream.save();
     res.json({
       message: "Stream created successfully",
       streamKey: savedStream.streamKey,
-      uniqueLink: savedStream.uniqueLink,
       id: savedStream._id
     });
   } catch (error) {
@@ -287,7 +284,8 @@ router.put("/:id", [_auth.default, createCourseThumbnailPhoto.single("file"), (0
       message: "Webinar updated successfully",
       streamKey: updatedWebinar.streamKey,
       uniqueLink: updatedWebinar.uniqueLink,
-      id: updatedWebinar._id
+      id: updatedWebinar._id,
+      fee
     });
   } catch (error) {
     console.error(error);
@@ -347,7 +345,83 @@ router.get("/stream/:streamKey", _auth.default, async (req, res) => {
     });
   }
 });
-router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
+router.get("/watch/:streamKey", async (req, res) => {
+  const {
+    streamKey
+  } = req.params;
+  let studentId;
+
+  try {
+    const livestream = await _Livewebinar.default.findOne({
+      streamKey
+    }).populate("creator").populate("school");
+
+    if (livestream) {
+      const planName = await _PaymentPlans.default.findOne({
+        _id: livestream.creator.selectedplan
+      });
+
+      if (livestream.fee > 0) {
+        const token = req.header("x-auth-token");
+
+        if (!token) {
+          return res.status(401).json({
+            msg: "No Token. Authorization Denied"
+          });
+        }
+
+        const decoded = jwt.verify(token, process.env.STUDENTTOKENSECRET);
+        studentId = decoded.student.id;
+        const payment = await _StudentWebinar.default.findOne({
+          student: studentId,
+          webinarBought: livestream._id,
+          boughtfrom: livestream.school._id
+        });
+
+        if (payment) {
+          res.json({
+            title: livestream.title,
+            streamkey: livestream.streamKey,
+            isLive: livestream.isLive,
+            firstname: livestream.creator.firstname,
+            lastname: livestream.creator.lastname,
+            username: livestream.creator.username,
+            school: livestream.school.name,
+            planname: planName.planname,
+            timeLeft: livestream.timeleft,
+            avatar: livestream.creator.avatar
+          });
+        } else {
+          res.status(400).json({
+            error: "Payment not found"
+          });
+        }
+      } else {
+        res.json({
+          title: livestream.title,
+          streamkey: livestream.streamKey,
+          isLive: livestream.isLive,
+          firstname: livestream.creator.firstname,
+          lastname: livestream.creator.lastname,
+          username: livestream.creator.username,
+          school: livestream.school.name,
+          planname: planName.planname,
+          timeLeft: livestream.timeleft,
+          avatar: livestream.creator.avatar
+        });
+      }
+    } else {
+      res.status(400).json({
+        error: "Stream not found"
+      });
+    }
+  } catch (error) {
+    res.status(400).json({
+      error: "Server error"
+    });
+  }
+});
+router.get("/watch/:streamKey", async (req, res) => {
   const {
     streamKey
   } = req.params;
@@ -402,11 +476,45 @@ router.get("/watch/:streamKey", _studentAuth.default, async (req, res) => {
     });
   }
 }); // get live streams
+// router.get("/streams/:filter", auth, async (req, res) => {
+//   // the query only returns the webinars whose startTime is greater than or equal to the current date/time
+//   const currentDate = new Date();
+//   const currentDateOnly = new Date(
+//     currentDate.getFullYear(),
+//     currentDate.getMonth(),
+//     currentDate.getDate()
+//   );
+//   let streams = await LiveWebinar.find({
+//     creator: req.user.id,
+//     startTime: { $gte: currentDateOnly },
+//   }).sort({ startTime: 1 });
+//   if (!streams) {
+//     return res.json({ error: "Stream not found" });
+//   }
+//   res.json({ streams });
+// });
+
+const handleStreamFilter = (value, userStreams) => {
+  switch (value) {
+    case "unPublished":
+      return userStreams.filter(stream => !stream["isPublished"]);
+
+    case "NotRecurring":
+      return userStreams.filter(stream => !stream["isRecurring"]);
+
+    case "":
+      return userStreams ? userStreams : [];
+
+    default:
+      // Assume `value` is a valid property name in the stream object
+      return userStreams.filter(stream => stream[value]);
+  }
+};
 
 router.get("/streams", _auth.default, async (req, res) => {
-  // the query only returns the webinars whose startTime is greater than or equal to the current date/time
   const currentDate = new Date();
   const currentDateOnly = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+  const filterState = req.query.filter || "";
   let streams = await _Livewebinar.default.find({
     creator: req.user.id,
     startTime: {
@@ -420,10 +528,12 @@ router.get("/streams", _auth.default, async (req, res) => {
     return res.json({
       error: "Stream not found"
     });
-  }
+  } // Apply the filtering based on the filterState
 
+
+  const filteredStreams = handleStreamFilter(filterState, streams);
   res.json({
-    streams
+    streams: filteredStreams
   });
 });
 router.get("/schoolstreams/:schoolName", async (req, res) => {

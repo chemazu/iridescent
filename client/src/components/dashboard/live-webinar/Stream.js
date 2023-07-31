@@ -223,16 +223,7 @@ export default function Stream() {
         durationInSec,
       },
     ];
-    setDefaultChat([
-      ...defaultChat,
-      {
-        user: 1,
-        type: "poll",
-        title: pollTitle,
-        options: pollOptions,
-        durationInSec,
-      },
-    ]);
+ 
     // handle special chat
     setSpecialChat([
       // ...specialChat,
@@ -1246,6 +1237,50 @@ export default function Stream() {
                     </Button>
                   </div>
                 </Modal>
+                <Modal isOpen={pollDuration} className="confirm-poll-modal">
+                  <div className="top">
+                    <h4
+                      onClick={() => {
+                        setPollStatus(true);
+                        setPollDuration(false);
+                        setDurationValue("");
+                        setDurationUnit("secs");
+                      }}
+                    >
+                      <i className="fa fa-times"></i>
+                    </h4>
+                  </div>
+                  <p className="confirm-heading">
+                    Set the duration of the Poll
+                  </p>
+
+                  <div className="confirm-heading time-selector">
+                    <input
+                      style={{ width: "50%", marginRight: "1.5rem" }}
+                      type="number"
+                      value={durationValue}
+                      onChange={handleDurationValueChange}
+                    />
+                    <select
+                      value={durationUnit}
+                      onChange={handleDurationUnitChange}
+                    >
+                      <option value="secs">Seconds</option>
+                      <option value="min">Minutes</option>
+                      <option value="hour">Hour</option>
+                    </select>
+                  </div>
+                  <div className="button-wrapper">
+                    <Button
+                      onClick={() => {
+                        setPollDuration(false);
+                        setPollConfirmation(true);
+                      }}
+                    >
+                      Next
+                    </Button>{" "}
+                  </div>
+                </Modal>
                 <Modal isOpen={viewDuration} className="confirm-poll-modal">
                   <div className="top">
                     <h4
@@ -1298,50 +1333,7 @@ export default function Stream() {
                     </Button>{" "}
                   </div>
                 </Modal>
-                <Modal isOpen={pollDuration} className="confirm-poll-modal">
-                  <div className="top">
-                    <h4
-                      onClick={() => {
-                        setPollStatus(true);
-                        setPollDuration(false);
-                        setDurationValue("");
-                        setDurationUnit("secs");
-                      }}
-                    >
-                      <i className="fa fa-times"></i>
-                    </h4>
-                  </div>
-                  <p className="confirm-heading">
-                    Set the duration of the Poll
-                  </p>
-
-                  <div className="confirm-heading time-selector">
-                    <input
-                      style={{ width: "50%", marginRight: "1.5rem" }}
-                      type="number"
-                      value={durationValue}
-                      onChange={handleDurationValueChange}
-                    />
-                    <select
-                      value={durationUnit}
-                      onChange={handleDurationUnitChange}
-                    >
-                      <option value="secs">Seconds</option>
-                      <option value="min">Minutes</option>
-                      <option value="hour">Hour</option>
-                    </select>
-                  </div>
-                  <div className="button-wrapper">
-                    <Button
-                      onClick={() => {
-                        setPollDuration(false);
-                        setPollConfirmation(true);
-                      }}
-                    >
-                      Next
-                    </Button>{" "}
-                  </div>
-                </Modal>
+              
                 <Modal isOpen={quizConfirmation} className="confirm-poll-modal">
                   <div className="top">
                     <h4

@@ -10,6 +10,10 @@ import {
   Card,
   Spinner,
   Progress,
+  Modal,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
 } from "reactstrap";
 import { connect } from "react-redux";
 import { loadUser } from "../../../actions/auth";
@@ -22,6 +26,7 @@ import Picker from "@emoji-mart/react";
 import CountdownTimer from "./CountDownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import Poll from "./Poll";
+import { useStore } from "react-redux";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
@@ -43,6 +48,8 @@ function WatchStream({ schoolname }) {
   const [pollAnswerHolder, setPollAnswerHolder] = useState([]);
   const [defaultChat, setDefaultChat] = useState([]);
   const [watcherUsername, setWatcherUsername] = useState("");
+  const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
+
   const [school, setSchool] = useState(null);
   const [disableVideoStream, setDisableVideoStream] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -60,7 +67,10 @@ function WatchStream({ schoolname }) {
   const [disconnect, setDisconnect] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [webinarRoomTimer, setWebinarRoomTimer] = useState(null);
-
+  const store = useStore();
+  const appState = store.getState();
+  const { student } = appState;
+  const { authenticated } = student;
   if (localStorage.getItem("studentToken")) {
     setAuthToken(localStorage.getItem("studentToken"));
   }
@@ -657,8 +667,33 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     scrollToBottom();
   }, [defaultChat]);
+
   return (
     <div className="dashboard-layout">
+      <Modal isOpen={!authenticated && watcherUsername === ""}>
+        <ModalHeader>Enter Username</ModalHeader>
+        <ModalBody>
+          <input
+            placeholder="Input Username"
+            style={{ width: "100%" }}
+            value={watcherUsernameInput}
+            onChange={(e) => {
+              setWatcherUsernameInput(e.target.value);
+            }}
+          />
+        </ModalBody>
+
+        <ModalFooter>
+          <Button
+            type="button"
+            onClick={() => {setWatcherUsername(watcherUsernameInput)}}
+            style={{  borderRadius: "22px",border:"none"}}
+            className={watcherUsernameInput === "" ? "" : "modal-button"}
+          >
+            Enter
+          </Button>
+        </ModalFooter>
+      </Modal>
       <Container fluid>
         <Row>
           <Col className="page-actions__col">
@@ -691,7 +726,7 @@ function WatchStream({ schoolname }) {
                     <div className="watch-left">
                       <div className="video-background watcher-video-bg">
                         <div className="broadcaster-disconnected reconnect-loading">
-                          <p>Waiting</p>
+                          <p>Waiting for tutor</p>
 
                           <img
                             src={presenterAvatar}
@@ -705,7 +740,7 @@ function WatchStream({ schoolname }) {
                 </div>
               </div>
             ) : (
-              <div className="live-webinar">
+              <div className="live-webinar watch-screen">
                 <div className="stream-webinar-content watch-webinar-content">
                   <div
                     className="page-title"
@@ -782,7 +817,13 @@ function WatchStream({ schoolname }) {
                               </div>
                             </div>
                           ) : (
-                            <div className="video-background" style={{background:"linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%)"}}>
+                            <div
+                              className="video-background"
+                              style={{
+                                background:
+                                  "linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%)",
+                              }}
+                            >
                               {/* {disableVideoStream && (
                                 <div
                                   style={{
@@ -811,36 +852,37 @@ function WatchStream({ schoolname }) {
                                 </div>
                               )} */}
                               <div className="mobile-control mobile-header">
-                            <div className="mobile-presenter-info">
-                              <img
-                                src={presenterAvatar}
-                                alt=""
-                                style={{ borderRadius: "50%", width: "15%" }}
-                              />
-                              <p>{presenterName}</p>
-                            </div>
+                                <div className="mobile-presenter-info">
+                                  <img
+                                    src={presenterAvatar}
+                                    alt=""
+                                    style={{
+                                      borderRadius: "50%",
+                                      width: "15%",
+                                    }}
+                                  />
+                                  <p>{presenterName}</p>
+                                </div>
 
-                            <div className="room-info">
-                              <div>
-                                <i className="fa fa-eye" />
-                                {attendees}
+                                <div className="room-info">
+                                  <div>
+                                    <i className="fa fa-eye" />
+                                    {attendees}
+                                  </div>
+                                  <i
+                                    onClick={() => {
+                                      handleExitStream();
+                                    }}
+                                    className="fa fa-times"
+                                  ></i>
+                                </div>
                               </div>
-                              <i
-                                onClick={() => {
-                                  handleExitStream();
-                                }}
-                                className="fa fa-times"
-                              ></i>
-                            </div>
-                          </div>
                               <video
                                 ref={myVideoRef}
                                 style={{
                                   width: "100%",
                                   objectFit: VideoFill ? "cover" : "contain",
                                   height: VideoFill ? "100vh" : "",
-
-
                                 }}
                                 muted={false}
                                 typeof="video/mp4"
@@ -939,7 +981,6 @@ function WatchStream({ schoolname }) {
                     ) : (
                       <div className="chat-box watcher-chat-box">
                         <div className="chat-interface">
-                          
                           <div className="chat-interface-text">
                             {defaultChat.map((singleChat, index) => {
                               return singleChat.type === "quiz" ? (

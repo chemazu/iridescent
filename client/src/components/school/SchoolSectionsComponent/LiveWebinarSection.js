@@ -10,22 +10,18 @@ import AuthenticationModal from "../AuthenticationModal";
 export default function LiveWebinarSection({ schoolname, theme }) {
   const [userStreams, setUserStreams] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [viewMore, setViewMore] = useState(false);
   const [authModal, setAuthModal] = useState(false);
 
   const [purchasedWebinar, setPurchasedWebinar] = useState([]);
 
   const [purchasedWebinarLoading, setPurchasedWebinarLoading] = useState(true);
-  const [currentItem, setCurrentItem] = useState(0);
   const store = useStore();
   const appState = store.getState();
-
-  const { cart, student } = appState;
-  const notificationState = appState.studentNotification;
+  const { student } = appState;
   const { authenticated } = student;
 
   let themeData = theme;
-  let backendSectionData = { isusingsecondarystyles: true };
+   
   const toggleAuthModal = () => {
     setAuthModal(!authModal);
   };
@@ -72,16 +68,6 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     return itemFound;
   };
   const today = new Date();
-  const startOfWeek = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() - today.getDay()
-  );
-  const endOfWeek = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() - today.getDay() + 6
-  );
 
   const streams = userStreams;
   console.log(userStreams);
@@ -159,7 +145,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                   ) : (
                     <>
                       {streams.map((webinaritem) => {
-                        console.log(webinaritem);
+                        console.log(webinaritem, themeData);
                         // Use appropriate type for `webinaritem`
                         return (
                           <div
@@ -171,10 +157,18 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                                   ?.coursecardhasShadow === true
                                   ? "0px 7px 29px 0px rgba(100, 100, 111, 0.2)"
                                   : "none",
+                              backgroundColor:
+                                themeData.themestyles.secondarybackgroundcolor,
                             }}
                           >
                             <div className="item-img-container">
-                              <Link to={`/live/preview/${webinaritem._id}`}>
+                              <Link
+                                to={
+                                  webinaritem.fee > 0
+                                    ? `/live/preview/${webinaritem._id}`
+                                    : `/livewebinar/watch/${webinaritem.streamKey}`
+                                }
+                              >
                                 <img
                                   src={webinaritem.thumbnail}
                                   alt="thumbnail img"
@@ -189,7 +183,13 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                               }}
                               className="course-item__details-container"
                             >
-                              <Link to={`live/preview/${webinaritem._id}`}>
+                              <Link
+                                to={
+                                  webinaritem.fee > 0
+                                    ? `/live/preview/${webinaritem._id}`
+                                    : `/livewebinar/watch/${webinaritem.streamKey}`
+                                }
+                              >
                                 <div
                                   style={{
                                     color:
@@ -234,9 +234,8 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                               </div> */}
                               <div
                                 style={{
-                                  color:
-                                    themeData.themedefaultstyles
-                                      ?.coursecardtextcolor,
+                                  color: "#fff",
+
                                   fontFamily:
                                     themeData.themedefaultstyles?.fontfamily,
                                 }}
@@ -281,7 +280,11 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                                     </Link>
                                   ) : (
                                     <Link
-                                      to={`/live/preview/${webinaritem._id}`}
+                                      to={
+                                        webinaritem.fee > 0
+                                          ? `/live/preview/${webinaritem._id}`
+                                          : `/livewebinar/watch/${webinaritem.streamKey}`
+                                      }
                                       style={{ marginRight: "1rem" }}
                                     >
                                       <Button
@@ -301,25 +304,6 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                                       </Button>
                                     </Link>
                                   ))}
-                                {/* <Link
-                                  to={`/live/preview/${webinaritem._id}`}
-                                  style={{ marginRight: "1rem" }}
-                                >
-                                  <Button
-                                    style={{
-                                      backgroundColor:
-                                        themeData.themestyles.buttontextcolor,
-                                      borderRadius:
-                                        themeData.themestyles
-                                          .buttonborderradius,
-                                      color:
-                                        themeData.themestyles
-                                          .buttonbackgroundcolor,
-                                    }}
-                                  >
-                                    Get Access{" "}
-                                  </Button>
-                                </Link> */}
                               </div>
                             </div>
                             {webinaritem.isLive && (

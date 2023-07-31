@@ -4,6 +4,10 @@ import axios from "axios";
 import { Col, Container, Row, Button, Card, Spinner, Modal } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import bellicon from "../../../images/flat-yellow-bell.png";
+import pollSvg from "../../../images/poll-svg.svg";
+import quizSvg from "../../../images/quiz-svg.svg";
+import plusSvg from "../../../images/plus-svg.svg";
+
 import { useAlert } from "react-alert";
 import DashboardNavbar from "../DashboardNavbar";
 
@@ -12,6 +16,9 @@ import { Link } from "react-router-dom";
 
 function LiveWebinar({ school, getSchool }) {
   const [userStreams, setUserStreams] = useState(null);
+  const [filterState, setFilterState] = useState("");
+  const [sortState, setSortState] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [instantWebinar, setInstantWebinar] = useState(false);
   const [menuIndex, setMenuIndex] = useState(null);
@@ -22,12 +29,9 @@ function LiveWebinar({ school, getSchool }) {
   const alert = useAlert();
 
   const handlePublishLive = async (id) => {
-    // setLoading(true);
     let res = await axios.put(`/api/v1/livewebinar/publish/${id}`);
     if (res) {
       getWebinars();
-      // setLoading(false);
-
       alert.show("Classroom updated");
     } else {
       alert.show("error in publishing");
@@ -37,14 +41,20 @@ function LiveWebinar({ school, getSchool }) {
   const getWebinars = async () => {
     setLoading(true);
 
-    let res = await axios.get("/api/v1/livewebinar/streams");
+    // let res = await axios.get(`/api/v1/livewebinar/streams/${filterState}`);
+    const res = await axios.get(
+      `/api/v1/livewebinar/streams?filter=${filterState}`
+    );
+
     if (res) {
       setUserStreams(res.data.streams);
+      console.log(res);
       setLoading(false);
     } else {
       console.log("error");
     }
   };
+
   function copyText(textToCopy) {
     navigator.clipboard
       // .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
@@ -60,6 +70,7 @@ function LiveWebinar({ school, getSchool }) {
       type: "success",
     });
   }
+
   const handleWebinarRemoval = async (id) => {
     try {
       const response = await axios.delete(`/api/v1/livewebinar/remove/${id}`, {
@@ -79,10 +90,54 @@ function LiveWebinar({ school, getSchool }) {
     }
   };
   const today = new Date();
+
   const streams = userStreams?.filter((stream) => {
     const streamDate = new Date(stream.startTime);
     return streamDate.toDateString() === today.toDateString();
   });
+  const handleSort = () => {
+    const sortFunction = (a, b) => {
+      switch (sortState) {
+        case "title":
+          if (a.title !== b.title) {
+            return a.title.localeCompare(b.title); // Sort by the "title" property in ascending order
+          }
+          break;
+
+        case "startTime":
+          return new Date(a.startTime) - new Date(b.startTime); // Sort by the "startTime" property in ascending order
+
+        default:
+          break;
+      }
+    };
+
+    return sortFunction;
+  };
+  userStreams?.sort(handleSort());
+  const handleStreamFilter = (value) => {
+    switch (value) {
+      case "unPublished":
+        return userStreams?.filter((stream) => {
+          return !stream["isPublished"]; // Here, `value` should be a valid property name of the stream object
+        });
+
+      case "NotRecurring":
+        return userStreams?.filter((stream) => {
+          return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
+        });
+
+      case "":
+        return userStreams ? userStreams : [];
+
+      default:
+        return userStreams?.filter((stream) => {
+          return stream[value]; // Here, `value` should be a valid property name of the stream object
+        });
+    }
+  };
+
+  // isPublished
 
   function handleTimeDisplay(time) {
     const timestamp = new Date(time);
@@ -126,7 +181,7 @@ function LiveWebinar({ school, getSchool }) {
     // getSchool();
 
     getWebinars();
-  }, []);
+  }, [filterState]);
 
   return (
     <div className="dashboard-layout">
@@ -142,7 +197,7 @@ function LiveWebinar({ school, getSchool }) {
                 <div className="page-title">
                   <div className="page-title__text">Tuturly Classroom</div>
                   <div className="page-title_cta">
-                    <Link to="/dashboard/livewebinar/create">
+                    <Link to="/dashboard/livewebinar/setup">
                       <Button className="page-title_cta-btn">
                         <i className="fas fa-plus mr-2"></i> Start a new class
                       </Button>
@@ -185,10 +240,73 @@ function LiveWebinar({ school, getSchool }) {
                       </div>
                     );
                   })}
+
+                  <p className="page-title__text">Classroom Resources </p>
+                  {/* <div className="single-resource-wrapper">
+                      <div className="single-resource">
+                        <div className="single-resource-img">
+                          <img src={quizSvg} alt="" />
+                        </div>
+                        <p>Quizzes</p>
+
+                      </div>
+                    </div>
+                    <div className="single-resource-wrapper">
+                      <div className="single-resource">
+                        <div className="single-resource-img">
+                          <img src={pollSvg} alt="" />
+                        </div>
+                      </div>
+                      <p>Polls</p>
+
+                    </div>
+                    <div className="single-resource-wrapper">
+                      <div className="single-resource">
+                        <div className="single-resource-img">
+                          <img src={plusSvg} alt="" />
+                        </div>
+                        <p>Add new resource</p>
+                      </div>
+                    </div> */}
+                  <div className="classroom-resources">
+                    <Link
+                      to="/dashboard/livewebinar/resource/quiz"
+                      className="single-resource"
+                    >
+                      <div className="single-resource">
+                        <div className="single-resource-img">
+                          <img src={quizSvg} alt="" />
+                        </div>
+                        <p>Quizzes</p>
+                      </div>
+                    </Link>
+                    <Link
+                      to="/dashboard/livewebinar/resource/poll"
+                      className="single-resource"
+                    >
+                      <div className="single-resource">
+                        <div className="single-resource-img">
+                          <img src={pollSvg} alt="" />
+                        </div>
+                        <p>Polls</p>
+                      </div>
+                    </Link>
+                    <Link
+                      to="/dashboard/livewebinar/resource/add"
+                      className="single-resource"
+                    >
+                      <div className="single-resource">
+                        <div className="single-resource-img">
+                          <img src={plusSvg} alt="" />
+                        </div>
+                        <p>Add new resource</p>
+                      </div>
+                    </Link>
+                  </div>
                   <div className="card-title">
                     <p className="page-title__text">Upcoming Webinars </p>
-                    {/* {userStreams?.length >= 3 && ( */}
-                    {userStreams?.length > 3 && (
+
+                    {handleStreamFilter(filterState)?.length > 3 && (
                       <span
                         onClick={() => {
                           setViewMore(!viewMore);
@@ -200,23 +318,75 @@ function LiveWebinar({ school, getSchool }) {
                     )}
                   </div>
                   <div className="card-content">
+                    <div className="table-sort">
+                      <div className="filter-parent">
+                        <p>Filter by</p>
+                        <div className="select-wrapper">
+                          <select
+                            onChange={(e) => {
+                              setFilterState(e.target.value);
+                            }}
+                          >
+                            {/* {filterState === "" && (
+                            <option value="" hidden={!filterState}>
+                              Filter
+                            </option>
+                          )} */}
+                            <option value="" hidden>
+                              {" "}
+                              {filterState === "" ? "Filter" : ""}
+                            </option>
+
+                            <option value="isPublished">Published</option>
+                            <option value="unPublished">Unpublished</option>
+                            <option value="isRecurring">Recurring</option>
+                            <option value="NotRecurring">One Off</option>
+
+                            {/* <option value=""> {filterState === '' ? "Filter" : 'Clear Filter'}</option> */}
+
+                            {filterState !== "" && (
+                              <option value="">Clear Filter</option>
+                            )}
+                          </select>
+                        </div>
+                      </div>
+                      <div
+                        className="filter-parent"
+                        style={{ alignItems: "flex-end" }}
+                      >
+                        <p>Sort by</p>
+                        <div className="select-wrapper">
+                          <select
+                            onChange={(e) => {
+                              setSortState(e.target.value);
+                            }}
+                          >
+                            <option>Sort</option>
+                            <option value="title">Title</option>
+                            <option value="startTime">Start Time</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
                     <div className="table-heading">
                       <p className="first">Time</p> <p>Title</p>
                       <p>Status</p>
-                      <p>...</p>
+                      <p>Action</p>
                     </div>
+
                     {loading ? (
                       // <p>Loading animation...</p>
                       <div className="table-body-empty">
                         <Spinner />
                       </div>
-                    ) : userStreams?.length < 1 ? (
+                    ) : handleStreamFilter(filterState)?.length < 1 ? (
                       <div className="table-body-empty">
                         <p>You have no upcoming webinars.</p>
                       </div>
                     ) : (
                       // userStreams.map((item, index) => {
-                      userStreams.map((item, index) => {
+                      handleStreamFilter(filterState).map((item, index) => {
+                        console.log(item);
                         return (
                           <>
                             <div
@@ -321,9 +491,13 @@ function LiveWebinar({ school, getSchool }) {
                                   index > 2 && !viewMore ? "none" : "flex",
 
                                 width: viewMore
-                                  ? index === userStreams.length - 1 && "100%"
+                                  ? index ===
+                                      handleStreamFilter(filterState).length -
+                                        1 && "100%"
                                   : (index === 2 ||
-                                      index === userStreams.length - 1) &&
+                                      index ===
+                                        handleStreamFilter(filterState).length -
+                                          1) &&
                                     "100%",
                               }}
                             />
@@ -332,7 +506,7 @@ function LiveWebinar({ school, getSchool }) {
                       })
                     )}
                     <div className="webinar-button-wrapper">
-                      <Link to="/dashboard/livewebinar/create">
+                      <Link to="/dashboard/livewebinar/setup">
                         <Button className="page-title_cta-btn">
                           <i className="fas fa-plus mr-2"></i> Start a new class
                         </Button>

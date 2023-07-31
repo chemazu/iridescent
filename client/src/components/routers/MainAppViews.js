@@ -56,6 +56,8 @@ import CreateLiveWebinar from "../dashboard/live-webinar/CreateLiveWebinar";
 import Stream from "../dashboard/live-webinar/Stream";
 import PresenterValidation from "../dashboard/live-webinar/PresenterValidation";
 import EditLiveWebinar from "../dashboard/live-webinar/EditLiveWebinar";
+import ChooseWebinarType from "../dashboard/live-webinar/ChooseWebinarType";
+import CreateResource from "../dashboard/live-webinar/CreateResource";
 
 export const MainAppViews = () => {
   return (
@@ -122,6 +124,16 @@ export const MainAppViews = () => {
           exact
           path="/dashboard/livewebinar/stream/:roomid"
           component={PresenterValidation}
+        />
+        <PrivateRoute
+          exact
+          path="/dashboard/livewebinar/setup"
+          component={ChooseWebinarType}
+        />
+        <PrivateRoute
+          exact
+          path="/dashboard/livewebinar/resource/:type"
+          component={CreateResource}
         />
         <PrivateRoute exact path="/dashboard/products" component={Products} />
         <PrivateRoute

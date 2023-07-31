@@ -91,6 +91,8 @@ var _logvisit = _interopRequireDefault(require("./routes/logvisit"));
 
 var _tutor = _interopRequireDefault(require("./routes/tutor"));
 
+var _classroomresources = _interopRequireDefault(require("./routes/classroomresources"));
+
 var _livewebinar = _interopRequireDefault(require("./routes/livewebinar"));
 
 var _Livewebinar = _interopRequireDefault(require("./models/Livewebinar"));
@@ -408,6 +410,7 @@ app.use("/api/v1/rootcategory", _rootcategory.default);
 app.use("/api/v1/log-visit", _logvisit.default);
 app.use("/api/v1/tutor", _tutor.default);
 app.use("/api/v1/livewebinar", _livewebinar.default);
+app.use("/api/v1/classroomresource", _classroomresources.default);
 app.use("/api/v1/studentwebinar", _studentwebinar.default);
 
 const root = require("path").join(__dirname, "../client", "build"); // block of code come's after application routes

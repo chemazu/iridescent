@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useRef } from "react";
 import { useDispatch, connect } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
-
 import axios from "axios";
 import { useAlert } from "react-alert";
 import setAuthToken from "../../../utilities/setAuthToken";
@@ -73,7 +72,7 @@ function CreateLiveWebinar({ school }) {
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
   };
-  const domain = process.env.REACT_APP_CURRENT_URL;
+
   const handleDateChange = (e) => {
     const selectedDate = new Date(e.target.value);
     const currentDate = new Date();
@@ -170,9 +169,7 @@ function CreateLiveWebinar({ school }) {
   function copyText(textToCopy) {
     navigator.clipboard
       // .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
-      .writeText(
-        `https://${school.name}.tuturlybeta.com/live/preview/${textToCopy}`
-      )
+      .writeText(`${getSchoolUrl(school.name)}/${textToCopy}`)
 
       .then(() => {})
       .catch((error) => {
@@ -244,7 +241,14 @@ function CreateLiveWebinar({ school }) {
         .post("/api/v1/livewebinar", body, config)
         .then((res) => {
           console.log(res);
-          setStreamLink(res.data.id);
+
+          // check fee
+          // decide what to update streamlink as
+          setStreamLink(
+            res.fee > 0
+              ? `live/preview/${res.data._id}`
+              : `livewebinar/watch/${res.data.streamKey}`
+          );
           dispatch(stopLoading());
 
           setShowModal(true);
@@ -393,7 +397,8 @@ function CreateLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {`https://${school.name}.tuturlybeta.com/live/preview/${streamLink}`}
+                    {getSchoolUrl(school.name)}/${streamLink}
+
                   </p>
                 </ModalBody>
                 <ModalFooter>
@@ -432,7 +437,7 @@ function CreateLiveWebinar({ school }) {
                   </div>
                 </div>
                 <Card className="webinar-container">
-                  <Link to="/dashboard/livewebinar">
+                  <Link to="/dashboard/livewebinar/setup">
                     <p>Back</p>
                   </Link>
                   <form className="webinarform">
