@@ -1,25 +1,37 @@
-import React, { useState, useEffect } from "react";
-import { Col, Container, Row, Button, Card, Modal } from "reactstrap";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Col,
+  Container,
+  Row,
+  Button,
+  Card,
+  Modal,
+  ModalHeader,
+  ModalFooter,
+} from "reactstrap";
 import DashboardNavbar from "../DashboardNavbar";
 import "../../../custom-styles/dashboard/choose-live-webinar.css";
 import pollSvg from "../../../images/poll-svg.svg";
 import quizSvg from "../../../images/quiz-svg.svg";
 import { useParams } from "react-router-dom";
-import { useDispatch, connect } from "react-redux";
+import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useAlert } from "react-alert";
 import axios from "axios";
+import { Link } from "react-router-dom/cjs/react-router-dom.min";
 
 export default function CreateResource() {
   const { type } = useParams();
   const dispatch = useDispatch();
+  const [page, setPage] = useState(1);
   const [resourceType, setResourceType] = useState("");
   const [answers, setAnswers] = useState([]);
   const [viewDuration, setViewDuration] = useState(false);
   const [editStat, setEditStat] = useState(false);
-  const [resourceId, setResourceId] = useState("");
+  const [deleteModal, setDeleteModal] = useState(false);
 
+  const [resourceId, setResourceId] = useState("");
   const alert = useAlert();
   const [quizStatus, setQuizStatus] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
@@ -35,7 +47,26 @@ export default function CreateResource() {
   const [pollStatus, setPollStatus] = useState(false);
   const [pollTitle, setPollTitle] = useState("");
   const [pollDuration, setPollDuration] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
 
+  const observer = useRef();
+
+  const lastBookElementRef = useCallback(
+    (node) => {
+      // if (loading) return;
+      if (observer.current) observer.current.disconnect();
+      observer.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setPage((page) => {
+            return page + 1;
+          });
+        }
+      });
+      if (node) observer.current.observe(node);
+    },
+    // eslint-disable-next-line
+    [loading]
+  );
   const handlePollOptionChange = (index, event) => {
     if (questionNumber > totalQuestion) {
       const newOptions = [...pollOptions];
@@ -308,24 +339,49 @@ export default function CreateResource() {
         },
       };
       dispatch(startLoading());
-      console.log("dsd");
-      await axios
-        .post("/api/v1/classroomresource/quiz", JSON.stringify(body), config)
-        .then((res) => {
-          console.log(res);
-          dispatch(stopLoading());
-          setAnswers([]);
-          setQuizHolder([]);
-          setPollTitle("");
-          setPollOptions(["", "", "", ""]);
-          setDurationValue("");
-          setDurationUnit("secs");
-          setTotalQuestion(0);
-          setQuestionNumber(1);
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+
+      if (editStat) {
+        await axios
+          .put(
+            `/api/v1/classroomresource/${resourceId}`,
+            JSON.stringify(body),
+            config
+          )
+          .then((res) => {
+            console.log(res);
+            dispatch(stopLoading());
+            alert.show("Quiz Edited");
+            setAnswers([]);
+            setQuizHolder([]);
+            setPollTitle("");
+            setPollOptions(["", "", "", ""]);
+            setDurationValue("");
+            setDurationUnit("secs");
+            setTotalQuestion(0);
+            setQuestionNumber(1);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      } else {
+        await axios
+          .post("/api/v1/classroomresource/quiz", JSON.stringify(body), config)
+          .then((res) => {
+            console.log(res);
+            dispatch(stopLoading());
+            setAnswers([]);
+            setQuizHolder([]);
+            setPollTitle("");
+            setPollOptions(["", "", "", ""]);
+            setDurationValue("");
+            setDurationUnit("secs");
+            setTotalQuestion(0);
+            setQuestionNumber(1);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
     } else {
       console.log("dsd2");
 
@@ -356,7 +412,7 @@ export default function CreateResource() {
     setAnswers([]);
     setQuestionNumber(1);
   };
-  const handleResourceEdit = async (id) => {
+  const handlePollEdit = async (id) => {
     dispatch(startLoading());
     setEditStat(true);
     setResourceId(id);
@@ -373,16 +429,80 @@ export default function CreateResource() {
       dispatch(stopLoading());
 
       //
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+    }
+  };
+  const handleQuizEdit = async (id) => {
+    dispatch(startLoading());
+    setEditStat(true);
+    setResourceId(id);
+
+    try {
+      const response = await axios.get(`/api/v1/classroomresource/${id}`);
+      console.log(response.data);
+      const {
+        durationInSec,
+        quizHolder: quizHolderData,
+        answers: answersData,
+      } = response?.data;
+
+      console.log(durationInSec, quizHolderData);
+      // handle duration unit
+      setDurationValue(durationInSec);
+      setQuizHolder(quizHolderData);
+      setAnswers(answersData);
+      setPollTitle(quizHolderData[quizHolderData.length - 1].question);
+      setPollOptions(quizHolderData[quizHolderData.length - 1].options);
+      setTotalQuestion(quizHolderData.length);
+      setQuestionNumber(quizHolderData.length);
+
+      // setDurationValue(durationInSec);
+      // setPollTitle(quizHolder[questionNumber].question);
+      // setPollOptions(quizHolder[questionNumber].options);
+
+      setQuizStatus(true);
+      dispatch(stopLoading());
+
+      //
+    } catch (error) {
+      // dispatch(stopLoading());
+    }
+  };
+  const handleDeleteModal = (id) => {
+    setDeleteModal(true);
+    setResourceId(id);
+  };
+  const handleDeleteResource = async () => {
+    setDeleteModal(false);
+
+    dispatch(startLoading());
+
+    try {
+      const response = await axios.delete(
+        `/api/v1/classroomresource/${resourceId}`
+      );
+      if (response) {
+        dispatch(stopLoading());
+      }
+    } catch (error) {
+      dispatch(stopLoading());
+    }
   };
   useEffect(() => {
     const fetchResources = async () => {
       try {
+        setLoading(true);
         const response = await axios.get(
-          `/api/v1/classroomresource/creator-resources/${type}`
+          `/api/v1/classroomresource/creator-resources/${type}?page=${page}`
         );
-        setResources(response.data);
+        console.log(response);
+        setResources(response.data.resources);
         setLoading(false);
+        // console.log(response.data.resources.totalPages > response.data.resources.currentPage);
+
+        // setHasMore(response.data.resources.length > 0);
+        // setHasMore(response.data.resources.totalPages > response.data.resources.currentPage);
       } catch (error) {
         console.error("Error fetching resources:", error);
         setLoading(false);
@@ -390,14 +510,40 @@ export default function CreateResource() {
     };
 
     fetchResources();
-  }, []);
-  const filteredResource = resources.filter((item) => item.type === type);
+  });
+  const filteredResource = resources?.filter((item) => item.type === type);
 
   return (
     <div className="dashboard-layout">
       <Container fluid>
         <Row>
           <DashboardNavbar />
+          <Modal isOpen={deleteModal}>
+            <ModalHeader>
+              Are you sure you want to delete this resource
+            </ModalHeader>
+
+            <ModalFooter>
+              <div className="button-wrapper">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setDeleteModal(false);
+                  }}
+                  className="cancel"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    handleDeleteResource();
+                  }}
+                >
+                  Delete
+                </Button>
+              </div>
+            </ModalFooter>
+          </Modal>
           <Modal isOpen={pollDuration} className="confirm-poll-modal">
             <div className="top">
               <h4
@@ -681,7 +827,7 @@ export default function CreateResource() {
                   style={{ width: "100%" }}
                   onClick={handleCreateQuiz}
                 >
-                  Create
+                  {editStat ? "Edit" : "Create"}
                 </Button>
               </form>
             </div>
@@ -783,7 +929,28 @@ export default function CreateResource() {
             <div className="live-webinar">
               <div className="live-webinar-content">
                 <div className="page-title">
-                  <div className="page-title__text">Tuturly Classroom</div>
+                  <div
+                    className="page-title__text"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      color: "#000",
+                    }}
+                  >
+                    {" "}
+                    <Link
+                      to="/dashboard/livewebinar"
+                      style={{
+                        color: "#000",
+                      }}
+                    >
+                      <i
+                        class="fas fa-less-than"
+                        style={{ fontSize: "16px", paddingRight: "5px" }}
+                      ></i>
+                      Tuturly Classroom
+                    </Link>
+                  </div>
                   <div className="page-title_cta"></div>
                 </div>
 
@@ -800,7 +967,11 @@ export default function CreateResource() {
                         const { type, timeStamp, quizHolder, title, _id } =
                           item;
                         return (
-                          <div className="single-resource-card" key={index}>
+                          <div
+                            className="single-resource-card"
+                            key={index}
+                            ref={lastBookElementRef}
+                          >
                             <div className="resource-top">
                               <p className="page-title__text">
                                 {typeText} 0{index + 1}
@@ -814,14 +985,27 @@ export default function CreateResource() {
                               <p>{formatTimeAndDate(timeStamp)[0]}</p>{" "}
                               <p>{formatTimeAndDate(timeStamp)[1]}</p>
                               <div>
-                                <i
-                                  className="fa fa-pencil"
-                                  onClick={() => {
-                                    handleResourceEdit(_id);
-                                  }}
-                                ></i>
+                                {type === "poll" && (
+                                  <i
+                                    className="fa fa-pencil"
+                                    onClick={() => {
+                                      handlePollEdit(_id);
+                                    }}
+                                  ></i>
+                                )}
+                                {type === "quiz" && (
+                                  <i
+                                    className="fa fa-pencil"
+                                    onClick={() => {
+                                      handleQuizEdit(_id);
+                                    }}
+                                  ></i>
+                                )}
                                 <i
                                   className="fa fa-trash"
+                                  onClick={() => {
+                                    handleDeleteModal(_id);
+                                  }}
                                   style={{ marginLeft: ".5rem" }}
                                 ></i>
                               </div>
@@ -836,7 +1020,7 @@ export default function CreateResource() {
                             setQuizStatus(true);
                           }}
                         >
-                          <p>Click Here to Create New {typeText}</p>
+                          <p>Click here to create new {typeText}</p>
                         </div>
                       )}
                       {type.toLowerCase() === "poll" && (
@@ -846,7 +1030,7 @@ export default function CreateResource() {
                             setPollStatus(true);
                           }}
                         >
-                          <p>Click Here to Create New {typeText}</p>
+                          <p>Click here to create new {typeText}</p>
                         </div>
                       )}
                     </div>

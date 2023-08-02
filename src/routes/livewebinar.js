@@ -67,12 +67,14 @@ router.post(
       const creatorSchool = await School.findOne({ createdBy: req.user.id });
       const school = creatorSchool._id;
       // the dummy image used as a placeholder for instant webinar  is a png file
-      const fileType = category=== "instant" ?`.png`:
-        `.${
-          req.file.originalname.split(".")[
-            req.file.originalname.split(".").length - 1
-          ]
-        }` 
+      const fileType =
+        category === "instant"
+          ? `.png`
+          : `.${
+              req.file.originalname.split(".")[
+                req.file.originalname.split(".").length - 1
+              ]
+            }`;
 
       const imageToBeUploaded = dataUri(`${fileType}`, req.file.buffer).content;
       const uploadResponse = await cloudinary.v2.uploader.upload(
@@ -526,7 +528,10 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
   if (!streams) {
     return res.json({ error: "Stream not found" });
   }
-  res.json({ streams });
+  let publishedStreams = streams.filter((item) => {
+    return item.isPublished;
+  });
+  res.json({ streams: publishedStreams });
 });
 
 router.get("/streamdetails/:streamId", async (req, res) => {

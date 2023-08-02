@@ -38,6 +38,11 @@
 .instant-webinar-options {
   padding: 3rem 4rem;
 }
+.instant-webinar-options .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .interactive-buttons .selected {
   border: 5px solid var(--site-theme-color);
 }
@@ -56,6 +61,9 @@
 }
 .single-resource-card .page-title__text {
   margin-bottom: 1rem;
+}
+.single-resource-card .page-title__text:hover {
+  text-decoration: underline;
 }
 .single-resource-card p {
   margin: 0;

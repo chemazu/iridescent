@@ -1163,6 +1163,15 @@
   font-size: 18px;
   color: #000;
 }
+.save-resource {
+  display: flex;
+  align-items: center;
+  padding: 0 29%;
+  justify-content: space-between;
+}
+.save-resource p {
+  margin-bottom: 0;
+}
 .watch-webinar-content .page-title {
   display: flex;
   flex-direction: row-reverse;
@@ -1430,18 +1439,18 @@
 
 .classroom-resources .single-resource {
   width: 100%;
-text-align: center;
-display: flex;
-flex-direction: column;
-align-items: center;
-min-width: fit-content;
-color: #000;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: fit-content;
+  color: #000;
 }
 .classroom-resources .single-resource:hover {
- cursor: pointer;
+  cursor: pointer;
 }
 .classroom-resources .single-resource p {
-  padding-top: .5rem;
+  padding-top: 0.5rem;
 }
 .classroom-resources .single-resource-img {
   padding: 20% 35%;

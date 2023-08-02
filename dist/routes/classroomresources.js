@@ -16,6 +16,7 @@ var _School = _interopRequireDefault(require("../models/School"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const router = (0, _express.Router)();
+const ITEMS_PER_PAGE = 3;
 router.post("/:type", [_auth.default], async (req, res) => {
   const {
     type
@@ -93,20 +94,39 @@ router.get("/creator-resources/:type", [_auth.default], async (req, res) => {
   const {
     type
   } = req.params;
+  const page = parseInt(req.query.page) || 1;
 
   try {
-    const resources = await _ClassroomResource.default.find({
+    // const resources = await ClassroomResource.find({ creator, type });
+    // if (!resources.length) {
+    //   return res
+    //     .status(404)
+    //     .json({ message: "No resources found for the creator." });
+    // }
+    const totalResources = await _ClassroomResource.default.countDocuments({
       creator,
       type
     });
+    console.log(totalResources, "trs");
+    const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
+    const resources = await _ClassroomResource.default.find({
+      creator,
+      type
+    }).skip((page - 1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
 
     if (!resources.length) {
-      return res.status(404).json({
+      return res.json({
         message: "No resources found for the creator."
       });
-    }
+    } // res.json(resources);
 
-    res.json(resources);
+
+    res.json({
+      totalResources,
+      totalPages,
+      currentPage: page,
+      resources
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -198,6 +218,31 @@ router.get("/:resourceId", async (req, res) => {
     console.error(error);
     res.status(500).json({
       error: "An error occurred while fetching the resource."
+    });
+  }
+});
+router.delete("/:resourceId", [_auth.default], async (req, res) => {
+  const {
+    resourceId
+  } = req.params;
+
+  try {
+    const deletedResource = await _ClassroomResource.default.findByIdAndRemove(resourceId);
+
+    if (!deletedResource) {
+      return res.status(404).json({
+        error: "Resource not found."
+      });
+    }
+
+    res.json({
+      message: "Resource deleted successfully",
+      deletedResource
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "An error occurred while deleting the resource."
     });
   }
 });

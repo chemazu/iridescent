@@ -3,7 +3,17 @@ import React, { useEffect, useRef, useState } from "react";
 import Peer from "peerjs";
 import axios from "axios";
 import socket from "../../../utilities/client-socket-connect";
-import { Col, Container, Row, Button, Card, Modal, Progress } from "reactstrap";
+import {
+  Col,
+  Container,
+  Row,
+  Button,
+  Card,
+  Modal,
+  Progress,
+  ModalHeader,
+  ModalFooter,
+} from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import smiley from "../../../images/emojisvg.svg";
 import { useAlert } from "react-alert";
@@ -15,15 +25,19 @@ import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
 import CountdownTimer from "./CountDownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
+import { useDispatch } from "react-redux";
+import { startLoading, stopLoading } from "../../../actions/appLoading";
 
 export default function Stream() {
   const { roomid } = useParams();
+  const dispatch = useDispatch();
+
   const myVideoRef = useRef();
   const peerRef = useRef();
   const screenStreamRef = useRef(null);
   const [audioDevices, setAudioDevices] = useState([]);
   const [videoDevices, setVideoDevices] = useState([]);
-
+  const [resources, setResources] = useState([]);
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
   const alert = useAlert();
@@ -46,6 +60,15 @@ export default function Stream() {
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attendies, setAttendies] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  const [resourceModal, setResourceModal] = useState(false);
+  const [resourceType, setResourceType] = useState("");
+  const [editStat, setEditStat] = useState(false);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [saveResource, setSaveResource] = useState(false);
+
+  const [resourceId, setResourceId] = useState("");
   const [audioVisuals, setAudioVisuals] = useState({
     video: true,
     audio: true,
@@ -211,7 +234,7 @@ export default function Stream() {
       alert.show("Can not Edit");
     }
   };
-  const handleCreatePoll = () => {
+  const handleCreatePoll = async () => {
     let durationInSec = convertToSeconds(durationValue, durationUnit);
     let newDefaultChat = [
       ...defaultChat,
@@ -223,7 +246,7 @@ export default function Stream() {
         durationInSec,
       },
     ];
- 
+
     // handle special chat
     setSpecialChat([
       // ...specialChat,
@@ -248,6 +271,65 @@ export default function Stream() {
       },
       roomid
     );
+    const body = {
+      type: "poll",
+      title: pollTitle,
+      options: pollOptions,
+      durationInSec,
+      timeStamp: Date.now(),
+    };
+
+    if (localStorage.getItem("token")) {
+      setAuthToken(localStorage.getItem("token"));
+    }
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+    if (editStat) {
+      dispatch(startLoading());
+      await axios
+        .put(
+          `/api/v1/classroomresource/${resourceId}`,
+          JSON.stringify(body),
+          config
+        )
+        .then((res) => {
+          console.log(res);
+          dispatch(stopLoading());
+          alert.show("Poll Edited");
+          setPollTitle("");
+          setPollOptions(["", "", "", ""]);
+          setDurationValue("");
+          setDurationUnit("secs");
+        })
+        .catch((error) => {
+          console.error(error);
+          alert.show("Poll not edited ,try again");
+        });
+    }
+    if (saveResource && !editStat) {
+      dispatch(startLoading());
+
+      await axios
+        .post("/api/v1/classroomresource/poll", JSON.stringify(body), config)
+        .then((res) => {
+          console.log(res);
+          dispatch(stopLoading());
+          alert.show("Poll saved to resources");
+
+          setPollTitle("");
+          setPollOptions(["", "", "", ""]);
+          setDurationValue("");
+          setDurationUnit("secs");
+        })
+        .catch((error) => {
+          console.error(error);
+          alert.show("Poll not submitted ,try again");
+        });
+    }
+
     let newIndex = newDefaultChat.length;
     socket.emit(
       "message",
@@ -272,7 +354,7 @@ export default function Stream() {
     setDurationValue("");
     setDurationUnit("secs");
   };
-  const handleQuizCreate = () => {
+  const handleQuizCreate = async () => {
     if (pollOptions.every((option) => option !== "") && pollTitle !== "") {
       // handle special chat
 
@@ -293,6 +375,7 @@ export default function Stream() {
         },
       ]);
       // setSpecialChat
+      let durationInSec = convertToSeconds(durationValue, durationUnit);
 
       setSpecialChat([
         {
@@ -304,7 +387,69 @@ export default function Stream() {
           submissionStatus: false,
         },
       ]);
+      let timeStamp = Date.now();
+      let body = {
+        quizHolder: newQuizHolder,
+        timeStamp,
+        type: "quiz",
+        answers,
+        durationInSec,
+      };
 
+      if (localStorage.getItem("token")) {
+        setAuthToken(localStorage.getItem("token"));
+      }
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      if (editStat) {
+        await axios
+          .put(
+            `/api/v1/classroomresource/${resourceId}`,
+            JSON.stringify(body),
+            config
+          )
+          .then((res) => {
+            console.log(res);
+            dispatch(stopLoading());
+            alert.show("Quiz Edited");
+            setAnswers([]);
+            setQuizHolder([]);
+            setPollTitle("");
+            setPollOptions(["", "", "", ""]);
+            setDurationValue("");
+            setDurationUnit("secs");
+            setTotalQuestion(0);
+            setQuestionNumber(1);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+      if (saveResource) {
+        dispatch(startLoading());
+
+        await axios
+          .post("/api/v1/classroomresource/quiz", JSON.stringify(body), config)
+          .then((res) => {
+            console.log(res);
+            dispatch(stopLoading());
+            setAnswers([]);
+            setQuizHolder([]);
+            setPollTitle("");
+            setPollOptions(["", "", "", ""]);
+            setDurationValue("");
+            setDurationUnit("secs");
+            setTotalQuestion(0);
+            setQuestionNumber(1);
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
       const newIndex = defaultChat.length;
 
       // let newAnswerHolder = { ...answerHolder, [newIndex]: answers };
@@ -324,7 +469,6 @@ export default function Stream() {
         questionControl: newIndex,
       };
       // convert duration to second
-      let durationInSec = convertToSeconds(durationValue, durationUnit);
 
       let timerData = {
         duration: durationInSec,
@@ -639,7 +783,6 @@ export default function Stream() {
 
   const removePollQuizFromChat = (index) => {
     setSpecialChat([]);
-
     setTimerHolder(false);
 
     socket.emit("special close", roomid);
@@ -729,7 +872,7 @@ export default function Stream() {
   useEffect(() => {
     socket.on("roomTimerTick", (roomTimer) => {
       setTimeLeft(roomTimer);
-   
+
       if (roomTimer === 600) {
         console.log(roomTimer, "fsd");
         setTimeOutModal(true);
@@ -781,7 +924,6 @@ export default function Stream() {
     roomid,
     quizResultHolder,
     quizSubmission,
-
     setQuizResultHolder,
   ]);
 
@@ -800,6 +942,7 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("timerTick", (remainingTime) => {
+      console.log(remainingTime);
       if (timerHolder) {
         let newTimeHolder = {
           ...timerHolder,
@@ -928,12 +1071,14 @@ export default function Stream() {
   // trigger intialize Peeer
 
   const handleTriggerLive = async () => {
-    let res = await axios.put(`/api/v1/livewebinar/live/${presenterDetails.id}`);
+    let res = await axios.put(
+      `/api/v1/livewebinar/live/${presenterDetails.id}`
+    );
     console.log(res);
   };
   const handleInitializePeer = () => {
     setStartController(true);
-    handleTriggerLive()
+    handleTriggerLive();
   };
 
   const toggleScreenSharing = () => {
@@ -973,7 +1118,172 @@ export default function Stream() {
         .catch((error) => console.error(error));
     }
   };
+  function formatTimeAndDate(timestamp) {
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
 
+    const dateObj = new Date(timestamp);
+    const hours = String(dateObj.getHours()).padStart(2, "0");
+    const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+    const month = months[dateObj.getMonth()];
+    const day = dateObj.getDate();
+
+    const formattedTime = `${hours}:${minutes}`;
+    const formattedDate = `${month} ${day}`;
+
+    return [formattedTime, formattedDate];
+  }
+  const handlePollEdit = async (id) => {
+    dispatch(startLoading());
+    setEditStat(true);
+    setResourceModal(false);
+    setResourceId(id);
+
+    try {
+      const response = await axios.get(`/api/v1/classroomresource/${id}`);
+      console.log(response.data);
+      const { title, options, durationInSec } = response?.data;
+      setPollTitle(title);
+      setPollOptions(options);
+      setDurationValue(durationInSec);
+      // handle duration unit
+      setPollStatus(true);
+      dispatch(stopLoading());
+
+      //
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+    }
+  };
+  const handleQuizEdit = async (id) => {
+    dispatch(startLoading());
+    setEditStat(true);
+    setResourceId(id);
+
+    try {
+      const response = await axios.get(`/api/v1/classroomresource/${id}`);
+      console.log(response.data);
+      const {
+        durationInSec,
+        quizHolder: quizHolderData,
+        answers: answersData,
+      } = response?.data;
+
+      console.log(durationInSec, quizHolderData);
+      // handle duration unit
+      setDurationValue(durationInSec);
+      setQuizHolder(quizHolderData);
+      setAnswers(answersData);
+      setPollTitle(quizHolderData[quizHolderData.length - 1].question);
+      setPollOptions(quizHolderData[quizHolderData.length - 1].options);
+      setTotalQuestion(quizHolderData.length);
+      setQuestionNumber(quizHolderData.length);
+
+      // setDurationValue(durationInSec);
+      // setPollTitle(quizHolder[questionNumber].question);
+      // setPollOptions(quizHolder[questionNumber].options);
+      setResourceModal(false);
+      setQuizStatus(true);
+      dispatch(stopLoading());
+
+      //
+    } catch (error) {
+      // dispatch(stopLoading());
+    }
+  };
+  const handleOpenResourceModal = async (type) => {
+    dispatch(startLoading());
+    try {
+      setLoading(true);
+
+      const response = await axios.get(
+        `/api/v1/classroomresource/creator-resources/${type}?page=${1}`
+      );
+      setResourceType(type);
+      setResources(response.data.resources);
+      dispatch(stopLoading());
+
+      setResourceModal(true);
+
+      setLoading(false);
+
+      // console.log(response.data.resources.totalPages > response.data.resources.currentPage);
+
+      // setHasMore(response.data.resources.totalPages > response.data.resources.currentPage);
+    } catch (error) {
+      console.error("Error fetching resources:", error);
+      setLoading(false);
+      dispatch(stopLoading());
+    }
+  };
+  const handlePollSelect = (item) => {
+    let { type, title, options, durationInSec } = item;
+    setSpecialChat([
+      {
+        user: 1,
+        type,
+        title,
+        options,
+        durationInSec,
+        submissionStatus: false,
+      },
+    ]);
+    socket.emit(
+      "specialchat",
+      {
+        user: presenterDetails.username || 1,
+        type,
+        title,
+        options,
+        timeStamp: Date.now(),
+        durationInSec,
+      },
+      roomid
+    );
+    let timerData = {
+      duration: durationInSec,
+      roomid,
+    };
+    socket.emit("startTimer", timerData);
+    setPollTitle("");
+    setPollOptions(["", "", "", ""]);
+    setDurationValue("");
+    setDurationUnit("secs");
+    setResourceModal(false);
+  };
+  const handleDeleteModal = (id) => {
+    setDeleteModal(true);
+    setResourceId(id);
+    setResourceModal(false);
+  };
+  const handleDeleteResource = async () => {
+    setDeleteModal(false);
+
+    dispatch(startLoading());
+
+    try {
+      const response = await axios.delete(
+        `/api/v1/classroomresource/${resourceId}`
+      );
+      if (response) {
+        dispatch(stopLoading());
+      }
+    } catch (error) {
+      dispatch(stopLoading());
+    }
+  };
   return (
     <div className="dashboard-layout">
       <Container fluid>
@@ -982,6 +1292,130 @@ export default function Stream() {
           <Col className="page-actions__col">
             <div className="live-webinar">
               <div className="stream-webinar-content">
+                <Modal isOpen={deleteModal}>
+                  <ModalHeader>
+                    Are you sure you want to delete this resource
+                  </ModalHeader>
+
+                  <ModalFooter>
+                    <div className="button-wrapper">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          setDeleteModal(false);
+                        }}
+                        className="cancel"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          handleDeleteResource();
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </ModalFooter>
+                </Modal>
+                <Modal isOpen={resourceModal}>
+                  <Card className="instant-webinar-options">
+                    <div className="top">
+                      {resourceType === "quiz" && (
+                        <p className="page-title__text">Your Quizzes</p>
+                      )}
+                      {resourceType === "poll" && (
+                        <p className="page-title__text">Your Polls</p>
+                      )}
+
+                      <h4
+                        onClick={() => {
+                          setResourceModal(false);
+                        }}
+                      >
+                        <i className="fa fa-times"></i>
+                      </h4>
+                    </div>
+                    <div className="resource-content">
+                      {resources?.map((item, index) => {
+                        const { type, timeStamp, quizHolder, title, _id } =
+                          item;
+                        return (
+                          <div className="single-resource-card" key={index}>
+                            <div className="resource-top">
+                              <p
+                                className="page-title__text"
+                                onClick={() => {
+                                  handlePollSelect(item);
+                                }}
+                              >
+                                {resourceType} 0{index + 1}
+                              </p>
+                              {type === "quiz" && (
+                                <p>{quizHolder?.length} Questions</p>
+                              )}
+                              {type === "poll" && <p>{title}</p>}
+                            </div>
+                            <div className="resource-bottom">
+                              <p>{formatTimeAndDate(timeStamp)[0]}</p>{" "}
+                              <p>{formatTimeAndDate(timeStamp)[1]}</p>
+                              <div>
+                                {type === "poll" && (
+                                  <i
+                                    className="fa fa-pencil"
+                                    onClick={() => {
+                                      handlePollEdit(_id);
+                                    }}
+                                  ></i>
+                                )}
+                                {type === "quiz" && (
+                                  <i
+                                    className="fa fa-pencil"
+                                    onClick={() => {
+                                      handleQuizEdit(_id);
+                                    }}
+                                  ></i>
+                                )}
+                                <i
+                                  className="fa fa-trash"
+                                  onClick={() => {
+                                    handleDeleteModal(_id);
+                                  }}
+                                  style={{ marginLeft: ".5rem" }}
+                                ></i>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {resourceType.toLowerCase() === "quiz" && (
+                        <div
+                          className="single-resource-card empty"
+                          onClick={() => {
+                            setResourceModal(false);
+
+                            setQuizStatus(true);
+                          }}
+                        >
+                          <p>Click here to create new Quiz</p>
+                        </div>
+                      )}
+                      {resourceType.toLowerCase() === "poll" && (
+                        <div
+                          className="single-resource-card empty"
+                          onClick={() => {
+                            setResourceModal(false);
+
+                            setPollStatus(true);
+                          }}
+                        >
+                          <p>Click here to create new poll</p>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                </Modal>
                 <Modal isOpen={timeOutModal}>
                   <div className="close-time-out">
                     <h4
@@ -1009,7 +1443,12 @@ export default function Stream() {
                         <i className="fa fa-times"></i>
                       </h4>
                     </div>
-                    <p className="poll-heading">Create Poll</p>
+
+                    {editStat ? (
+                      <p className="poll-heading">Edit Poll</p>
+                    ) : (
+                      <p className="poll-heading">Create Poll</p>
+                    )}
                     <form className="poll-form">
                       <div className="poll-item">
                         <p>Poll title</p>
@@ -1054,13 +1493,13 @@ export default function Stream() {
                             ) {
                               setPollStatus(false);
                               setPollDuration(true);
-                              setPollResultHolder([])
+                              setPollResultHolder([]);
                             } else {
                               alert.show("Please fill in all options.");
                             }
                           }}
                         >
-                          Create
+                          {editStat ? "Edit" : "Create"}
                         </Button>
                       </div>
                     </form>
@@ -1073,7 +1512,13 @@ export default function Stream() {
                         <i className="fa fa-times"></i>
                       </h4>
                     </div>
-                    <p className="poll-heading">Create Pop Quiz</p>
+
+                    {editStat ? (
+                      <p className="poll-heading">Edit Pop Quiz</p>
+                    ) : (
+                      <p className="poll-heading">Create Pop Quiz</p>
+                    )}
+
                     <form className="poll-form" onSubmit={handleQuizSubmit}>
                       {totalQuestion > 0 ? (
                         <select
@@ -1191,7 +1636,7 @@ export default function Stream() {
                         style={{ width: "100%" }}
                         onClick={handleCreateQuiz}
                       >
-                        Create
+                        {editStat ? "Edit" : "Create"}
                       </Button>
                     </form>
                   </div>
@@ -1203,10 +1648,17 @@ export default function Stream() {
                       <i className="fa fa-times"></i>
                     </h4>
                   </div>
-                  <p className="confirm-heading">
-                    Are you sure you want to create this poll?
-                  </p>
+                  {editStat ? (
+                    <p className="confirm-heading">
+                      Are you sure you want to edit this poll?
+                    </p>
+                  ) : (
+                    <p className="confirm-heading">
+                      Are you sure you want to create this poll?
+                    </p>
+                  )}
                   <p className="confirm-heading">{pollTitle}</p>
+
                   <div className="poll-wrapper">
                     {pollOptions.map((option, index) => {
                       return (
@@ -1217,6 +1669,18 @@ export default function Stream() {
                       );
                     })}
                   </div>
+                  {!editStat && (
+                    <div className="save-resource">
+                      <input
+                        type="checkbox"
+                        onChange={() => {
+                          setSaveResource(!saveResource);
+                        }}
+                        value={saveResource}
+                      />
+                      <p>Save to classroom resource</p>
+                    </div>
+                  )}
                   <div className="button-wrapper">
                     <Button
                       onClick={() => {
@@ -1333,7 +1797,7 @@ export default function Stream() {
                     </Button>{" "}
                   </div>
                 </Modal>
-              
+
                 <Modal isOpen={quizConfirmation} className="confirm-poll-modal">
                   <div className="top">
                     <h4
@@ -1347,11 +1811,27 @@ export default function Stream() {
                       <i className="fa fa-times"></i>
                     </h4>
                   </div>
-                  <p className="confirm-heading">
-                    Are you sure you want to create this quiz?
-                  </p>
-                  <p className="confirm-heading">{pollTitle}</p>
 
+                  {editStat ? (
+                    <p className="confirm-heading">
+                      Are you sure you want to edit this quiz?
+                    </p>
+                  ) : (
+                    <p className="confirm-heading">
+                      Are you sure you want to create this quiz?
+                    </p>
+                  )}
+                  <p className="confirm-heading">{pollTitle}</p>
+                  <div className="save-resource">
+                    <input
+                      type="checkbox"
+                      onChange={() => {
+                        setSaveResource(!saveResource);
+                      }}
+                      value={saveResource}
+                    />
+                    <p>Save to classroom resource</p>
+                  </div>
                   <div className="button-wrapper">
                     <Button
                       onClick={() => {
@@ -2386,7 +2866,9 @@ export default function Stream() {
                       className="control-object"
                       onClick={() => {
                         if (!timerHolder) {
-                          setPollStatus(true);
+                          // setPollStatus(true);
+
+                          handleOpenResourceModal("poll");
                         } else {
                           alert.show("ASSESSMENT ONGOING");
                         }
@@ -2400,7 +2882,8 @@ export default function Stream() {
                       className="control-object"
                       onClick={() => {
                         if (!timerHolder) {
-                          setQuizStatus(true);
+                          // setQuizStatus(true);
+                          handleOpenResourceModal("quiz");
                         } else {
                           alert.show("ASSESSMENT ONGOING");
                         }

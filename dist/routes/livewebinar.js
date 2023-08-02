@@ -560,8 +560,11 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
     });
   }
 
+  let publishedStreams = streams.filter(item => {
+    return item.isPublished;
+  });
   res.json({
-    streams
+    streams: publishedStreams
   });
 });
 router.get("/streamdetails/:streamId", async (req, res) => {

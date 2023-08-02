@@ -3,7 +3,7 @@ import { Router } from "express";
 import ClassroomResource from "../models/ClassroomResource";
 import School from "../models/School";
 const router = Router();
-
+const ITEMS_PER_PAGE = 3;
 router.post("/:type", [auth], async (req, res) => {
   const { type } = req.params;
   const creator = req.user.id;
@@ -57,16 +57,37 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
   const creator = req.user.id;
   const { type } = req.params;
 
+  const page = parseInt(req.query.page) || 1;
+
   try {
-    const resources = await ClassroomResource.find({ creator, type });
+    // const resources = await ClassroomResource.find({ creator, type });
+    // if (!resources.length) {
+    //   return res
+    //     .status(404)
+    //     .json({ message: "No resources found for the creator." });
+    // }
+    const totalResources = await ClassroomResource.countDocuments({
+      creator,
+      type,
+    });
+    console.log(totalResources, "trs");
+    const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
+
+    const resources = await ClassroomResource.find({ creator, type })
+      .skip((page - 1) * ITEMS_PER_PAGE)
+      .limit(ITEMS_PER_PAGE);
 
     if (!resources.length) {
-      return res
-        .status(404)
-        .json({ message: "No resources found for the creator." });
+      return res.json({ message: "No resources found for the creator." });
     }
 
-    res.json(resources);
+    // res.json(resources);
+    res.json({
+      totalResources,
+      totalPages,
+      currentPage: page,
+      resources,
+    });
   } catch (error) {
     console.error(error);
     res
@@ -136,4 +157,29 @@ router.get("/:resourceId", async (req, res) => {
       .json({ error: "An error occurred while fetching the resource." });
   }
 });
+
+router.delete("/:resourceId", [auth], async (req, res) => {
+  const { resourceId } = req.params;
+
+  try {
+    const deletedResource = await ClassroomResource.findByIdAndRemove(
+      resourceId
+    );
+
+    if (!deletedResource) {
+      return res.status(404).json({ error: "Resource not found." });
+    }
+
+    res.json({
+      message: "Resource deleted successfully",
+      deletedResource,
+    });
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while deleting the resource." });
+  }
+});
+
 export default router;
