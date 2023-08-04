@@ -294,14 +294,17 @@ io.on("connection", (socket) => {
             let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
 
             if (liveWebinar) {
-              liveWebinar.timeleft = freeTimers[roomId];
-              liveWebinar.isLive = false;
+              // liveWebinar.timeleft = freeTimers[roomId];
+              // liveWebinar.isLive = false;
 
-              await liveWebinar.save();
+              // await liveWebinar.save();
+
               clearInterval(timerControl[roomId]);
               delete timerControl[roomId];
               delete pollQuizHolder[roomId];
               delete freeTimers[roomId];
+              await LiveWebinar.findByIdAndRemove(liveWebinar._id);
+
             }
           }
           delete newBroadcasterHolder[roomId];

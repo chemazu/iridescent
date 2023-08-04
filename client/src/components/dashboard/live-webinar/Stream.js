@@ -46,7 +46,7 @@ export default function Stream() {
   const [startController, setStartController] = useState(false);
   const [quizHolder, setQuizHolder] = useState([]);
   const [quizResultHolder, setQuizResultHolder] = useState([]);
-  const [allQuizHolder, setAllQuizHolderHolder] = useState({});
+  // const [allQuizHolder, setAllQuizHolderHolder] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [chatMessage, setChatMessage] = useState(null);
   const [pollStatus, setPollStatus] = useState(false);
@@ -67,6 +67,7 @@ export default function Stream() {
   const [editStat, setEditStat] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [saveResource, setSaveResource] = useState(false);
+  const [exitModal, setExitModal] = useState(false);
 
   const [resourceId, setResourceId] = useState("");
   const [audioVisuals, setAudioVisuals] = useState({
@@ -126,6 +127,9 @@ export default function Stream() {
       })
       .catch((error) => console.error(error));
   };
+  const handleExitStreamModal = () => {
+    setExitModal(!exitModal);
+  };
 
   const handleExitStream = () => {
     socket.emit("endstream", roomid);
@@ -156,6 +160,11 @@ export default function Stream() {
       setPeerHolder(null);
     }
     history.push("/dashboard/livewebinar");
+  
+
+
+    // Refresh the current page
+    // window.location.reload();
   };
   const getSchoolUrl = (schoolname) => {
     const host = window.location.host;
@@ -168,20 +177,51 @@ export default function Stream() {
       : `https://${schoolname}.${baseDomain}.com`;
   };
   function copyText() {
-    navigator.clipboard
-      .writeText(
-        `${getSchoolUrl(presenterDetails.school)}/live/preview/${
-          presenterDetails.id
-        }`
-      )
-      .then(() => {})
-      .catch((error) => {
-        console.error("Error copying text: ", error);
+    if (presenterDetails.fee === 0) {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(presenterDetails.school)}/livewebinar/watch/${roomid}`
+        )
+
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
       });
-    alert.show("Link Copied", {
-      type: "success",
-    });
+    } else {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(presenterDetails.school)}/live/preview/${
+            presenterDetails.id
+          }`
+        )
+
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
+      });
+    }
   }
+  // function copyText() {
+  //   navigator.clipboard
+  //     .writeText(
+  //       `${getSchoolUrl(presenterDetails.school)}/live/preview/${
+  //         presenterDetails.id
+  //       }`
+  //     )
+  //     .then(() => {})
+  //     .catch((error) => {
+  //       console.error("Error copying text: ", error);
+  //     });
+  //   alert.show("Link Copied", {
+  //     type: "success",
+  //   });
+  // }
   const validateWebinar = async () => {
     if (localStorage.getItem("tutorToken")) {
       setAuthToken(localStorage.getItem("tutorToken"));
@@ -197,6 +237,7 @@ export default function Stream() {
           avatar: res.data.avatar,
           id: res.data.id,
           school: res.data.school,
+          fee: res.data.fee,
         });
         setPlanname(res.data.planname);
 
@@ -220,7 +261,7 @@ export default function Stream() {
         correctCount++;
       }
     }
-    const percentCorrect = (correctCount / totalCount) * 100;
+    const percentCorrect = [correctCount, totalCount];
     return percentCorrect;
   };
   const handlePollTitleChange = (event) => {
@@ -357,23 +398,12 @@ export default function Stream() {
   const handleQuizCreate = async () => {
     if (pollOptions.every((option) => option !== "") && pollTitle !== "") {
       // handle special chat
-
       let newQuizHolder = [
         ...quizHolder,
         { question: pollTitle, options: pollOptions },
       ];
 
       setQuizHolder(newQuizHolder);
-      setDefaultChat([
-        ...defaultChat,
-        {
-          user: 1,
-          quizHolder: newQuizHolder,
-          type: "quiz",
-          timeStamp: Date.now(),
-          duration: { durationUnit, durationValue },
-        },
-      ]);
       // setSpecialChat
       let durationInSec = convertToSeconds(durationValue, durationUnit);
 
@@ -456,8 +486,8 @@ export default function Stream() {
 
       setAnswerHolder(answers);
       setAnswers([]);
-      let newAllQuizHolder = { ...allQuizHolder, [newIndex]: quizHolder };
-      setAllQuizHolderHolder(newAllQuizHolder);
+      // let newAllQuizHolder = { ...allQuizHolder, [newIndex]: quizHolder };
+      // setAllQuizHolderHolder(newAllQuizHolder);
       setQuizHolder([]);
 
       const messageData = {
@@ -513,8 +543,8 @@ export default function Stream() {
 
       setAnswerHolder(answers);
       setAnswers([]);
-      let newAllQuizHolder = { ...allQuizHolder, [newIndex]: quizHolder };
-      setAllQuizHolderHolder(newAllQuizHolder);
+      // let newAllQuizHolder = { ...allQuizHolder, [newIndex]: quizHolder };
+      // setAllQuizHolderHolder(newAllQuizHolder);
 
       const messageData = {
         user: 1,
@@ -1070,15 +1100,15 @@ export default function Stream() {
 
   // trigger intialize Peeer
 
-  const handleTriggerLive = async () => {
-    let res = await axios.put(
-      `/api/v1/livewebinar/live/${presenterDetails.id}`
-    );
-    console.log(res);
-  };
+  // const handleTriggerLive = async () => {
+  //   let res = await axios.put(
+  //     `/api/v1/livewebinar/live/${presenterDetails?.id}`
+  //   );
+  //   console.log(res);
+  // };
   const handleInitializePeer = () => {
     setStartController(true);
-    handleTriggerLive();
+    // handleTriggerLive();
   };
 
   const toggleScreenSharing = () => {
@@ -1230,38 +1260,75 @@ export default function Stream() {
   };
   const handlePollSelect = (item) => {
     let { type, title, options, durationInSec } = item;
-    setSpecialChat([
-      {
+    if (type === "poll") {
+      setSpecialChat([
+        {
+          user: 1,
+          type,
+          title,
+          options,
+          durationInSec,
+          submissionStatus: false,
+        },
+      ]);
+      socket.emit(
+        "specialchat",
+        {
+          user: presenterDetails.username || 1,
+          type,
+          title,
+          options,
+          timeStamp: Date.now(),
+          durationInSec,
+        },
+        roomid
+      );
+      let timerData = {
+        duration: durationInSec,
+        roomid,
+      };
+      socket.emit("startTimer", timerData);
+      setPollTitle("");
+      setPollOptions(["", "", "", ""]);
+      setDurationValue("");
+      setDurationUnit("secs");
+      setResourceModal(false);
+    } else {
+      let { type, durationInSec } = item;
+      setAnswerHolder(item.answers);
+      setSpecialChat([
+        {
+          user: 1,
+          quizHolder: item.quizHolder,
+          type: "quiz",
+          timeStamp: Date.now(),
+          submissionStatus: false,
+          duration: durationInSec,
+        },
+      ]);
+      let timerData = {
+        duration: durationInSec,
+        roomid,
+      };
+      const messageData = {
         user: 1,
-        type,
-        title,
-        options,
-        durationInSec,
-        submissionStatus: false,
-      },
-    ]);
-    socket.emit(
-      "specialchat",
-      {
-        user: presenterDetails.username || 1,
-        type,
-        title,
-        options,
+        quizHolder: item.quizHolder,
+        type: "quiz",
         timeStamp: Date.now(),
-        durationInSec,
-      },
-      roomid
-    );
-    let timerData = {
-      duration: durationInSec,
-      roomid,
-    };
-    socket.emit("startTimer", timerData);
-    setPollTitle("");
-    setPollOptions(["", "", "", ""]);
-    setDurationValue("");
-    setDurationUnit("secs");
-    setResourceModal(false);
+        duration: durationInSec,
+
+        questionControl: 1,
+      };
+      socket.emit("specialchat", messageData, roomid);
+
+      socket.emit("startTimer", timerData);
+      setResourceModal(false);
+
+      setPollTitle("");
+      setPollOptions(["", "", "", ""]);
+      setDurationValue("");
+      setDurationUnit("secs");
+    }
   };
   const handleDeleteModal = (id) => {
     setDeleteModal(true);
@@ -1292,6 +1359,36 @@ export default function Stream() {
           <Col className="page-actions__col">
             <div className="live-webinar">
               <div className="stream-webinar-content">
+                <Modal isOpen={exitModal}>
+                  <ModalHeader>
+                    <p style={{textAlign:"center",margin:0}}>
+                      Are you certain about ending this classroom? Once you
+                      leave, you won't be able to come back.
+                    </p>
+                  </ModalHeader>
+
+                  <ModalFooter>
+                    <div className="button-wrapper">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                 setExitModal(false)
+                        }}
+                        className="cancel"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          handleExitStream();
+                          // handleExitStreamModal();
+                        }}
+                      >
+                        End
+                      </Button>
+                    </div>
+                  </ModalFooter>
+                </Modal>
                 <Modal isOpen={deleteModal}>
                   <ModalHeader>
                     Are you sure you want to delete this resource
@@ -1880,7 +1977,7 @@ export default function Stream() {
 
                   <Button
                     className="page-title_cta-btn"
-                    onClick={handleExitStream}
+                    onClick={handleExitStreamModal}
                   >
                     End Webinar &nbsp; <i className="fa fa-times"></i>
                   </Button>
@@ -1914,7 +2011,7 @@ export default function Stream() {
 
                     <Button
                       className="page-title_cta-btn"
-                      onClick={handleExitStream}
+                      onClick={handleExitStreamModal}
                     >
                       End Webinar &nbsp; <i className="fa fa-times"></i>
                     </Button>
@@ -2254,9 +2351,13 @@ export default function Stream() {
                                       <div className="quiz-progress">
                                         {quizSubmission ||
                                         item.submissionStatus ? (
-                                          <p>Quiz Over</p>
+                                          <p className="resource-question">
+                                            Quiz Over
+                                          </p>
                                         ) : (
-                                          <p>Quiz in Progress</p>
+                                          <p className="resource-question">
+                                            Quiz in Progress
+                                          </p>
                                         )}
 
                                         <CountdownTimer
@@ -2272,28 +2373,28 @@ export default function Stream() {
                                               : 0
                                           }
                                           // onCompletion={handleQuizTimeOut}
-                                          style={
-                                            {
-                                              // color: "rgb(82, 95, 127)",
-                                              // fontSize: "1rem",
-                                              // fontWeight: "300",
-                                              // lineHeight: "1.7",
-                                            }
-                                          }
+                                          style={{
+                                            // color: "rgb(82, 95, 127)",
+                                            fontSize: "1rem",
+                                            fontWeight: "500",
+                                            // lineHeight: "1.7",
+                                          }}
                                         />
                                       </div>{" "}
                                       {quizSubmission && (
                                         <div className="quiz-submission">
-                                          <p>
+                                          <p className="resource-question">
                                             ({quizResultHolder.length}
                                             )Submitted
                                           </p>
-                                          <p>View Results</p>
+                                          <p className="resource-question">
+                                            View Results
+                                          </p>
                                         </div>
                                       )}{" "}
                                       {quizSubmission && (
                                         <div className="quiz-submitted">
-                                          <p>
+                                          <p className="resource-question">
                                             ({quizResultHolder?.length}
                                             )Submitted
                                           </p>
@@ -2306,8 +2407,11 @@ export default function Stream() {
                                                       className="single-quiz-result"
                                                       key={index}
                                                     >
-                                                      <p>{index + 1}.</p>
+                                                      <p className="resource-question">
+                                                        {index + 1}.
+                                                      </p>
                                                       <p
+                                                        className="resource-question"
                                                         style={{
                                                           width: "55%",
                                                           wordWrap:
@@ -2316,7 +2420,7 @@ export default function Stream() {
                                                       >
                                                         {item.user}
                                                       </p>
-                                                      <p>{item.result}%</p>
+                                                      <p>{`${item.result[0]}/${item.result[1]}`}</p>
                                                     </div>
                                                   );
                                                 }
@@ -2350,19 +2454,15 @@ export default function Stream() {
                                           ></i>
                                         </div>
                                         <div className="bottom">
-                                          <p
-                                            style={{
-                                              fontSize: "12px",
-                                              fontWeight: "500",
-                                              marginBottom: "5px",
-                                            }}
-                                          >
+                                          <p className="resource-question">
                                             {item.title}
                                           </p>
 
                                           <div className="poll-options">
                                             {item.submissionStatus ? (
-                                              <p>Poll Over !!!</p>
+                                              <p className="resource-question">
+                                                Poll Over !!!
+                                              </p>
                                             ) : (
                                               <Progress
                                                 max={`${item.durationInSec}`}
@@ -2554,9 +2654,13 @@ export default function Stream() {
                                         <div className="quiz-progress">
                                           {quizSubmission ||
                                           item.submissionStatus ? (
-                                            <p>Quiz Over</p>
+                                            <p className="resource-question">
+                                              Quiz Over
+                                            </p>
                                           ) : (
-                                            <p>Quiz in Progress</p>
+                                            <p className="resource-question">
+                                              Quiz in Progress
+                                            </p>
                                           )}
 
                                           <CountdownTimer
@@ -2652,10 +2756,9 @@ export default function Stream() {
                                           <div className="bottom">
                                             <p
                                               style={{
-                                                fontSize: "12px",
-                                                fontWeight: "500",
                                                 marginBottom: "5px",
                                               }}
+                                              className="resource-question"
                                             >
                                               {item.title}
                                             </p>

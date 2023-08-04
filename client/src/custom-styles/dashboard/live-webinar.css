@@ -17,7 +17,9 @@
   min-height: 100%;
   height: fit-content;
 }
-
+.modal-footer .button-wrapper{
+padding: 0;
+}
 .live-webinar-content {
   width: 87%;
 }
@@ -26,6 +28,14 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0;
+}
+.resource-question {
+  font-weight: 500;
+  font-size: 1rem;
+}
+.inchat-poll .bottom .resource-question{
+  font-weight: 500;
+  font-size: 1rem;
 }
 .live-webinar .card-title span {
   color: var(--site-theme-color);

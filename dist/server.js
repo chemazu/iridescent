@@ -336,13 +336,14 @@ io.on("connection", socket => {
           });
 
           if (liveWebinar) {
-            liveWebinar.timeleft = freeTimers[roomId];
-            liveWebinar.isLive = false;
-            await liveWebinar.save();
+            // liveWebinar.timeleft = freeTimers[roomId];
+            // liveWebinar.isLive = false;
+            // await liveWebinar.save();
             clearInterval(timerControl[roomId]);
             delete timerControl[roomId];
             delete pollQuizHolder[roomId];
             delete freeTimers[roomId];
+            await _Livewebinar.default.findByIdAndRemove(liveWebinar._id);
           }
         }
 

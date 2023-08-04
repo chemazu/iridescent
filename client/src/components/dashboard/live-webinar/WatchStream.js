@@ -686,8 +686,10 @@ function WatchStream({ schoolname }) {
         <ModalFooter>
           <Button
             type="button"
-            onClick={() => {setWatcherUsername(watcherUsernameInput)}}
-            style={{  borderRadius: "22px",border:"none"}}
+            onClick={() => {
+              setWatcherUsername(watcherUsernameInput);
+            }}
+            style={{ borderRadius: "22px", border: "none" }}
             className={watcherUsernameInput === "" ? "" : "modal-button"}
           >
             Enter
@@ -1073,7 +1075,9 @@ function WatchStream({ schoolname }) {
 
                                   <div className="bottom">
                                     {submitted ? (
-                                      <p>Submitted!!!</p>
+                                      <p className="resource-question">
+                                        Submitted!!!
+                                      </p>
                                     ) : (
                                       singleChat.quizHolder.map(
                                         (item, index, arr) => {
@@ -1095,7 +1099,9 @@ function WatchStream({ schoolname }) {
                                                     : "none",
                                               }}
                                             >
-                                              <p>{item.question}</p>
+                                              <p className="resource-question">
+                                                {item.question}
+                                              </p>
                                               <ul
                                                 className="question-options "
                                                 type="A"
@@ -1106,6 +1112,8 @@ function WatchStream({ schoolname }) {
                                                       <li
                                                         key={index}
                                                         style={{
+                                                          fontWeight: 400,
+
                                                           listStyleType:
                                                             answers[
                                                               currentQuestion -
@@ -1163,7 +1171,7 @@ function WatchStream({ schoolname }) {
                                                     Next
                                                   </Button>
                                                 )}
-                                                {submitted ? (
+                                                {submitted || false ? (
                                                   <Button disabled>
                                                     Submitted
                                                   </Button>
@@ -1251,8 +1259,12 @@ function WatchStream({ schoolname }) {
                                             }
                                           />
                                         )}
-                                        <p>Question : </p>
-                                        <p>{singleChat.title}</p>
+                                        <p className="resource-question">
+                                          Question :{" "}
+                                        </p>
+                                        <p className="resource-question">
+                                          {singleChat.title}
+                                        </p>
                                         <div className="poll-options">
                                           {/* add POLL RES HERES */}
                                           {pollResults && submitted ? (

@@ -322,6 +322,8 @@ router.get("/stream/:streamKey", auth, async (req, res) => {
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar,
           id: livestream._id,
+          fee: livestream.fee,
+
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });

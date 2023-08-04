@@ -48,32 +48,60 @@ function LiveWebinar({ school, getSchool }) {
 
     if (res) {
       setUserStreams(res.data.streams);
-      console.log(res);
       setLoading(false);
     } else {
       console.log("error");
+      setLoading(false);
+      
+
     }
   };
-
+  const getSchoolUrl = (schoolname) => {
+    const host = window.location.host;
+    if (host.includes("localhost")) {
+      return `http://${schoolname}.${host}`;
+    }
+    const baseDomain = host.split(".")[1];
+    return baseDomain.includes("localhost")
+      ? `http://${schoolname}.${baseDomain}`
+      : `https://${schoolname}.${baseDomain}.com`;
+  };
   function copyText(textToCopy) {
-    navigator.clipboard
-      // .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
-      .writeText(
-        `https://${school.name}.tuturlybeta.com/live/preview/${textToCopy}`
-      )
+    console.log(textToCopy);
+    if (textToCopy.fee === 0) {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(school.name)}/livewebinar/watch/${
+            textToCopy.streamKey
+          }`
+        )
 
-      .then(() => {})
-      .catch((error) => {
-        console.error("Error copying text: ", error);
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
       });
-    alert.show("Link Copied", {
-      type: "success",
-    });
+    } else {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(school.name)}/live/preview/${textToCopy._id}`
+        )
+
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
+      });
+    }
   }
 
   const handleWebinarRemoval = async (id) => {
     try {
-      const response = await axios.delete(`/api/v1/livewebinar/remove/${id}`, {
+      await axios.delete(`/api/v1/livewebinar/remove/${id}`, {
         headers: {
           Authorization: "Bearer YOUR_AUTH_TOKEN", // Replace with your actual authentication token
         },
@@ -177,11 +205,12 @@ function LiveWebinar({ school, getSchool }) {
       document.removeEventListener("click", handleClickOutside);
     };
   }, [menuIndex]);
+
   useEffect(() => {
     // getSchool();
 
     getWebinars();
-  }, [filterState]);
+  },[filterState]);
 
   return (
     <div className="dashboard-layout">
@@ -422,7 +451,7 @@ function LiveWebinar({ school, getSchool }) {
                                     <div
                                       className="action-item"
                                       onClick={() => {
-                                        copyText(item._id);
+                                        copyText(item);
                                       }}
                                     >
                                       <i className="fa fa-share"></i>

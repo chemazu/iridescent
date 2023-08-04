@@ -327,7 +327,8 @@ router.get("/stream/:streamKey", _auth.default, async (req, res) => {
           planname: payment.planname,
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar,
-          id: livestream._id
+          id: livestream._id,
+          fee: livestream.fee
         });
       } else {
         res.status(400).json({
