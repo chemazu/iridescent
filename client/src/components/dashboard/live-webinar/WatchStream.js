@@ -27,12 +27,15 @@ import CountdownTimer from "./CountDownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import Poll from "./Poll";
 import { useStore } from "react-redux";
+import videojs from "video.js";
+import VideoStreamer from "./VideoStreamer";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
   let history = useHistory();
   let [currentPeer, setCurrentPeer] = useState(null);
   const myVideoRef = useRef();
+  const videoRef = useRef(null);
   const peerRef = useRef(null);
   const chatInterfaceRef = useRef(null);
   const [title, setTitle] = useState("");
@@ -58,6 +61,7 @@ function WatchStream({ schoolname }) {
     "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
   );
   const [reconnectLoading, setReconnectLoading] = useState(false);
+
   const [attendees, setAttendees] = useState(true);
   const [theme, setTheme] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -67,10 +71,72 @@ function WatchStream({ schoolname }) {
   const [disconnect, setDisconnect] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [webinarRoomTimer, setWebinarRoomTimer] = useState(null);
+  const [videoOptions, setVideoOptions] = useState({
+    autoplay: true,
+    playbackRates: [0.5, 1, 1.25, 1.5, 2],
+    width: 720,
+    height: 300,
+    controls: true,
+    // sources: [
+    //   {
+    //     src: "//vjs.zencdn.net/v/oceans.mp4",
+    //     type: "video/mp4",
+    //   },
+    // ],
+  });
+  const playerRef = React.useRef(null);
+  const handleAddStream = (stream) => {
+    // Make sure Video.js player is only initialized once
+    const pop = videoRef.current;
+  
+      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
+   if (pop){  const videoElement = document.createElement("video-js");
+      videoElement.srcObject = stream;
+      videoElement.classList.add("vjs-big-play-centered");
+
+      videoRef.current.appendChild(videoElement);
+
+      const player = (playerRef.current = videojs(videoElement, options, () => {
+        videojs.log("player is ready");
+        // onReady && onReady(player);
+      }));
+      player.autoplay(true);}
+      else{
+        console.log("firstyuyuy")
+      }
+      // You could update an existing player in the `else` block here
+      // on prop change, for example:
+    
+  };
+  const handlePlayerReady = (player) => {
+    playerRef.current = player;
+
+    // You can handle player events here, for example:
+    player.on("waiting", () => {
+      videojs.log("player is waiting");
+    });
+
+    player.on("dispose", () => {
+      videojs.log("player will dispose");
+    });
+  };
+  // const onReady = (player) => {
+  //   playerRef.current = player;
+
+  //   // You can handle player events here, for example:
+  //   player.on("waiting", () => {
+  //     videojs.log("player is waiting");
+  //   });
+
+  //   player.on("dispose", () => {
+  //     videojs.log("player will dispose");
+  //   });
+  // };
   const store = useStore();
   const appState = store.getState();
   const { student } = appState;
   const { authenticated } = student;
+
   if (localStorage.getItem("studentToken")) {
     setAuthToken(localStorage.getItem("studentToken"));
   }
@@ -88,7 +154,9 @@ function WatchStream({ schoolname }) {
       video.addEventListener("loadedmetadata", () => {
         video.play();
       });
+      console.log(stream);
     }
+    handleAddStream(stream)
   }
 
   var currentDate = new Date();
@@ -456,6 +524,7 @@ function WatchStream({ schoolname }) {
         call.on("stream", (userVideoStream) => {
           setReconnectLoading(false);
           addVideoStream(userVideoStream);
+
         });
       });
     });
@@ -879,7 +948,7 @@ function WatchStream({ schoolname }) {
                                   ></i>
                                 </div>
                               </div>
-                              <video
+                              {/* <video
                                 ref={myVideoRef}
                                 style={{
                                   width: "100%",
@@ -888,7 +957,18 @@ function WatchStream({ schoolname }) {
                                 }}
                                 muted={false}
                                 typeof="video/mp4"
-                              />
+                              /> */}
+                              {/* <VideoStreamer {...videoOptions} /> */}
+                              {/* <VideoStreamer
+                                options={videoOptions}
+                                onReady={handlePlayerReady}
+                                ref={videoRef}
+                              /> */}
+                              <div ref={videoRef}  style={{
+                                  width: "100%",
+                                  objectFit: VideoFill ? "cover" : "contain",
+                                  height: VideoFill ? "100vh" : "",
+                                }}></div>
                             </div>
                           )}
                         </div>
