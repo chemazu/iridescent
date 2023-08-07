@@ -948,7 +948,7 @@ function WatchStream({ schoolname }) {
                                   ></i>
                                 </div>
                               </div>
-                              {/* <video
+                              <video
                                 ref={myVideoRef}
                                 style={{
                                   width: "100%",
@@ -957,18 +957,20 @@ function WatchStream({ schoolname }) {
                                 }}
                                 muted={false}
                                 typeof="video/mp4"
-                              /> */}
+
+                                playsinline 
+                              />
                               {/* <VideoStreamer {...videoOptions} /> */}
                               {/* <VideoStreamer
                                 options={videoOptions}
                                 onReady={handlePlayerReady}
                                 ref={videoRef}
                               /> */}
-                              <div ref={videoRef}  style={{
+                              {/* <div ref={videoRef}  style={{
                                   width: "100%",
                                   objectFit: VideoFill ? "cover" : "contain",
                                   height: VideoFill ? "100vh" : "",
-                                }}></div>
+                                }}></div> */}
                             </div>
                           )}
                         </div>
