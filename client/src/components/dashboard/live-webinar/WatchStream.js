@@ -93,8 +93,9 @@ function WatchStream({ schoolname }) {
     if (pop) {
       const videoElement = document.createElement("video-js");
       videoElement.srcObject = stream;
+      videoElement.setAttribute("playsinline", "true");
       videoElement.classList.add("vjs-big-play-centered");
-
+ 
       videoRef.current.appendChild(videoElement);
 
       const player = (playerRef.current = videojs(videoElement, options, () => {
@@ -946,7 +947,7 @@ function WatchStream({ schoolname }) {
                                   ></i>
                                 </div>
                               </div>
-                              <video
+                              {/* <video
                                 ref={myVideoRef}
                                 style={{
                                   width: "100%",
@@ -954,20 +955,20 @@ function WatchStream({ schoolname }) {
                                   height: VideoFill ? "100vh" : "",
                                 }}
                                 muted={false}
-                                typeof="video/mp4"
+                                // typeof="video/mp4"
                                 playsinline = {true}
-                              />
+                              /> */}
                               {/* <VideoStreamer {...videoOptions} /> */}
                               {/* <VideoStreamer
                                 options={videoOptions}
                                 onReady={handlePlayerReady}
                                 ref={videoRef}
                               /> */}
-                              {/* <div ref={videoRef}  style={{
+                              <div ref={videoRef}  style={{
                                   width: "100%",
                                   objectFit: VideoFill ? "cover" : "contain",
                                   height: VideoFill ? "100vh" : "",
-                                }}></div> */}
+                                }}></div>
                             </div>
                           )}
                         </div>
