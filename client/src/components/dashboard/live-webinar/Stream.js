@@ -71,8 +71,14 @@ export default function Stream() {
 
   const [resourceId, setResourceId] = useState("");
   const [audioVisuals, setAudioVisuals] = useState({
-    video: true,
-    audio: true,
+    video: {
+      width: 640,
+      height: 480,
+      mimeType: "video/H264", // Adjust according to your needs
+    },
+    audio: {
+      mimeType: "audio/opus", // Adjust according to your needs
+    },
   });
   const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
@@ -160,8 +166,6 @@ export default function Stream() {
       setPeerHolder(null);
     }
     history.push("/dashboard/livewebinar");
-  
-
 
     // Refresh the current page
     // window.location.reload();
@@ -1361,7 +1365,7 @@ export default function Stream() {
               <div className="stream-webinar-content">
                 <Modal isOpen={exitModal}>
                   <ModalHeader>
-                    <p style={{textAlign:"center",margin:0}}>
+                    <p style={{ textAlign: "center", margin: 0 }}>
                       Are you certain about ending this classroom? Once you
                       leave, you won't be able to come back.
                     </p>
@@ -1372,7 +1376,7 @@ export default function Stream() {
                       <Button
                         type="button"
                         onClick={() => {
-                 setExitModal(false)
+                          setExitModal(false);
                         }}
                         className="cancel"
                       >

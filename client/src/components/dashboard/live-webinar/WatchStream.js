@@ -88,9 +88,10 @@ function WatchStream({ schoolname }) {
   const handleAddStream = (stream) => {
     // Make sure Video.js player is only initialized once
     const pop = videoRef.current;
-  
-      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
-   if (pop){  const videoElement = document.createElement("video-js");
+
+    // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
+    if (pop) {
+      const videoElement = document.createElement("video-js");
       videoElement.srcObject = stream;
       videoElement.classList.add("vjs-big-play-centered");
 
@@ -100,13 +101,12 @@ function WatchStream({ schoolname }) {
         videojs.log("player is ready");
         // onReady && onReady(player);
       }));
-      player.autoplay(true);}
-      else{
-        console.log("firstyuyuy")
-      }
-      // You could update an existing player in the `else` block here
-      // on prop change, for example:
-    
+      player.autoplay(true);
+    } else {
+      console.log("firstyuyuy");
+    }
+    // You could update an existing player in the `else` block here
+    // on prop change, for example:
   };
   const handlePlayerReady = (player) => {
     playerRef.current = player;
@@ -156,7 +156,7 @@ function WatchStream({ schoolname }) {
       });
       console.log(stream);
     }
-    handleAddStream(stream)
+    handleAddStream(stream);
   }
 
   var currentDate = new Date();
@@ -217,7 +217,6 @@ function WatchStream({ schoolname }) {
     let newAnswerHolder = [String.fromCharCode(65 + index)];
     setPollAnswerHolder(newAnswerHolder);
   };
-
   const handleExitStream = () => {
     // Perform any necessary actions before exiting the stream
     // For example, stop the video stream, disconnect from the peer, etc.
@@ -524,7 +523,6 @@ function WatchStream({ schoolname }) {
         call.on("stream", (userVideoStream) => {
           setReconnectLoading(false);
           addVideoStream(userVideoStream);
-
         });
       });
     });
@@ -957,8 +955,7 @@ function WatchStream({ schoolname }) {
                                 }}
                                 muted={false}
                                 typeof="video/mp4"
-
-                                playsinline 
+                                playsinline = {true}
                               />
                               {/* <VideoStreamer {...videoOptions} /> */}
                               {/* <VideoStreamer
