@@ -70,7 +70,7 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
       creator,
       type,
     });
-    console.log(totalResources, "trs");
+ 
     const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
 
     const resources = await ClassroomResource.find({ creator, type })

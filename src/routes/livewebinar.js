@@ -323,7 +323,7 @@ router.get("/stream/:streamKey", auth, async (req, res) => {
           avatar: livestream.creator.avatar,
           id: livestream._id,
           fee: livestream.fee,
-
+          classEndTime: livestream.classEndTime,
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });
@@ -498,6 +498,7 @@ router.get("/streams", auth, async (req, res) => {
   let streams = await LiveWebinar.find({
     creator: req.user.id,
     startTime: { $gte: currentDateOnly },
+    endStatus:false,
   }).sort({ startTime: 1 });
 
   if (!streams) {
@@ -523,6 +524,8 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
   let streams = await LiveWebinar.find({
     creator: school.createdBy,
     startTime: { $gte: currentDateOnly },
+    endStatus:false,
+
   })
     .populate("creator")
     .sort({ startTime: 1 });

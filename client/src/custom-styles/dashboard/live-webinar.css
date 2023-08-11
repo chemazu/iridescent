@@ -17,8 +17,8 @@
   min-height: 100%;
   height: fit-content;
 }
-.modal-footer .button-wrapper{
-padding: 0;
+.modal-footer .button-wrapper {
+  padding: 0;
 }
 .live-webinar-content {
   width: 87%;
@@ -33,7 +33,7 @@ padding: 0;
   font-weight: 500;
   font-size: 1rem;
 }
-.inchat-poll .bottom .resource-question{
+.inchat-poll .bottom .resource-question {
   font-weight: 500;
   font-size: 1rem;
 }
@@ -417,7 +417,13 @@ padding: 0;
 .stream-webinar-content {
   width: 97%;
 }
-
+.watch-webinar-content {
+  height: 100%;
+  /* max-height: 100vh; */
+  display: flex;
+  flex-direction: column;
+  padding-top: 10px;
+}
 .stream-container {
   width: 100%;
   height: 100%;
@@ -980,10 +986,24 @@ padding: 0;
 /* REFACTORED */
 .stream-webinar-content .page-title {
   display: block;
-  height: 100%;
+  /* height: 100%; */
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
-  border-top: 10px solid var(--site-theme-color);
+  border-top: 0px;
+}
+.student-room-info {
+  width: 35%;
+  /* margin-top: 2rem; */
+  padding: 2% 5%;
+  border-radius: 15px;
+  display: flex;
+  justify-content: space-between;
+}
+.student-room-info span {
+  text-align: center;
+}
+.student-room-info .divider-span {
+  border: 1px solid #fff;
 }
 .page-title .time-constraints {
   display: flex;
@@ -1092,7 +1112,8 @@ padding: 0;
 .inchat-poll .bottom p {
   text-align: center;
   margin: 0;
-  font-size: 10px;
+  font-size: 1rem;
+  font-weight: 400;
 }
 .inchat-poll .bottom {
   display: flex;
@@ -1145,7 +1166,8 @@ padding: 0;
   width: 100%;
   justify-content: space-between;
   overflow: scroll;
-  height: 3rem;
+  /* height: 3rem; */
+  align-items: center;
   /* padding-bottom: .5rem;
   margin-bottom: .5rem; */
 }
@@ -1186,8 +1208,21 @@ padding: 0;
   display: flex;
   flex-direction: row-reverse;
   align-items: center;
+  margin: 0;
+  border-radius: 10px;
 }
+.watch-webinar-content .page-title .page-title__text {
+  display: flex;
+  width: fit-content;
+  align-items: center;
 
+}
+.watch-webinar-content .page-title  .page-title__text img {
+  width: 3.75rem;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline;
+}
 .watch-webinar-content .page-title .time-constraints {
   display: flex;
   flex-direction: row;
@@ -1200,22 +1235,39 @@ padding: 0;
   width: 100%;
   justify-content: space-between;
   position: relative;
-  margin-bottom: 3rem;
+  /* margin-bottom: 3rem;
+  j */
+  height: 100%;
 }
 
 .live-webinar-watch .watch-left {
   width: 71%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-top: 20px;
+  padding-bottom: 10px;
 }
 .live-webinar-watch .video-background video {
-  height: 52vh;
+  height: 100%;
 }
-
+.expand-wrapper {
+  display: none;
+}
+.filled-video {
+}
+.filled-video .vjs-tech {
+  object-fit: cover !important;
+  height: 100vh !important;
+}
 .live-webinar-watch .chat-box {
   width: 27.5%;
   height: 100%;
   flex-flow: column;
   position: absolute;
   right: 0;
+  padding-top: 20px;
+  padding-bottom: 10px;
 }
 .live-webinar-watch .chat-box .chat-interface {
   flex-grow: 1;
@@ -1408,8 +1460,10 @@ padding: 0;
   }
 }
 .watch-screen {
-  max-height: 100vh !important;
+  /* max-height: 100vh !important; */
   overflow: hidden !important;
+  height: 100%;
+  padding-top: 0;
 }
 .table-sort {
   display: flex;
@@ -1477,6 +1531,9 @@ padding: 0;
   max-height: 40px;
 }
 @media screen and (max-width: 812px) {
+  .expand-wrapper {
+    display: block;
+  }
   .live-webinar-interface {
     flex-direction: column;
     position: relative;
@@ -1491,6 +1548,12 @@ padding: 0;
   }
   .presenter-controls-wrapper {
     width: 100%;
+  }
+  .watch-left .presenter-controls-wrapper {
+    display: none;
+  }
+  .watch-left .video-js {
+    background-color: transparent;
   }
   .presenter-controls {
     flex-wrap: wrap;
@@ -1565,6 +1628,7 @@ padding: 0;
   .stream-webinar-content {
     width: 100%;
     height: 100%;
+    padding-top: 0px;
   }
   .live-webinar {
     padding-top: 0;
@@ -1687,6 +1751,7 @@ padding: 0;
     width: 100%;
     height: 100vh;
     overflow: hidden;
+    padding-top: 0;
   }
   .live-webinar-watch .watch-left .video-background {
     height: 100vh;

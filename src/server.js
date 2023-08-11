@@ -87,13 +87,18 @@ io.on("connection", (socket) => {
     io.in(roomId).emit("disablevideo", status);
     broadcasterScreen[roomId] = status;
   });
-  socket.on("freeTimer", async (roomId) => {
+  socket.on("freeTimer", async (roomId, now) => {
     if (freeTimers[roomId] || timerControl[roomId]) {
       return;
     }
     if (!freeTimers[roomId]) {
       let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
       if (liveWebinar) {
+        if (liveWebinar.classEndTime === 0) {
+          let newTime = now + 45 * 60 * 1000;
+          liveWebinar.classEndTime = newTime;
+          await liveWebinar.save();
+        }
         if (liveWebinar.timeleft === 0) {
           io.in(roomId).emit("timer elapsed for room", 0);
         } else {
@@ -264,6 +269,7 @@ io.on("connection", (socket) => {
             if (liveWebinar) {
               liveWebinar.timeleft = freeTimers[roomId];
               liveWebinar.isLive = false;
+              liveWebinar.endStatus = true;
               await liveWebinar.save();
               // clearInterval(timerControl[roomId]);
               // delete timerControl[roomId];
@@ -281,9 +287,16 @@ io.on("connection", (socket) => {
       }
     );
   });
-  socket.on("endstream", async () => {
+  socket.on("endstream", async (roomid) => {
     // Check if the socket is a broadcaster
     const socketId = socket.id;
+    console.log("endstream")
+    let endLiveWebinar = await LiveWebinar.findOne({ streamKey: roomid });
+    if(endLiveWebinar){
+      endLiveWebinar.endStatus = true;
+      await endLiveWebinar.save();
+
+    }
 
     Object.entries(newBroadcasterHolder).forEach(
       async ([roomId, broadcaster]) => {
@@ -294,17 +307,17 @@ io.on("connection", (socket) => {
             let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
 
             if (liveWebinar) {
-              // liveWebinar.timeleft = freeTimers[roomId];
+              liveWebinar.timeleft = freeTimers[roomId];
               // liveWebinar.isLive = false;
-
-              // await liveWebinar.save();
+              liveWebinar.endStatus = true;
+console.log(liveWebinar)
+              await liveWebinar.save();
 
               clearInterval(timerControl[roomId]);
               delete timerControl[roomId];
               delete pollQuizHolder[roomId];
               delete freeTimers[roomId];
-              await LiveWebinar.findByIdAndRemove(liveWebinar._id);
-
+              // await LiveWebinar.findByIdAndRemove(liveWebinar._id);
             }
           }
           delete newBroadcasterHolder[roomId];

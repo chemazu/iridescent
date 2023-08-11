@@ -328,7 +328,8 @@ router.get("/stream/:streamKey", _auth.default, async (req, res) => {
           timeLeft: livestream.timeleft,
           avatar: livestream.creator.avatar,
           id: livestream._id,
-          fee: livestream.fee
+          fee: livestream.fee,
+          classEndTime: livestream.classEndTime
         });
       } else {
         res.status(400).json({
@@ -520,7 +521,8 @@ router.get("/streams", _auth.default, async (req, res) => {
     creator: req.user.id,
     startTime: {
       $gte: currentDateOnly
-    }
+    },
+    endStatus: false
   }).sort({
     startTime: 1
   });
@@ -550,7 +552,8 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
     creator: school.createdBy,
     startTime: {
       $gte: currentDateOnly
-    }
+    },
+    endStatus: false
   }).populate("creator").sort({
     startTime: 1
   });

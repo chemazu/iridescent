@@ -52,7 +52,6 @@ function WatchStream({ schoolname }) {
   const [defaultChat, setDefaultChat] = useState([]);
   const [watcherUsername, setWatcherUsername] = useState("");
   const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
-
   const [school, setSchool] = useState(null);
   const [disableVideoStream, setDisableVideoStream] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -71,6 +70,9 @@ function WatchStream({ schoolname }) {
   const [disconnect, setDisconnect] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [webinarRoomTimer, setWebinarRoomTimer] = useState(null);
+  const pryColor = "#44B5BB";
+  const secColor = "#272727";
+
   const [videoOptions, setVideoOptions] = useState({
     autoplay: true,
     playbackRates: [0.5, 1, 1.25, 1.5, 2],
@@ -85,29 +87,63 @@ function WatchStream({ schoolname }) {
     // ],
   });
   const playerRef = React.useRef(null);
-  const handleAddStream = (stream) => {
-    // Make sure Video.js player is only initialized once
-    const pop = videoRef.current;
+  // const handleAddStream = (stream) => {
+  //   // Make sure Video.js player is only initialized once
+  //   const pop = videoRef.current;
 
-    // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
-    if (pop) {
+  //   // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
+  //   if (pop) {
+  //     const videoElement = document.createElement("video-js");
+  //     videoElement.srcObject = stream;
+  //     videoElement.setAttribute("playsinline", "true");
+  //     videoElement.classList.add("vjs-big-play-centered");
+
+  //     videoRef.current.appendChild(videoElement);
+
+  //     const player = (playerRef.current = videojs(videoElement, options, () => {
+  //       videojs.log("player is ready");
+  //       // onReady && onReady(player);
+  //     }));
+  //     player.autoplay(true);
+  //   } else {
+  //     console.log("firstyuyuy");
+  //   }
+  //   // You could update an existing player in the `else` block here
+  //   // on prop change, for example:
+  // };
+
+  const handleAddStream = (stream) => {
+    if (!playerRef.current) {
+      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
       const videoElement = document.createElement("video-js");
       videoElement.srcObject = stream;
       videoElement.setAttribute("playsinline", "true");
-      videoElement.classList.add("vjs-big-play-centered");
- 
-      videoRef.current.appendChild(videoElement);
 
-      const player = (playerRef.current = videojs(videoElement, options, () => {
+      videoElement.classList.add("vjs-big-play-centered");
+      videoElement.classList.add("vjs-big-play-centered");
+
+      videoRef.current.appendChild(videoElement);
+      videoElement.style.width = "100%";
+      videoElement.style.heightm = "100%";
+      // let options = {
+      //   autoplay: true,
+      //   playbackRates: [0.5, 1, 1.25, 1.5, 2],
+      //   width: 720,
+      //   height: 300,
+      //   // controls: true,
+      // };
+      const player = (playerRef.current = videojs(videoElement, {}, () => {
         videojs.log("player is ready");
-        // onReady && onReady(player);
+        // handlePlayerReady && handlePlayerReady(player);
       }));
       player.autoplay(true);
+
+      // You could update an existing player in the `else` block here
+      // on prop change, for example:
     } else {
-      console.log("firstyuyuy");
+      // playerRef.current.src({ type: "application/x-mpegURL", src: stream });
+      // playerRef.current.load(); // Load the new source
     }
-    // You could update an existing player in the `else` block here
-    // on prop change, for example:
   };
   const handlePlayerReady = (player) => {
     playerRef.current = player;
@@ -313,6 +349,7 @@ function WatchStream({ schoolname }) {
     try {
       const res = await axios.get(`/api/v1/theme/${schoolId}`);
       setTheme(res.data);
+      console.log(res);
     } catch (error) {
       if (error.response.status === 404) {
         setTheme(null);
@@ -774,17 +811,18 @@ function WatchStream({ schoolname }) {
                     className="page-title"
                     style={{
                       backgroundColor:
-                        theme?.themestyles.primarybackgroundcolor,
-                      color: theme?.themestyles.primarytextcolor,
+                        theme?.themestyles.secondarybackgroundcolor,
+                      color: theme?.themestyles.navbartextcolor,
                     }}
                   >
                     <div className="time-constraints"></div>
                     <div
                       className="page-title__text"
                       style={{
-                        color: theme?.themestyles.primarytextcolor,
+                        color: theme?.themestyles.navbartextcolor,
                       }}
                     >
+
                       {isLoading ? "..." : title}
                       <p style={{ margin: "0" }}>
                         {/* <Button onClick={startStream}>Join Webinar</Button> */}
@@ -816,49 +854,37 @@ function WatchStream({ schoolname }) {
                     className="page-title"
                     style={{
                       backgroundColor:
-                        theme?.themestyles.primarybackgroundcolor,
-                      color: theme?.themestyles.primarytextcolor,
+                        theme?.themestyles.secondarybackgroundcolor,
+                      color: theme?.themestyles.navbartextcolor,
                     }}
                   >
                     <div className="time-constraints">
-                      {webinarRoomTimer && (
-                        <div
-                          className="time-tracker"
-                          style={{
-                            color: theme?.themestyles.primarytextcolor,
-                          }}
-                        >
-                          <p
-                            style={{
-                              color: theme?.themestyles.primarytextcolor,
-                            }}
-                          >
-                            Time Remaining
-                          </p>
-                          <CountdownTimer duration={webinarRoomTimer} />
-                        </div>
-                      )}
-
                       <Button
                         className="page-title_cta-btn"
                         onClick={() => {
                           handleExitStream();
                         }}
                       >
-                        End Webinar &nbsp; <i className="fa fa-times"></i>
+                        Leave Class &nbsp; <i className="fa fa-times"></i>
                       </Button>
                     </div>
+
                     <div
                       className="page-title__text"
                       style={{
-                        color: theme?.themestyles.primarytextcolor,
+                        color: theme?.themestyles.navbartextcolor,
                       }}
                     >
-                      {isLoading ? "..." : title}
-                      <p style={{ margin: "0" }}>
-                        {/* <Button onClick={startStream}>Join Webinar</Button> */}
-                        {isLoading ? "..." : presenterName}
-                      </p>
+                      <img src={presenterAvatar} alt={title || ""} />
+                      <div>
+                        <span style={{ fontWeight: "600", fontSize: "22px" }}>
+                          {isLoading ? "..." : title}
+                        </span>
+                        <p style={{ margin: "0" }}>
+                          {/* <Button onClick={startStream}>Join Webinar</Button> */}
+                          {isLoading ? "..." : presenterName}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="live-webinar-watch">
@@ -870,47 +896,16 @@ function WatchStream({ schoolname }) {
                           <Spinner />
                         </div>
                       ) : (
-                        <div className="video-background-parent">
-                          {disconnect ? (
-                            <div
-                              className="video-background"
-                              style={{ height: "50vh" }}
-                            >
-                              <div className="broadcaster-disconnected reconnect-loading">
-                                <p> Broadcaster Disconnected</p>
+                        <>
+                          <div className="video-background-parent">
+                            {disconnect ? (
+                              <div
+                                className="video-background"
+                                style={{ height: "50vh" }}
+                              >
+                                <div className="broadcaster-disconnected reconnect-loading">
+                                  <p> Broadcaster Disconnected</p>
 
-                                <img
-                                  src={presenterAvatar}
-                                  alt=""
-                                  style={{ borderRadius: "50%", width: "15%" }}
-                                />
-                              </div>
-                            </div>
-                          ) : (
-                            <div
-                              className="video-background"
-                              style={{
-                                background:
-                                  "linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%)",
-                              }}
-                            >
-                              {/* {disableVideoStream && (
-                                <div
-                                  style={{
-                                    position: "absolute",
-                                    width: "100%",
-                                    height: "100%",
-                                    background: "#000",
-                                    zIndex: "4",
-                                    display: disableVideoStream
-                                      ? "none"
-                                      : "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    borderRadius: "10px",
-                                  }}
-                                >
-                                  {" "}
                                   <img
                                     src={presenterAvatar}
                                     alt=""
@@ -920,60 +915,71 @@ function WatchStream({ schoolname }) {
                                     }}
                                   />
                                 </div>
-                              )} */}
-                              <div className="mobile-control mobile-header">
-                                <div className="mobile-presenter-info">
-                                  <img
-                                    src={presenterAvatar}
-                                    alt=""
-                                    style={{
-                                      borderRadius: "50%",
-                                      width: "15%",
-                                    }}
-                                  />
-                                  <p>{presenterName}</p>
-                                </div>
-
-                                <div className="room-info">
-                                  <div>
-                                    <i className="fa fa-eye" />
-                                    {attendees}
-                                  </div>
-                                  <i
-                                    onClick={() => {
-                                      handleExitStream();
-                                    }}
-                                    className="fa fa-times"
-                                  ></i>
-                                </div>
                               </div>
-                              {/* <video
-                                ref={myVideoRef}
+                            ) : (
+                              <div
+                                className="video-background"
                                 style={{
-                                  width: "100%",
-                                  objectFit: VideoFill ? "cover" : "contain",
-                                  height: VideoFill ? "100vh" : "",
+                                  background:
+                                    "linear-gradient(0deg, rgba(2,0,36,1) 0%, rgba(0,212,255,1) 100%)",
                                 }}
-                                muted={false}
-                                // typeof="video/mp4"
-                                playsinline = {true}
-                              /> */}
-                              {/* <VideoStreamer {...videoOptions} /> */}
-                              {/* <VideoStreamer
-                                options={videoOptions}
-                                onReady={handlePlayerReady}
-                                ref={videoRef}
-                              /> */}
-                              <div ref={videoRef}  style={{
-                                  width: "100%",
-                                  objectFit: VideoFill ? "cover" : "contain",
-                                  height: VideoFill ? "100vh" : "",
-                                }}></div>
-                            </div>
-                          )}
-                        </div>
+                              >
+                                <div className="mobile-control mobile-header">
+                                  <div className="mobile-presenter-info">
+                                    <img
+                                      src={presenterAvatar}
+                                      alt=""
+                                      style={{
+                                        borderRadius: "50%",
+                                        width: "15%",
+                                      }}
+                                    />
+                                    <p>{presenterName}</p>
+                                  </div>
+
+                                  <div className="room-info">
+                                    <div>
+                                      <i className="fa fa-eye" />
+                                      {attendees}
+                                    </div>
+                                    <i
+                                      onClick={() => {
+                                        handleExitStream();
+                                      }}
+                                      className="fa fa-times"
+                                    ></i>
+                                  </div>
+                                </div>
+
+                                <div
+                                  ref={videoRef}
+                                  className={
+                                    VideoFill ? "filled-video" : "eggs"
+                                  }
+                                  // style={{
+                                  //   width: "100%",
+                                  //   objectFit: VideoFill ? "cover" : "",
+                                  //   height: VideoFill ? "100vh" : "",
+                                  // }}
+                                ></div>
+                              </div>
+                            )}
+                          </div>
+                          <div
+                            className="student-room-info desktop-control"
+                            style={{
+                              backgroundColor:
+                                theme?.themestyles.secondarybackgroundcolor,
+                              color: theme?.themestyles.navbartextcolor,
+                            }}
+                          >
+                            <span className="date-span">{formattedDate}</span>
+                            <span className="divider-span"></span>
+                            <span>Attendees ({attendees})</span>
+                          </div>
+                        </>
                       )}
-                      {disconnect ? (
+                      {/* {disconnect ? (
                         ""
                       ) : (
                         <Card className="presenter-controls-wrapper">
@@ -982,8 +988,8 @@ function WatchStream({ schoolname }) {
                             className="presenter-controls pc-top"
                             style={{
                               backgroundColor:
-                                theme?.themestyles.primarybackgroundcolor,
-                              color: theme?.themestyles.primarytextcolor,
+                                theme?.themestyles.secondarybackgroundcolor,
+                              color: theme?.themestyles.navbartextcolor,
                             }}
                           >
                             {formattedDate} | Attendies ({attendees}){" "}
@@ -992,8 +998,8 @@ function WatchStream({ schoolname }) {
                             className="presenter-controls  pc-bottom watcher-pc"
                             style={{
                               backgroundColor:
-                                theme?.themestyles.primarybackgroundcolor,
-                              color: theme?.themestyles.primarytextcolor,
+                                theme?.themestyles.secondarybackgroundcolor,
+                              color: theme?.themestyles.navbartextcolor,
                             }}
                           >
                             <div className="control-object more">
@@ -1055,7 +1061,7 @@ function WatchStream({ schoolname }) {
                             </div>
                           </div>
                         </Card>
-                      )}
+                      )} */}
                     </div>
 
                     {disconnect ? (
@@ -1113,22 +1119,16 @@ function WatchStream({ schoolname }) {
                               return singleChat.type === "quiz" ? (
                                 <div
                                   className="inchat-poll   inchat-quiz"
-                                  style={{
-                                    backgroundColor:
-                                      theme?.themestyles.primarybackgroundcolor,
-                                    color:
-                                      theme?.themestyles.secondarytextcolor,
-                                  }}
+                          
                                 >
                                   <div
                                     className="top"
                                     style={{
                                       backgroundColor:
                                         theme?.themestyles
-                                          .secondarybackgroundcolor,
+                                          .navbarbackgroundcolor,
                                       color:
-                                        theme?.themestyles.primarytextcolor ||
-                                        "#fff",
+                                        theme?.themestyles.primarytextcolor,
                                     }}
                                   >
                                     <span style={{ color: "#fff" }}>
@@ -1292,20 +1292,20 @@ function WatchStream({ schoolname }) {
                                   {singleChat.type === "poll" ? (
                                     <div
                                       className="inchat-poll"
-                                      style={{
-                                        backgroundColor:
-                                          theme?.themestyles
-                                            .primarybackgroundcolor,
-                                        color:
-                                          theme?.themestyles.primarytextcolor,
-                                      }}
+                                      // style={{
+                                      //   backgroundColor:
+                                      //     theme?.themestyles
+                                      //       .secondarybackgroundcolor,
+                                      //   color:
+                                      //     theme?.themestyles.navbartextcolor,
+                                      // }}
                                     >
                                       <div
                                         className="top"
                                         style={{
                                           backgroundColor:
                                             theme?.themestyles
-                                              .secondarybackgroundcolor,
+                                              .navbarbackgroundcolor,
                                           color:
                                             theme?.themestyles.primarytextcolor,
                                         }}
@@ -1417,8 +1417,8 @@ function WatchStream({ schoolname }) {
                           className="chat-control"
                           style={{
                             backgroundColor:
-                              theme?.themestyles.primarybackgroundcolor,
-                            color: theme?.themestyles.primarytextcolor,
+                              theme?.themestyles.secondarybackgroundcolor,
+                            color: theme?.themestyles.navbartextcolor,
                           }}
                         >
                           {showEmojiPicker && (

@@ -27,6 +27,7 @@ import CountdownTimer from "./CountDownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
+import SecondaryTimer from "./SecondaryTimer";
 
 export default function Stream() {
   const { roomid } = useParams();
@@ -53,6 +54,9 @@ export default function Stream() {
   const [answerHolder, setAnswerHolder] = useState({});
   const [timerHolder, setTimerHolder] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [classEndTime, setClassEndTime] = useState(null);
+  // localStorage.getItem("classendTime")
+
   const [pollTitle, setPollTitle] = useState("");
   const [defaultChat, setDefaultChat] = useState([]);
   const [specialChat, setSpecialChat] = useState([]);
@@ -70,16 +74,21 @@ export default function Stream() {
   const [exitModal, setExitModal] = useState(false);
 
   const [resourceId, setResourceId] = useState("");
+  // const [audioVisuals, setAudioVisuals] = useState({
+  //   video: {
+  //     width: 640,
+  //     height: 480,
+  //     mimeType: "video/H264", // Adjust according to your needs
+  //   },
+  //   audio: {
+  //     mimeType: "audio/opus", // Adjust according to your needs
+  //   },
+  // });
   const [audioVisuals, setAudioVisuals] = useState({
-    video: {
-      width: 640,
-      height: 480,
-      mimeType: "video/H264", // Adjust according to your needs
-    },
-    audio: {
-      mimeType: "audio/opus", // Adjust according to your needs
-    },
+    video: true,
+    audio: true,
   });
+
   const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(1);
@@ -169,6 +178,7 @@ export default function Stream() {
 
     // Refresh the current page
     // window.location.reload();
+    // update the api
   };
   const getSchoolUrl = (schoolname) => {
     const host = window.location.host;
@@ -242,6 +252,7 @@ export default function Stream() {
           id: res.data.id,
           school: res.data.school,
           fee: res.data.fee,
+          classEndTime: res.data.classEndTime,
         });
         setPlanname(res.data.planname);
 
@@ -909,7 +920,7 @@ export default function Stream() {
 
       if (roomTimer === 600) {
         console.log(roomTimer, "fsd");
-        setTimeOutModal(true);
+        // setTimeOutModal(true);
       }
     });
 
@@ -1039,9 +1050,24 @@ export default function Stream() {
       setAttendies(roomSize);
     });
   }, [roomid]);
+let handleTimer = () => {
+  const classEndTimeFromLocalStorage = localStorage.getItem(roomid);
+  const now = Date.now();
+  const newTime = now + 45 * 60 * 1000;
 
+  if (classEndTimeFromLocalStorage) {
+    console.log(classEndTimeFromLocalStorage);
+    setClassEndTime(classEndTimeFromLocalStorage);
+  } else {
+    console.log(newTime)
+    localStorage.setItem(roomid, newTime);
+    setClassEndTime(newTime);
+  }
+}
   useEffect(() => {
     const initializePeer = async () => {
+     
+      handleTimer()
       const peerInstance = new Peer();
       peerRef.current = peerInstance;
       setPeerHolder(peerInstance);
@@ -1049,7 +1075,7 @@ export default function Stream() {
       peerInstance.on("open", (peerId) => {
         socket.emit("broadcaster", roomid, peerId);
         if (planname === "free") {
-          socket.emit("freeTimer", roomid);
+          // socket.emit("freeTimer", roomid, now);
         }
       });
       peerInstance.on("call", (call) => {
@@ -1082,6 +1108,7 @@ export default function Stream() {
     // };
   }, [screenSharing, audioVisuals, startController, roomid, planname]);
 
+
   useEffect(() => {
     async function getMediaDevices() {
       try {
@@ -1104,12 +1131,6 @@ export default function Stream() {
 
   // trigger intialize Peeer
 
-  // const handleTriggerLive = async () => {
-  //   let res = await axios.put(
-  //     `/api/v1/livewebinar/live/${presenterDetails?.id}`
-  //   );
-  //   console.log(res);
-  // };
   const handleInitializePeer = () => {
     setStartController(true);
     // handleTriggerLive();
@@ -1983,7 +2004,7 @@ export default function Stream() {
                     className="page-title_cta-btn"
                     onClick={handleExitStreamModal}
                   >
-                    End Webinar &nbsp; <i className="fa fa-times"></i>
+                    End Class &nbsp; <i className="fa fa-times"></i>
                   </Button>
                 </div>
                 <div className="page-title" style={{ display: "block" }}>
@@ -1997,13 +2018,21 @@ export default function Stream() {
                     ></i>
                     <div className="time-tracker">
                       <p>Time Remaining</p>
-                      {planname && timeLeft ? (
+                      {planname  ? (
                         planname === "free" ? (
                           !isLoading && (
-                            <CountdownTimer
-                              duration={timeLeft}
-                              onCompletion={handlePlanTimeOut}
-                            />
+                            // <CountdownTimer
+                            //   duration={timeLeft}
+                            //   onCompletion={handlePlanTimeOut}
+                            // />
+                          //   <SecondaryTimer
+                          //   endTime={classEndTime}
+                          //   tenMins={() => setTimeOutModal(true)}
+                          //   endStream={() => {
+                          //     handleExitStream();
+                          //   }}
+                          // />
+                          ""
                           )
                         ) : (
                           ""
@@ -2017,7 +2046,7 @@ export default function Stream() {
                       className="page-title_cta-btn"
                       onClick={handleExitStreamModal}
                     >
-                      End Webinar &nbsp; <i className="fa fa-times"></i>
+                      End Class &nbsp; <i className="fa fa-times"></i>
                     </Button>
                   </div>
                   <div className="title-bar">
