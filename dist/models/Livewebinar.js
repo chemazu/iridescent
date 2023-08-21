@@ -67,7 +67,7 @@ const liveWebinarSchema = new _mongoose.default.Schema({
     type: Date
   },
   classEndTime: {
-    type: Date,
+    type: Number,
     default: 0
   },
   fee: {

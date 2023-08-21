@@ -16,6 +16,9 @@ const paymentPlansSchema = new _mongoose.default.Schema({
   coursecount: {
     type: Number
   },
+  resourcecount: {
+    type: Number
+  },
   productcount: {
     type: Number
   },

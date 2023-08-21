@@ -65,7 +65,7 @@ const liveWebinarSchema = new mongoose.Schema({
     type: Date,
   },
   classEndTime: {
-    type: Date,
+    type: Number,
     default: 0,
   },
   fee: {

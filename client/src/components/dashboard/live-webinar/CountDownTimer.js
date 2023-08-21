@@ -1,34 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from 'react';
 
-const CountdownTimer = ({ duration, onCompletion, style }) => {
-  // const [timeLeft, setTimeLeft] = useState(duration);
+const CountdownTimer = ({ endTime, firstReminder, classOver }) => {
+  const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
 
-  // useEffect(() => {
-  //   if (timeLeft === 0) {
-  //     onCompletion();
-  //     return;
-  //   }
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newTimeLeft = endTime - Date.now();
+      setTimeLeft(newTimeLeft);
 
-  //   const timer = setInterval(() => {
-  //     setTimeLeft((prevTime) => prevTime - 1);
-  //   }, 1000);
+      if (newTimeLeft <= 0 * 60 * 1000) {
 
-  //   return () => {
-  //     clearInterval(timer);
-  //   };
-  // }, [timeLeft, onCompletion]);
+        console.log("fish")
+        classOver();
 
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${minutes.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
+      } else if (newTimeLeft === 10 * 60 * 1000) {
+        firstReminder();
+      }
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [endTime, firstReminder, classOver]);
+
+  const formatTime = (milliseconds) => {
+    const seconds = Math.floor(milliseconds / 1000) % 60;
+    const minutes = Math.floor(milliseconds / 1000 / 60) % 60;
+
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
     <div>
-      <span style={style}>{formatTime(duration)}</span>
+      <p>{formatTime(timeLeft)}</p>
     </div>
   );
 };

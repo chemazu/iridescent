@@ -17,21 +17,35 @@ const PresenterValidation = ({ school }) => {
   useEffect(() => {
     const validateWebinar = async () => {
       setIsLoading(true);
+      let now = Date.now();
 
       try {
         if (localStorage.getItem("tutorToken")) {
           setAuthToken(localStorage.getItem("tutorToken"));
         }
-        let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
+        let res = await axios.get(`/api/v1/livewebinar/validate/${roomid}`);
+
         if (res) {
-          setIsValid(true);
-          setIsLoading(false);
-          if (res.data.timeLeft > 0) {
-            setIsValid(true);
-            setIsLoading(false);
+          if (!res.data.endStatus) {
+            if (res.data.classEndTime > now||res.data.classEndTime === 0) {
+              // localStorage.setItem(`${roomid}`, `${res.data.classEndTime}`);
+              setIsValid(true);
+              setIsLoading(false);
+            } else {
+              setTimeout(true);
+              setIsLoading(false);
+            }
           } else {
-            setTimeout(true);
           }
+          // classEndTime
+          // endStatus
+          // setIsValid(true);
+          // setIsLoading(false);
+          // if (res.data.timeLeft > 0) {
+
+          // } else {
+          //   setTimeout(true);
+          // }
         }
       } catch (error) {
         console.log(error);
@@ -61,8 +75,7 @@ const PresenterValidation = ({ school }) => {
 
   if (timeout) {
     return <>TimeOut increase plan for longer webinars</>;
-  // return <Stream />;
-
+    // return <Stream />;
   }
 
   if (!isValid) {

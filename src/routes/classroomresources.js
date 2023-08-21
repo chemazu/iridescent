@@ -2,6 +2,7 @@ import auth from "../middleware/auth";
 import { Router } from "express";
 import ClassroomResource from "../models/ClassroomResource";
 import School from "../models/School";
+import PaymentPlans from "../models/PaymentPlans";
 const router = Router();
 const ITEMS_PER_PAGE = 3;
 router.post("/:type", [auth], async (req, res) => {
@@ -70,7 +71,7 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
       creator,
       type,
     });
- 
+
     const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
 
     const resources = await ClassroomResource.find({ creator, type })
@@ -93,6 +94,41 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
     res
       .status(500)
       .json({ error: "An error occurred while fetching the resources." });
+  }
+});
+router.get("/count", [auth], async (req, res) => {
+  console.log("first")
+  const creator = req.user.id;
+  try {
+    const resources = await ClassroomResource.find({ creator }).populate(
+      "creator"
+    );
+
+    if (resources.length > 0) {
+      const payment = await PaymentPlans.findOne({
+        _id: resources[0].creator.selectedplan,
+      });
+
+      console.log({
+        resourceCount: resources.length,
+        paymentInfo: payment.planname,
+      });
+
+      res.json({
+        resourceCount: resources.length,
+        paymentInfo: payment.planname,
+      });
+    } else {
+      res.json({
+        resourceCount: 0,
+        paymentInfo: null,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching resources." });
   }
 });
 // PUT endpoint to update a resource (both quiz and poll)
@@ -157,7 +193,6 @@ router.get("/:resourceId", async (req, res) => {
       .json({ error: "An error occurred while fetching the resource." });
   }
 });
-
 router.delete("/:resourceId", [auth], async (req, res) => {
   const { resourceId } = req.params;
 
@@ -181,5 +216,6 @@ router.delete("/:resourceId", [auth], async (req, res) => {
       .json({ error: "An error occurred while deleting the resource." });
   }
 });
+
 
 export default router;

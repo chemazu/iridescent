@@ -23,17 +23,18 @@ import setDocumentTitle from "../../../utilities/setDocumentTitle";
 import smiley from "../../../images/emojisvg.svg";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import CountdownTimer from "./CountDownTimer";
+import CountdownTimer from "./CountdownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import Poll from "./Poll";
 import { useStore } from "react-redux";
 import videojs from "video.js";
-import VideoStreamer from "./VideoStreamer";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
   let history = useHistory();
   let [currentPeer, setCurrentPeer] = useState(null);
+  let [presenterPeer, setPresenterPeer] = useState(null);
+
   const myVideoRef = useRef();
   const videoRef = useRef(null);
   const peerRef = useRef(null);
@@ -68,11 +69,10 @@ function WatchStream({ schoolname }) {
   const [pollResults, setPollResults] = useState(null);
   const [waiting, setWaiting] = useState(false);
   const [disconnect, setDisconnect] = useState(false);
-  const [screenSharing, setScreenSharing] = useState(false);
   const [webinarRoomTimer, setWebinarRoomTimer] = useState(null);
   const pryColor = "#44B5BB";
   const secColor = "#272727";
-
+  // const finalPeer = new Peer()
   const [videoOptions, setVideoOptions] = useState({
     autoplay: true,
     playbackRates: [0.5, 1, 1.25, 1.5, 2],
@@ -112,39 +112,91 @@ function WatchStream({ schoolname }) {
   //   // on prop change, for example:
   // };
 
+  // const handleAddStream = (stream) => {
+  //   if (!playerRef.current)
+  //    {
+  //     // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
+  //     const videoElement = document.createElement("video-js");
+  //     videoElement.srcObject = stream;
+  //     videoElement.setAttribute("playsinline", "true");
+
+  //     videoElement.classList.add("vjs-big-play-centered");
+  //     videoElement.classList.add("vjs-big-play-centered");
+
+  //     videoRef.current.appendChild(videoElement);
+  //     videoElement.style.width = "100%";
+  //     videoElement.style.heightm = "100%";
+  //     // let options = {
+  //     //   autoplay: true,
+  //     //   playbackRates: [0.5, 1, 1.25, 1.5, 2],
+  //     //   width: 720,
+  //     //   height: 300,
+  //     //   // controls: true,
+  //     // };
+  //     const player = (playerRef.current = videojs(videoElement, {}, () => {
+  //       videojs.log("player is ready");
+  //       // handlePlayerReady && handlePlayerReady(player);
+  //     }));
+  //     player.autoplay(true);
+
+  //     // You could update an existing player in the `else` block here
+  //     // on prop change, for example:
+  //   }
+  //   else {
+  //     // playerRef.current.src({ type: "application/x-mpegURL", src: stream });
+  //     // playerRef.current.load(); // Load the new source
+  //   }
+  // };
+  const replaceVideoElement = (stream) => {
+    console.log("first");
+    // Remove the existing video element if it exists
+    if (playerRef.current) {
+      playerRef.current.dispose(); // Dispose the videojs player
+      playerRef.current = null;
+      videoRef.current.innerHTML = ""; // Clear the video container
+    }
+
+    const videoElement = document.createElement("video");
+    videoElement.setAttribute("playsinline", "true");
+    videoElement.classList.add("video-js", "vjs-big-play-centered");
+    videoElement.srcObject = stream;
+    videoElement.height="100%"
+
+    videoRef.current.appendChild(videoElement);
+
+    const player = (playerRef.current = videojs(videoElement, {}, () => {
+      console.log("Player is ready");
+    }));
+
+    player.autoplay(true);
+  };
   const handleAddStream = (stream) => {
     if (!playerRef.current) {
-      // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
-      const videoElement = document.createElement("video-js");
-      videoElement.srcObject = stream;
+      const videoElement = document.createElement("video");
       videoElement.setAttribute("playsinline", "true");
-
-      videoElement.classList.add("vjs-big-play-centered");
-      videoElement.classList.add("vjs-big-play-centered");
+      videoElement.classList.add("video-js", "vjs-big-play-centered");
+      videoElement.srcObject = stream; // Set the MediaStream as the source
 
       videoRef.current.appendChild(videoElement);
-      videoElement.style.width = "100%";
-      videoElement.style.heightm = "100%";
-      // let options = {
-      //   autoplay: true,
-      //   playbackRates: [0.5, 1, 1.25, 1.5, 2],
-      //   width: 720,
-      //   height: 300,
-      //   // controls: true,
-      // };
+
       const player = (playerRef.current = videojs(videoElement, {}, () => {
-        videojs.log("player is ready");
-        // handlePlayerReady && handlePlayerReady(player);
+        console.log("Player is ready");
       }));
+
       player.autoplay(true);
 
-      // You could update an existing player in the `else` block here
-      // on prop change, for example:
+      // You can set other options for the player here
+      // player.playbackRates([0.5, 1, 1.25, 1.5, 2]);
+      // player.dimensions(720, 300);
+
+      // Optionally add controls
+      // player.controls(true);
     } else {
-      // playerRef.current.src({ type: "application/x-mpegURL", src: stream });
-      // playerRef.current.load(); // Load the new source
+      console.log("else");
+      replaceVideoElement(stream);
     }
   };
+
   const handlePlayerReady = (player) => {
     playerRef.current = player;
 
@@ -191,7 +243,6 @@ function WatchStream({ schoolname }) {
       video.addEventListener("loadedmetadata", () => {
         video.play();
       });
-      console.log(stream);
     }
     handleAddStream(stream);
   }
@@ -349,7 +400,6 @@ function WatchStream({ schoolname }) {
     try {
       const res = await axios.get(`/api/v1/theme/${schoolId}`);
       setTheme(res.data);
-      console.log(res);
     } catch (error) {
       if (error.response.status === 404) {
         setTheme(null);
@@ -418,6 +468,7 @@ function WatchStream({ schoolname }) {
   //   }
   //   setChatMessage("");
   // };
+
   const sendMessage = () => {
     if (chatMessage.trim() !== "") {
       // Check if the trimmed chatMessage is not empty
@@ -449,36 +500,187 @@ function WatchStream({ schoolname }) {
       sendMessage();
     }
   };
+
   const handleUniqueSubmission = (result, type) => {
     setAnswers([]);
     socket.emit("special submit", type, result, roomid, watcherUsername);
 
     setSubmitted(true);
   };
+
+  const initiateCall = (peerId) => {
+    if (currentPeer) {
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((newStream) => {
+          const call = currentPeer?.call(peerId, newStream);
+          call?.on("stream", (remoteStream) => {
+            setWaiting(false);
+            addVideoStream(remoteStream);
+
+            // Handle the incoming stream
+          });
+        });
+    }
+  };
+
   useEffect(() => {
-    socket.on("timerEnded", (questionControl, remainingTime) => {
-      setTimerHolder({});
-      handlePollSubmit();
-      if (specialChat && specialChat.length > 0) {
-        if (specialChat[0].type === "poll") {
-          handlePollSubmit();
-        }
-        // check if they have submitted
+    const peerInstance = new Peer();
+    peerRef.current = peerInstance;
 
-        if (specialChat[0].type === "quiz") {
-          handleUniqueSubmission(answers, "quiz");
-        }
+    peerInstance.on("open", (user) => {
+      socket.emit("watcher", roomid, user);
+    });
+    const startClass = (peerId, stat) => {
+      console.log("startClass ", stat, peerId);
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((newStream) => {
+          const call = peerInstance?.call(peerId, newStream);
+          call?.on("stream", (remoteStream) => {
+            setWaiting(false);
+            addVideoStream(remoteStream);
+
+            // Handle the incoming stream
+          });
+        });
+    };
+    socket.on("join stream", (roomSize, peerId) => {
+      startClass(peerId, "join");
+      setPresenterPeer(peerId);
+      // Handle the join stream event
+      // triger som bs that run the stream
+      // initiateCall(peerId)
+    });
+    socket.on("broadcaster", (peerId) => {
+      setDisconnect(false);
+      setPresenterPeer(peerId);
+      setWaiting(false);
+
+      startClass(peerId, "broad");
+    });
+    socket.on("screenSharingStatus", (status, peerId) => {
+      console.log(status);
+      console.log(peerId);
+
+
+      if (status) {
+      startClass(peerId, "screen");
+
+   
       } else {
-        // Handle the case when specialChat is not defined or empty
-      }
-      // check if they have submitted
+        if (playerRef.current) {
+          playerRef.current.dispose(); // Dispose the videojs player
+          playerRef.current = null;
+          videoRef.current.innerHTML = ""; // Clear the video container
+        }
+        console.log("iii")
+      startClass(peerId, "screenss");
 
-      // hanlePollQuizTimeOut();
+
+      }
     });
     return () => {
-      socket.off("timerEnded");
+      peerInstance.destroy();
+      socket.off("join stream");
+      socket.off("broadcaster");
+      socket.off("screenSharingStatus");
     };
-  }, [roomid, timerHolder]);
+  }, [roomid]);
+
+  // useEffect(() => {
+  //   socket.on("join stream", (roomSize, peerId) => {
+  //     startClass(peerId);
+  //     // Handle the join stream event
+  //     // triger som bs that run the stream
+  //     // initiateCall(peerId)
+  //   });
+
+  //   return () => {
+  //     socket.off("join stream");
+  //   };
+  // }, [roomid, currentPeer]);
+
+  // useEffect(() => {
+  //   socket.on("broadcaster", (peerId) => {
+  //     startClass(peerId);
+  //   });
+
+  //   return () => {
+  //     socket.off("broadcaster");
+  //   };
+  // }, [roomid, waiting]);
+
+  // useEffect(() => {
+  //   const peerInstance = new Peer();
+
+  //   const initializePeer = async () => {
+  //     setCurrentPeer(peerInstance);
+  //     peerRef.current = peerInstance;
+
+  //     peerInstance.on("open", (peerId) => {
+  //       socket.emit("watcher", roomid, peerId);
+  //     });
+  //   };
+
+  //   const handleBroadcaster = () => {
+  //     setDisconnect(false);
+  //     setWaiting(false);
+
+  //     peerInstance.on("open", (user) => {
+  //       socket.emit("watcher", roomid, user);
+  //     });
+
+  //     setCurrentPeer(peerInstance);
+  //     peerRef.current = peerInstance;
+
+  //     peerInstance.on("call", (call) => {
+  //       setReconnectLoading(true);
+
+  //       call.answer();
+  //       call.on("stream", (userVideoStream) => {
+  //         setReconnectLoading(false);
+  //         console.log("wozer");
+  //         addVideoStream(userVideoStream);
+  //       });
+  //     });
+  //   };
+
+  //   initializePeer();
+
+  //   socket.on("broadcaster", handleBroadcaster);
+
+  //   return () => {
+  //     socket.off("broadcaster");
+  //     peerInstance.destroy();
+  //   };
+  // }, [roomid, waiting]);
+
+  // useEffect(() => {
+  //   socket.on("timerEnded", (questionControl, remainingTime) => {
+  //     setTimerHolder({});
+  //     handlePollSubmit();
+  //     if (specialChat && specialChat.length > 0) {
+  //       if (specialChat[0].type === "poll") {
+  //         handlePollSubmit();
+  //       }
+  //       // check if they have submitted
+
+  //       if (specialChat[0].type === "quiz") {
+  //         handleUniqueSubmission(answers, "quiz");
+  //       }
+  //     } else {
+  //       // Handle the case when specialChat is not defined or empty
+  //     }
+  //     // check if they have submitted
+
+  //     // hanlePollQuizTimeOut();
+  //   });
+  //   return () => {
+  //     socket.off("timerEnded");
+  //   };
+  // }, [roomid, timerHolder]);
+
   useEffect(() => {
     socket.on("watcher-exit", (size) => {
       setAttendees(size);
@@ -488,15 +690,41 @@ function WatchStream({ schoolname }) {
       socket.off("watcher-exit");
     };
   }, [roomid, attendees]);
-
+  const colors = [
+    "#c65e8e",
+    "#c792ea",
+    "#faa773",
+    "#f37ffe",
+    "#fe0017",
+    "#fee700",
+    "#200b72",
+    "#240638",
+    "#2cff28",
+    "#fff6d5",
+    "#96ffbe",
+  ];
+  function generateUserColor(username) {
+    const index = username.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
   useEffect(() => {
     socket.on("message", (message) => {
-      setDefaultChat([...defaultChat, { ...message, submitted: false }]);
+      const userExists = defaultChat.find((item) => item.user === message.user);
+      let newMessage;
+      if (userExists) {
+        newMessage = { ...message, color: userExists.color };
+      } else {
+        let color = generateUserColor(message.user);
+        newMessage = { ...message, color };
+      }
+
+      setDefaultChat([...defaultChat, { ...newMessage }]);
     });
     return () => {
       socket.off("message");
     };
   }, [defaultChat, roomid]);
+
   useEffect(() => {
     socket.on("specialchat", (message) => {
       setSubmitted(false);
@@ -513,25 +741,13 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     socket.on("no stream", () => {
       setWaiting(true);
+      console.log("no stream");
     });
     return () => {
       socket.off("no stream");
     };
   }, [roomid, waiting]);
 
-  function convertArrayToObject(array) {
-    const result = {};
-
-    // Iterate over the array elements
-    for (let i = 0; i < array.length; i++) {
-      const key = array[i];
-      const value = i === 0 ? 1 : 0; // Set the value to 1 for the first element, 0 for the rest
-
-      result[key] = value; // Assign the key-value pair to the result object
-    }
-
-    return result;
-  }
   useEffect(() => {
     socket.on("updatedPollResult", (updatedResults) => {
       setPollResults(updatedResults);
@@ -541,63 +757,125 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid, pollResults]);
 
-  useEffect(() => {
-    socket.on("broadcaster", () => {
-      peerRef.current.destroy();
-      setDisconnect(false);
-      setWaiting(false);
-      const NewPeer = new Peer();
-      NewPeer.on("open", (user) => {
-        socket.emit("watcher", roomid, user);
-      });
+  // useEffect(() => {
+  //   socket.on("broadcaster", () => {
+  //     peerRef.current.destroy();
+  //     setDisconnect(false);
+  //     setWaiting(false);
+  //     const NewPeer = new Peer();
+  //     // different Peer
 
-      setCurrentPeer(NewPeer);
-      peerRef.current = NewPeer;
-      NewPeer.on("call", (call) => {
-        // stop reconnecting loading
-        setReconnectLoading(true);
+  //     NewPeer.on("open", (user) => {
+  //       socket.emit("watcher", roomid, user);
+  //     });
 
-        call.answer();
-        call.on("stream", (userVideoStream) => {
-          setReconnectLoading(false);
-          addVideoStream(userVideoStream);
-        });
-      });
-    });
-    return () => {
-      socket.off("broadcaster");
-    };
-  }, [roomid, waiting]);
+  //     setCurrentPeer(NewPeer);
+  //     peerRef.current = NewPeer;
+  //     NewPeer.on("call", (call) => {
+  //       // stop reconnecting loading
+  //       setReconnectLoading(true);
 
-  useEffect(() => {
-    socket.on("screenSharingStatus", (status) => {
-      setScreenSharing(status);
-      let newDummyStream = createBlankVideoStream();
-      if (status) {
-        peerRef.current.on("call", (call) => {
-          call.answer(newDummyStream);
-          call.on("stream", (remoteStream) => {
-            addVideoStream(remoteStream);
-          });
-        });
-      } else {
-        peerRef.current.on("call", (call) => {
-          navigator.mediaDevices
-            .getUserMedia({ video: true, audio: true })
-            .then((newStream) => {
-              call.answer(newStream);
-              call.on("stream", (remoteStream) => {
-                // Handle the received screen sharing stream
-                addVideoStream(remoteStream);
-              });
-            });
-        });
-      }
-    });
-    return () => {
-      socket.off("screenSharingStatus");
-    };
-  }, [roomid, screenSharing]);
+  //       call.answer();
+  //       call.on("stream", (userVideoStream) => {
+  //         setReconnectLoading(false);
+  //         addVideoStream(userVideoStream);
+  //       });
+  //     });
+  //   });
+  //   return () => {
+  //     socket.off("broadcaster");
+  //   };
+  // }, [roomid, waiting]);
+
+  // useEffect(() => {
+  //   socket.on("screenSharingStatus", (status) => {
+  //     setScreenSharing(status);
+  //     let newDummyStream = createBlankVideoStream();
+  //     if (status) {
+  //       console.log("firstw5");
+  //       console.log(peerRef);
+  //       peerRef.current.on("call", (call) => {
+  //         console.log("secondw5");
+
+  //         call.answer(newDummyStream);
+
+  //         call.on("stream", (remoteStream) => {
+  //           // addVideoStream(remoteStream);
+  //           replaceVideoElement(remoteStream);
+
+  //         });
+  //       });
+  //     } else {
+  //       peerRef.current.on("call", (call) => {
+  //         navigator.mediaDevices
+  //           .getUserMedia({ video: true, audio: true })
+  //           .then((newStream) => {
+  //             call.answer(newStream);
+  //             call.on("stream", (remoteStream) => {
+  //               // Handle the received screen sharing stream
+  //               // addVideoStream(remoteStream);
+  //               replaceVideoElement(remoteStream);
+  //             });
+  //           });
+  //       });
+  //     }
+  //   });
+  //   return () => {
+  //     socket.off("screenSharingStatus");
+  //   };
+  // }, [roomid, screenSharing]);
+  // useEffect(() => {
+  //   const handleScreenSharingStatus = (status) => {
+  //     setScreenSharing(status);
+
+  //     if (status) {
+  //       const newDummyStream = createBlankVideoStream();
+
+  //       const handleCall = (call) => {
+  //         call.answer(newDummyStream);
+
+  //         call.on("stream", (remoteStream) => {
+  //           replaceVideoElement(remoteStream);
+  //         });
+  //       };
+
+  //       peerRef.current.on("call", handleCall);
+
+  //       return () => {
+  //         peerRef.current.off("call", handleCall);
+  //         if (newDummyStream) {
+  //           newDummyStream.getTracks().forEach(track => track.stop());
+  //         }
+  //       };
+  //     } else {
+  //       const handleCall = (call) => {
+  //         navigator.mediaDevices
+  //           .getUserMedia({ video: true, audio: true })
+  //           .then((newStream) => {
+  //             call.answer(newStream);
+  //             call.on("stream", (remoteStream) => {
+  //               replaceVideoElement(remoteStream);
+  //             });
+  //           });
+  //       };
+
+  //       peerRef.current.on("call", handleCall);
+
+  //       return () => {
+  //         peerRef.current.off("call", handleCall);
+  //       };
+  //     }
+  //   };
+
+  //   socket.on("screenSharingStatus", ()=>{
+  //     console.log("firstss")
+
+  //   });
+
+  //   return () => {
+  //     socket.off("screenSharingStatus");
+  //   };
+  // }, [roomid, screenSharing]);
 
   useEffect(() => {
     socket.on("timerStarted", (duration) => {
@@ -632,7 +910,6 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     socket.on("roomTimerTick", (roomTimer) => {
       setWebinarRoomTimer(roomTimer);
-      // console.log(roomTimer)
     });
     return () => {
       socket.off("roomTimerTick");
@@ -697,40 +974,25 @@ function WatchStream({ schoolname }) {
   }, [schoolname]);
   // const myPeer = new Peer({ videoCodec: "h264" });
 
-  useEffect(() => {
-    const initializePeer = async () => {
-      const peerInstance = new Peer();
-      setCurrentPeer(peerInstance);
-      peerRef.current = peerInstance;
+  // useEffect(() => {
+  //   const initializePeer = async () => {
+  //     const peerInstance = new Peer();
+  //     // different Peer
+  //     setCurrentPeer(peerInstance);
+  //     peerRef.current = peerInstance;
 
-      peerInstance.on("open", (peerId) => {
-        // socket.emit("join", peerId);
-        socket.emit("watcher", roomid, peerId);
-      });
-    };
+  //     peerInstance.on("open", (peerId) => {
+  //       // socket.emit("join", peerId);
+  //       socket.emit("watcher", roomid, peerId);
+  //     });
+  //   };
 
-    initializePeer();
+  //   initializePeer();
 
-    return () => {
-      currentPeer?.destroy();
-    };
-  }, [roomid]);
-
-  const initiateCall = (peerId) => {
-    if (currentPeer) {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((newStream) => {
-          const call = currentPeer?.call(peerId, newStream);
-          call?.on("stream", (remoteStream) => {
-            setWaiting(false);
-            addVideoStream(remoteStream);
-
-            // Handle the incoming stream
-          });
-        });
-    }
-  };
+  //   return () => {
+  //     currentPeer?.destroy();
+  //   };
+  // }, [roomid]);
 
   useEffect(() => {
     socket.on("watcher", (userId, roomSize) => {
@@ -749,17 +1011,6 @@ function WatchStream({ schoolname }) {
       socket.off("disablevideo");
     };
   }, [roomid, disableVideoStream]);
-  useEffect(() => {
-    socket.on("join stream", (roomSize, peerId) => {
-      // Handle the join stream event
-
-      initiateCall(peerId);
-    });
-
-    return () => {
-      socket.off("join stream");
-    };
-  }, [roomid, currentPeer]);
 
   useEffect(() => {
     validateWebinar();
@@ -822,7 +1073,6 @@ function WatchStream({ schoolname }) {
                         color: theme?.themestyles.navbartextcolor,
                       }}
                     >
-
                       {isLoading ? "..." : title}
                       <p style={{ margin: "0" }}>
                         {/* <Button onClick={startStream}>Join Webinar</Button> */}
@@ -1088,6 +1338,8 @@ function WatchStream({ schoolname }) {
                                       <p
                                         className="watcher-username"
                                         style={{
+                                          color: singleChat.color || "#fe0017",
+
                                           marginBottom: "0",
                                           alignSelf:
                                             singleChat.user === watcherUsername
@@ -1117,10 +1369,7 @@ function WatchStream({ schoolname }) {
                           <div className="chat-interface-quiz">
                             {specialChat?.map((singleChat, index) => {
                               return singleChat.type === "quiz" ? (
-                                <div
-                                  className="inchat-poll   inchat-quiz"
-                          
-                                >
+                                <div className="inchat-poll   inchat-quiz">
                                   <div
                                     className="top"
                                     style={{

@@ -8,6 +8,9 @@ const paymentPlansSchema = new mongoose.Schema(
     coursecount: {
       type: Number,
     },
+    resourcecount: {
+      type: Number,
+    },
     productcount: {
       type: Number,
     },

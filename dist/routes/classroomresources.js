@@ -13,6 +13,8 @@ var _ClassroomResource = _interopRequireDefault(require("../models/ClassroomReso
 
 var _School = _interopRequireDefault(require("../models/School"));
 
+var _PaymentPlans = _interopRequireDefault(require("../models/PaymentPlans"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const router = (0, _express.Router)();
@@ -130,6 +132,40 @@ router.get("/creator-resources/:type", [_auth.default], async (req, res) => {
     console.error(error);
     res.status(500).json({
       error: "An error occurred while fetching the resources."
+    });
+  }
+});
+router.get("/count", [_auth.default], async (req, res) => {
+  console.log("first");
+  const creator = req.user.id;
+
+  try {
+    const resources = await _ClassroomResource.default.find({
+      creator
+    }).populate("creator");
+
+    if (resources.length > 0) {
+      const payment = await _PaymentPlans.default.findOne({
+        _id: resources[0].creator.selectedplan
+      });
+      console.log({
+        resourceCount: resources.length,
+        paymentInfo: payment.planname
+      });
+      res.json({
+        resourceCount: resources.length,
+        paymentInfo: payment.planname
+      });
+    } else {
+      res.json({
+        resourceCount: 0,
+        paymentInfo: null
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: "An error occurred while fetching resources."
     });
   }
 }); // PUT endpoint to update a resource (both quiz and poll)

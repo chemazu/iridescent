@@ -4,6 +4,7 @@ import { Col, Container, Row, Button, Card, Spinner, Modal } from "reactstrap";
 import DashboardNavbar from "../DashboardNavbar";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import axios from "axios";
+import "../../../custom-styles/dashboard/live-webinar.css";
 import "../../../custom-styles/dashboard/choose-live-webinar.css";
 import alarm from "../../../images/alarm-add.svg";
 import scheduled from "../../../images/scheduled.svg";
@@ -17,17 +18,13 @@ function ChooseWebinarType({school}) {
   const [webinarType, setWebinarType] = useState("");
   const alert = useAlert();
   const history = useHistory();
-
   const dispatch = useDispatch();
-
   const [instantClass, setInstantClass] = useState(false);
-
   const [title, setTitle] = useState("");
   const [freeWebinar, setFreeWebinar] = useState(null);
   const [currency, setCurrency] = useState("");
   const [fee, setFee] = useState("");
   const [fileToSend, setFileToSend] = useState(null);
-
   const timestamp = Date.now();
   console.log(school)
   const getSchoolUrl = (schoolname) => {

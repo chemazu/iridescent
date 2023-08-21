@@ -215,7 +215,6 @@ router.put(
     body("currency", "currency is required").not().isEmpty(),
   ],
   async (req, res) => {
-    console.log("ferer");
     const errors = validationResult(req.body);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -288,7 +287,34 @@ router.put(
     }
   }
 );
+router.get("/classtimer/:streamKey", auth, async (req, res) => {
+  const { streamKey } = req.params;
+  let user = req.user.id;
 
+try {
+  const livestream = await LiveWebinar.findOne({ streamKey, creator: user })
+  .populate("creator")
+  .populate("school");
+  if (livestream) {
+    const timestamp = Date.now();
+    const endTime = timestamp + 45 * 60 * 1000;
+    livestream.streamStarted = timestamp;
+
+    if (livestream.classEndTime === 0) {
+      livestream.classEndTime = endTime;
+    }
+    await livestream.save();
+
+    res.json({ classEndTime: livestream.classEndTime });
+  } else {
+    res.status(400).json({ error: "Stream not found" });
+  }
+} catch (error) {
+  res.status(400).json({ error: "Server error" });
+  
+}
+  
+});
 // confirm a live stream
 
 router.get("/stream/:streamKey", auth, async (req, res) => {
@@ -304,12 +330,8 @@ router.get("/stream/:streamKey", auth, async (req, res) => {
       const payment = await PaymentPlans.findOne({
         _id: livestream.creator.selectedplan,
       });
-      const timestamp = Date.now();
 
       if (payment) {
-        livestream.streamStarted = timestamp;
-
-        await livestream.save();
         res.json({
           title: livestream.title,
           streamkey: livestream.streamKey,
@@ -324,10 +346,32 @@ router.get("/stream/:streamKey", auth, async (req, res) => {
           id: livestream._id,
           fee: livestream.fee,
           classEndTime: livestream.classEndTime,
+          endStatus: livestream.endStatus,
         });
       } else {
         res.status(400).json({ error: "Payment plan not found" });
       }
+    } else {
+      res.status(400).json({ error: "Stream not found" });
+    }
+  } catch (error) {
+    res.status(400).json({ error: "Server error" });
+  }
+});
+
+router.get("/validate/:streamKey", auth, async (req, res) => {
+  const { streamKey } = req.params;
+  let user = req.user.id;
+  try {
+    const livestream = await LiveWebinar.findOne({ streamKey, creator: user })
+      .populate("creator")
+      .populate("school");
+
+    if (livestream) {
+      res.json({
+        classEndTime: livestream.classEndTime,
+        endStatus: livestream.endStatus,
+      });
     } else {
       res.status(400).json({ error: "Stream not found" });
     }
@@ -398,55 +442,55 @@ router.get("/watch/:streamKey", async (req, res) => {
     res.status(400).json({ error: "Server error" });
   }
 });
-router.get("/watch/:streamKey", async (req, res) => {
-  const { streamKey } = req.params;
-  let studentId = req.student.id;
+// router.get("/watch/:streamKey", async (req, res) => {
+//   const { streamKey } = req.params;
+//   let studentId = req.student.id;
 
-  try {
-    const livestream = await LiveWebinar.findOne({ streamKey })
-      .populate("creator")
-      .populate("school");
+//   try {
+//     const livestream = await LiveWebinar.findOne({ streamKey })
+//       .populate("creator")
+//       .populate("school");
 
-    if (livestream) {
-      const payment = await StudentWebinar.findOne({
-        student: studentId,
-        webinarBought: livestream._id,
-        boughtfrom: livestream.school._id,
-      });
-      const planName = await PaymentPlans.findOne({
-        _id: livestream.creator.selectedplan,
-      });
-      if (payment || livestream.fee === 0) {
-        // livestream.streamStarted = timestamp;
+//     if (livestream) {
+//       const payment = await StudentWebinar.findOne({
+//         student: studentId,
+//         webinarBought: livestream._id,
+//         boughtfrom: livestream.school._id,
+//       });
+//       const planName = await PaymentPlans.findOne({
+//         _id: livestream.creator.selectedplan,
+//       });
+//       if (payment || livestream.fee === 0) {
+//         // livestream.streamStarted = timestamp;
 
-        // if (livestream.timeleft === 0) {
-        //   livestream.timeleft = 2700;
-        // }
+//         // if (livestream.timeleft === 0) {
+//         //   livestream.timeleft = 2700;
+//         // }
 
-        // await livestream.save();
+//         // await livestream.save();
 
-        res.json({
-          title: livestream.title,
-          streamkey: livestream.streamKey,
-          isLive: livestream.isLive,
-          firstname: livestream.creator.firstname,
-          lastname: livestream.creator.lastname,
-          username: livestream.creator.username,
-          school: livestream.school.name,
-          planname: planName.planname,
-          timeLeft: livestream.timeleft,
-          avatar: livestream.creator.avatar,
-        });
-      } else {
-        res.status(400).json({ error: "Payment plan not found" });
-      }
-    } else {
-      res.status(400).json({ error: "Stream not found" });
-    }
-  } catch (error) {
-    res.status(400).json({ error: "Server error" });
-  }
-});
+//         res.json({
+//           title: livestream.title,
+//           streamkey: livestream.streamKey,
+//           isLive: livestream.isLive,
+//           firstname: livestream.creator.firstname,
+//           lastname: livestream.creator.lastname,
+//           username: livestream.creator.username,
+//           school: livestream.school.name,
+//           planname: planName.planname,
+//           timeLeft: livestream.timeleft,
+//           avatar: livestream.creator.avatar,
+//         });
+//       } else {
+//         res.status(400).json({ error: "Payment plan not found" });
+//       }
+//     } else {
+//       res.status(400).json({ error: "Stream not found" });
+//     }
+//   } catch (error) {
+//     res.status(400).json({ error: "Server error" });
+//   }
+// });
 
 // get live streams
 // router.get("/streams/:filter", auth, async (req, res) => {
@@ -498,7 +542,7 @@ router.get("/streams", auth, async (req, res) => {
   let streams = await LiveWebinar.find({
     creator: req.user.id,
     startTime: { $gte: currentDateOnly },
-    endStatus:false,
+    endStatus: false,
   }).sort({ startTime: 1 });
 
   if (!streams) {
@@ -524,8 +568,7 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
   let streams = await LiveWebinar.find({
     creator: school.createdBy,
     startTime: { $gte: currentDateOnly },
-    endStatus:false,
-
+    endStatus: false,
   })
     .populate("creator")
     .sort({ startTime: 1 });

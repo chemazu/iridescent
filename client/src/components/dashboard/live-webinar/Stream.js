@@ -23,11 +23,11 @@ import { useParams, useHistory } from "react-router-dom";
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import CountdownTimer from "./CountDownTimer";
+
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
-import SecondaryTimer from "./SecondaryTimer";
+import CountdownTimer from "./CountdownTimer";
 
 export default function Stream() {
   const { roomid } = useParams();
@@ -174,6 +174,7 @@ export default function Stream() {
       peerHolder.destroy();
       setPeerHolder(null);
     }
+    localStorage.removeItem(roomid);
     history.push("/dashboard/livewebinar");
 
     // Refresh the current page
@@ -244,7 +245,6 @@ export default function Stream() {
     try {
       let res = await axios.get(`/api/v1/livewebinar/stream/${roomid}`);
       if (res) {
-        console.log(res);
         setPresenterDetails({
           name: `${res.data.firstname} ${res.data.lastname} `,
           username: res.data.username,
@@ -252,7 +252,6 @@ export default function Stream() {
           id: res.data.id,
           school: res.data.school,
           fee: res.data.fee,
-          classEndTime: res.data.classEndTime,
         });
         setPlanname(res.data.planname);
 
@@ -835,20 +834,6 @@ export default function Stream() {
     // confirm the index again in
   };
 
-  const onConnect = () => {
-    const hasAudio = audioVisuals.audio;
-    const hasVideo = audioVisuals.video;
-
-    if (hasAudio || hasVideo) {
-      navigator.mediaDevices
-        .getUserMedia(audioVisuals)
-        .then((stream) => {
-          addVideoStream(myVideoRef.current, stream);
-        })
-        .catch((error) => console.error(error));
-    }
-  };
-
   const convertToSeconds = (value, unit) => {
     let seconds = parseFloat(value);
 
@@ -1031,10 +1016,36 @@ export default function Stream() {
   useEffect(() => {
     validateWebinar();
   }, [roomid]);
-
+  const colors = [
+    "#c65e8e",
+    "#c792ea",
+    "#faa773",
+    "#f37ffe",
+    "#fe0017",
+    "#fee700",
+    "#200b72",
+    "#240638",
+    "#2cff28",
+    "#fff6d5",
+    "#96ffbe",
+  ];
+  function generateUserColor(username) {
+    const index = username.charCodeAt(0) % colors.length;
+    return colors[index];
+  }
   useEffect(() => {
     socket.on("message", (message) => {
-      setDefaultChat([...defaultChat, { ...message }]);
+      const userExists = defaultChat.find((item) => item.user === message.user);
+
+      let newMessage;
+      if (userExists) {
+        newMessage = { ...message, color: userExists.color };
+      } else {
+        let color = generateUserColor(message.user);
+        newMessage = { ...message, color };
+      }
+
+      setDefaultChat([...defaultChat, { ...newMessage }]);
     });
     return () => {
       socket.off("message");
@@ -1050,64 +1061,166 @@ export default function Stream() {
       setAttendies(roomSize);
     });
   }, [roomid]);
-let handleTimer = () => {
-  const classEndTimeFromLocalStorage = localStorage.getItem(roomid);
-  const now = Date.now();
-  const newTime = now + 45 * 60 * 1000;
-
-  if (classEndTimeFromLocalStorage) {
-    console.log(classEndTimeFromLocalStorage);
-    setClassEndTime(classEndTimeFromLocalStorage);
-  } else {
-    console.log(newTime)
-    localStorage.setItem(roomid, newTime);
-    setClassEndTime(newTime);
-  }
-}
-  useEffect(() => {
-    const initializePeer = async () => {
-     
-      handleTimer()
-      const peerInstance = new Peer();
-      peerRef.current = peerInstance;
-      setPeerHolder(peerInstance);
-
-      peerInstance.on("open", (peerId) => {
-        socket.emit("broadcaster", roomid, peerId);
-        if (planname === "free") {
-          // socket.emit("freeTimer", roomid, now);
-        }
-      });
-      peerInstance.on("call", (call) => {
-        // check if livestream
-        if (screenSharing && screenStreamRef.current) {
-          call.answer(screenStreamRef.current);
-        } else {
-          const hasAudio = audioVisuals.audio;
-          const hasVideo = audioVisuals.video;
-
-          if (hasAudio || hasVideo) {
-            navigator.mediaDevices
-              // .getUserMedia({ audio: true, video: true })
-              .getUserMedia(audioVisuals)
-
-              .then((stream) => {
-                call.answer(stream);
-              });
-          }
-        }
-      });
-    };
-    if (startController) {
-      onConnect();
-      initializePeer();
+  let handleFreeTimer = async () => {
+    let now = Date.now();
+    console.log("first", planname);
+    const endTime = now + 45 * 60 * 1000;
+    if (localStorage.getItem("tutorToken")) {
+      setAuthToken(localStorage.getItem("tutorToken"));
+    }
+    try {
+      let res = await axios.get(`/api/v1/livewebinar/classtimer/${roomid}`);
+      if (res) {
+        console.log(res, endTime);
+        localStorage.setItem(roomid, res?.data.classEndTime);
+        setClassEndTime(res?.data.classEndTime || endTime);
+      } else {
+        localStorage.setItem(roomid, endTime);
+      }
+    } catch (error) {
+      console.log(error);
+      localStorage.setItem(roomid, endTime);
     }
 
+    // const classEndTimeFromLocalStorage = localStorage.getItem(roomid);
+    // const now = Date.now();
+    // const newTime = now + 45 * 60 * 1000;
+
+    // if (classEndTimeFromLocalStorage) {
+    //   console.log(classEndTimeFromLocalStorage);
+    //   setClassEndTime(classEndTimeFromLocalStorage);
+    // } else {
+    //   console.log(newTime);
+    //   localStorage.setItem(roomid, newTime);
+    //   setClassEndTime(newTime);
+    // }
+  };
+  // const onConnect = () => {
+  //   const hasAudio = audioVisuals.audio;
+  //   const hasVideo = audioVisuals.video;
+  //   const constraints = screenSharing
+  //     ? { video: { mediaSource: "screen" }, audio: true }
+  //     : { video: true, audio: true };
+
+  //   if (hasAudio || hasVideo) {
+  //     navigator.mediaDevices
+  //       // .getUserMedia(audioVisuals)
+  //       .getUserMedia(constraints)
+  //       .then((stream) => {
+  //         addVideoStream(myVideoRef.current, stream);
+  //       })
+  //       .catch((error) => console.error(error));
+  //   }
+  // };
+  const initializePeer = async () => {
+    const peerInstance = new Peer();
+    peerRef.current = peerInstance;
+    peerInstance.on("open", (peerId) => {
+      if (!screenSharing) {
+        socket.emit("broadcaster", roomid, peerId);
+      }
+    });
+    handleFreeTimer()
+
+    // }
+    if (screenSharing) {
+      navigator.mediaDevices
+        .getDisplayMedia({ video: true, audio: true })
+        .then((stream) => {
+          screenStreamRef.current = stream;
+          socket.emit("startScreenSharing", roomid);
+          addVideoStream(myVideoRef.current, stream);
+        });
+    } else {
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((stream) => {
+          addVideoStream(myVideoRef.current, stream);
+          screenStreamRef.current = stream;
+        })
+        .catch((error) => console.error(error));
+    }
+    // addVideoStream(myVideoRef.current, screenStreamRef.current);
+
+    peerInstance.on("call", (call) => {
+      console.log(screenStreamRef.current);
+      call.answer(screenStreamRef.current);
+    });
+  };
+  useEffect(() => {
+    // const onConnect = () => {
+    //   // const hasAudio = audioVisuals.audio;
+    //   // const hasVideo = audioVisuals.video;
+    //   const constraints = screenSharing
+    //     ? { video: { mediaSource: "screen" }, audio: true }
+    //     : { video: true, audio: true };
+
+    //   // if (hasAudio || hasVideo) {
+    //     navigator.mediaDevices
+    //       // .getUserMedia(audioVisuals)
+    //       .getUserMedia(constraints)
+    //       .then((stream) => {
+    //         addVideoStream(myVideoRef.current, stream);
+    //       })
+    //       .catch((error) => console.error(error));
+    //   // }
+    // };
+
+    if (startController) {
+      // onConnect()
+      initializePeer();
+    }
     // return () => {
     //   peerHolder?.destroy();
     // };
-  }, [screenSharing, audioVisuals, startController, roomid, planname]);
+  }, [roomid, startController, screenSharing]);
+  // useEffect(() => {
+  //   const initializePeer = async () => {
+  //     handleFreeTimer();
+  //     const peerInstance = new Peer();
+  //     peerRef.current = peerInstance;
+  //     setPeerHolder(peerInstance);
 
+  //     peerInstance.on("open", (peerId) => {
+  //       socket.emit("broadcaster", roomid, peerId);
+  //       if (planname === "free") {
+  //         // socket.emit("freeTimer", roomid, now);
+  //       }
+  //     });
+  //     peerInstance.on("call", (call) => {
+  //       // check if livestream
+  //       if (screenSharing && screenStreamRef.current) {
+  //         call.answer(screenStreamRef.current);
+  //       } else {
+  //         const hasAudio = audioVisuals.audio;
+  //         const hasVideo = audioVisuals.video;
+  //         const constraints = screenSharing
+  //           ? { video: { mediaSource: "screen" }, audio: true }
+  //           : { video: true, audio: true };
+  //         if (hasAudio || hasVideo) {
+  //           navigator.mediaDevices
+  //             // .getUserMedia({ audio: true, video: true })
+  //             // .getUserMedia(audioVisuals)
+  //             .getUserMedia(constraints)
+
+  //             .then((stream) => {
+  //               call.answer(stream);
+  //             });
+  //         }
+  //       }
+  //     });
+  //   };
+  //   if (startController) {
+  //     onConnect();
+
+  //     initializePeer();
+  //     handleFreeTimer();
+  //   }
+
+  //   // return () => {
+  //   //   peerHolder?.destroy();
+  //   // };
+  // }, [screenSharing, audioVisuals, startController, roomid, planname]);
 
   useEffect(() => {
     async function getMediaDevices() {
@@ -1139,40 +1252,58 @@ let handleTimer = () => {
   const toggleScreenSharing = () => {
     if (screenSharing) {
       setScreenSharing(false);
-      handleScreenSharingEnded();
       screenStreamRef.current = null;
+      socket.emit("stopScreenSharing", roomid);
     } else {
       setScreenSharing(true);
-
-      navigator.mediaDevices
-        .getDisplayMedia({ video: true, audio: true })
-        .then((stream) => {
-          addVideoStream(myVideoRef.current, stream);
-
-          screenStreamRef.current = stream;
-          // setScreenStream(stream);
-
-          const screenSharingTrack = stream.getVideoTracks()[0];
-          screenSharingTrack.addEventListener(
-            "ended",
-            handleScreenSharingEnded
-          );
-          // if (myVideoRef.current) {
-          //   myVideoRef.current.srcObject = stream;
-
-          // }
-
-          socket.emit("startScreenSharing", roomid);
-
-          const connections = peerHolder._connections;
-          connections.forEach((value, key) => {
-            const call = peerHolder.call(key, stream);
-            call.on("stream", (userVideoStream) => {});
-          });
-        })
-        .catch((error) => console.error(error));
+      // navigator.mediaDevices
+      //   .getDisplayMedia({ video: true, audio: true })
+      //   .then((stream) => {
+      //     addVideoStream(myVideoRef.current, stream);
+      //     screenStreamRef.current = stream;
+      //     socket.emit("startScreenSharing", roomid);
+      //   });
     }
   };
+  // const toggleScreenSharing = () => {
+  //   if (screenSharing) {
+  //     setScreenSharing(false);
+  //     handleScreenSharingEnded();
+  //     screenStreamRef.current = null;
+  //   } else {
+  //     setScreenSharing(true);
+
+  //     navigator.mediaDevices
+  //       .getDisplayMedia({ video: true, audio: true })
+  //       .then((stream) => {
+  //         addVideoStream(myVideoRef.current, stream);
+
+  //         screenStreamRef.current = stream;
+  //         // setScreenStream(stream);
+
+  //         const screenSharingTrack = stream.getVideoTracks()[0];
+  //         screenSharingTrack.addEventListener(
+  //           "ended",
+  //           handleScreenSharingEnded
+  //         );
+  //         // if (myVideoRef.current) {
+  //         //   myVideoRef.current.srcObject = stream;
+
+  //         // }
+
+  //         socket.emit("startScreenSharing", roomid);
+
+  //         const connections = peerHolder._connections;
+  //         console.log(connections);
+  //         connections.forEach((value, key) => {
+  //           console.log(key);
+  //           const call = peerHolder.call(key, stream);
+  //           call.on("stream", (userVideoStream) => {});
+  //         });
+  //       })
+  //       .catch((error) => console.error(error));
+  //   }
+  // };
   function formatTimeAndDate(timestamp) {
     const months = [
       "Jan",
@@ -1245,10 +1376,6 @@ let handleTimer = () => {
       setPollOptions(quizHolderData[quizHolderData.length - 1].options);
       setTotalQuestion(quizHolderData.length);
       setQuestionNumber(quizHolderData.length);
-
-      // setDurationValue(durationInSec);
-      // setPollTitle(quizHolder[questionNumber].question);
-      // setPollOptions(quizHolder[questionNumber].options);
       setResourceModal(false);
       setQuizStatus(true);
       dispatch(stopLoading());
@@ -1258,6 +1385,27 @@ let handleTimer = () => {
       // dispatch(stopLoading());
     }
   };
+  function createColorGenerator() {
+    const colors = [
+      "#c65e8e",
+      "#c792ea",
+      "#faa773",
+      "#f37ffe",
+      "#fe0017",
+      "#fee700",
+      "#200b72",
+      "#240638",
+      "#2cff28",
+      "#fff6d5",
+      "#96ffbe",
+    ];
+
+    let colorIndex = attendies;
+    const color = colors[colorIndex];
+    colorIndex = (colorIndex + 1) % colors.length;
+
+    return color;
+  }
   const handleOpenResourceModal = async (type) => {
     dispatch(startLoading());
     try {
@@ -1565,7 +1713,6 @@ let handleTimer = () => {
                         <i className="fa fa-times"></i>
                       </h4>
                     </div>
-
                     {editStat ? (
                       <p className="poll-heading">Edit Poll</p>
                     ) : (
@@ -2016,15 +2163,46 @@ let handleTimer = () => {
                       className="fas fa-bars toggler-style mobile-control"
                       aria-hidden="true"
                     ></i>
-                    <div className="time-tracker">
-                      <p>Time Remaining</p>
-                      {planname  ? (
+
+                    {planname && (
+                      <>
+                        {planname === "free" && (
+                          <div className="time-tracker">
+                            <p>Time Remaining</p>
+                            {
+                              isLoading ? (
+                                <span>00:00:00</span>
+                              ) : parseInt(
+                                  localStorage.getItem(`${roomid}`)
+                                ) ? (
+                                <CountdownTimer
+                                  endTime={parseInt(
+                                    localStorage.getItem(`${roomid}`)
+                                  )}
+                                  firstReminder={() => {
+                                    setTimeOutModal(true);
+                                  }}
+                                  classOver={() => {
+                                    handlePlanTimeOut();
+                                  }}
+                                />
+                              ) : (
+                                <span>00:00:00</span>
+                              )
+                              // <p>{localStorage.getItem(`${roomid}`)}</p>
+                            }
+                          </div>
+                        )}
+                      </>
+                    )}
+                    {/* <div className="time-tracker">
+                      {planname ? (
                         planname === "free" ? (
-                          !isLoading && (
-                            // <CountdownTimer
-                            //   duration={timeLeft}
-                            //   onCompletion={handlePlanTimeOut}
-                            // />
+                          !isLoading &&
+                          // <CountdownTimer
+                          //   duration={timeLeft}
+                          //   onCompletion={handlePlanTimeOut}
+                          // />
                           //   <SecondaryTimer
                           //   endTime={classEndTime}
                           //   tenMins={() => setTimeOutModal(true)}
@@ -2033,14 +2211,13 @@ let handleTimer = () => {
                           //   }}
                           // />
                           ""
-                          )
                         ) : (
                           ""
                         )
                       ) : (
                         <span>00:00:00</span>
                       )}
-                    </div>
+                    </div> */}
 
                     <Button
                       className="page-title_cta-btn"
@@ -2333,7 +2510,12 @@ let handleTimer = () => {
                                       >
                                         <p
                                           style={{
+                                            fontWeight: 600,
+
                                             marginBottom: "0",
+                                            color: item.color
+                                              ? item.color
+                                              : "#200b72",
                                             alignSelf:
                                               item.user ===
                                               presenterDetails?.username
@@ -2636,7 +2818,11 @@ let handleTimer = () => {
                                         >
                                           <p
                                             style={{
+                                              fontWeight: 600,
                                               marginBottom: "0",
+                                              color: item.color
+                                                ? item.color
+                                                : "#200b72",
                                               alignSelf:
                                                 item.user ===
                                                 presenterDetails?.username
