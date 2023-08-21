@@ -1120,7 +1120,7 @@ export default function Stream() {
         socket.emit("broadcaster", roomid, peerId);
       }
     });
-    handleFreeTimer()
+    handleFreeTimer();
 
     // }
     if (screenSharing) {
@@ -2133,12 +2133,7 @@ export default function Stream() {
                     <p>Time Remaining</p>
                     {planname && timeLeft ? (
                       planname === "free" ? (
-                        !isLoading && (
-                          <CountdownTimer
-                            duration={timeLeft}
-                            onCompletion={handlePlanTimeOut}
-                          />
-                        )
+                        !isLoading && "countdown"
                       ) : (
                         ""
                       )
@@ -2574,27 +2569,7 @@ export default function Stream() {
                                             Quiz in Progress
                                           </p>
                                         )}
-
-                                        <CountdownTimer
-                                          // duration={convertToSeconds(
-                                          //   item.duration?.durationValue,
-                                          //   item.duration?.durationUnit
-                                          // )}
-                                          duration={
-                                            Number(timerHolder.remainingTime)
-                                              ? Number(
-                                                  timerHolder.remainingTime
-                                                )
-                                              : 0
-                                          }
-                                          // onCompletion={handleQuizTimeOut}
-                                          style={{
-                                            // color: "rgb(82, 95, 127)",
-                                            fontSize: "1rem",
-                                            fontWeight: "500",
-                                            // lineHeight: "1.7",
-                                          }}
-                                        />
+                                        <p>Countdown</p>
                                       </div>{" "}
                                       {quizSubmission && (
                                         <div className="quiz-submission">
@@ -2882,28 +2857,7 @@ export default function Stream() {
                                             </p>
                                           )}
 
-                                          <CountdownTimer
-                                            // duration={convertToSeconds(
-                                            //   item.duration?.durationValue,
-                                            //   item.duration?.durationUnit
-                                            // )}
-                                            duration={
-                                              Number(timerHolder.remainingTime)
-                                                ? Number(
-                                                    timerHolder.remainingTime
-                                                  )
-                                                : 0
-                                            }
-                                            // onCompletion={handleQuizTimeOut}
-                                            style={
-                                              {
-                                                // color: "rgb(82, 95, 127)",
-                                                // fontSize: "1rem",
-                                                // fontWeight: "300",
-                                                // lineHeight: "1.7",
-                                              }
-                                            }
-                                          />
+                                          <p>Countdown</p>
                                         </div>{" "}
                                         {quizSubmission && (
                                           <div className="quiz-submission">
