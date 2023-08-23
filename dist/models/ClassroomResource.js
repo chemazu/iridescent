@@ -35,6 +35,11 @@ const classroomResourceSchema = new _mongoose.default.Schema({
     // Assuming the reference model is named "User"
     required: true
   },
+  persist: {
+    type: Boolean,
+    required: true,
+    default: false
+  },
   school: {
     type: _mongoose.default.Schema.Types.ObjectId,
     required: true,

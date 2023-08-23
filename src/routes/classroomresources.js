@@ -18,7 +18,8 @@ router.post("/:type", [auth], async (req, res) => {
     const school = creatorSchool._id;
     if (type === "quiz") {
       console.log("quizz");
-      const { quizHolder, timeStamp, answers, durationInSec } = req.body;
+      const { quizHolder, timeStamp, answers, durationInSec, persist } =
+        req.body;
       const newResource = new ClassroomResource({
         quizHolder,
         timeStamp,
@@ -27,6 +28,7 @@ router.post("/:type", [auth], async (req, res) => {
         creator,
         type,
         school,
+        persist,
       });
       await newResource.save();
       res.json({
@@ -34,7 +36,7 @@ router.post("/:type", [auth], async (req, res) => {
       });
     }
     if (type === "poll") {
-      const { title, options, durationInSec, timeStamp } = req.body;
+      const { title, options, durationInSec, timeStamp, persist } = req.body;
       const newResource = new ClassroomResource({
         title,
         options,
@@ -43,6 +45,7 @@ router.post("/:type", [auth], async (req, res) => {
         timeStamp,
         type,
         school,
+        persist,
       });
       await newResource.save();
       res.json({
@@ -74,12 +77,16 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
 
     const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
 
-    const resources = await ClassroomResource.find({ creator, type })
-      .skip((page - 1) * ITEMS_PER_PAGE)
-      .limit(ITEMS_PER_PAGE);
+    const resources = await ClassroomResource.find({
+      creator,
+      type,
+      persist: true,
+    });
 
     if (!resources.length) {
-      return res.json({ message: "No resources found for the creator." });
+      return res.json({
+        message: "No resources found for the creator.",
+      });
     }
 
     // res.json(resources);
@@ -96,14 +103,17 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
       .json({ error: "An error occurred while fetching the resources." });
   }
 });
+router.get("/purge", async (req, res) => {
+  await ClassroomResource.deleteMany({});
+  res.json("all records deleted");
+});
 router.get("/count", [auth], async (req, res) => {
-  console.log("first")
+ 
   const creator = req.user.id;
   try {
     const resources = await ClassroomResource.find({ creator }).populate(
       "creator"
     );
-
     if (resources.length > 0) {
       const payment = await PaymentPlans.findOne({
         _id: resources[0].creator.selectedplan,

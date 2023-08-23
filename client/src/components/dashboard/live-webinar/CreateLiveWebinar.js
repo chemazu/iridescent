@@ -37,7 +37,7 @@ function CreateLiveWebinar({ school }) {
   const [description, setDescription] = useState("");
   const [rootCategoryListing, setCategoryListingData] = useState([]);
   const [customRep, setCustomRep] = useState("");
-  const [currency, setCurrency] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [fee, setFee] = useState("");
   const [fileToSend, setFileToSend] = useState(null);
   const [imageToCloudinary, setImageToCloudinary] = useState(null);
@@ -113,7 +113,7 @@ function CreateLiveWebinar({ school }) {
     setCategory("");
     setDescription("");
     setCustomRep("");
-    setCurrency("");
+    setCurrency("USD");
     setFee("");
     setRecurringFrequency("");
     setWebinarReps("");
@@ -387,7 +387,7 @@ function CreateLiveWebinar({ school }) {
                   }}
                   className="modal-header"
                 >
-                  Stream Created
+                  Classroom created
                 </div>
                 <ModalBody>
                   <p
@@ -397,7 +397,7 @@ function CreateLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {getSchoolUrl(school.name)}/${streamLink}
+                    {getSchoolUrl(school.name)}/{streamLink}
 
                   </p>
                 </ModalBody>
@@ -778,7 +778,7 @@ function CreateLiveWebinar({ school }) {
                         onChange={() => {
                           if (!freeWebinar) {
                             // Disable the "Webinar Fee" functionality when free webinar is checked
-                            setCurrency("NGN");
+                            setCurrency("USD");
                             setFee(0);
                           }
                           setFreeWebinar(!freeWebinar);
@@ -794,17 +794,14 @@ function CreateLiveWebinar({ school }) {
                     >
                       <strong>Classroom Fee</strong>
                       <div className="fee-wrapper">
-                        <select
+                        {/* <select
                           value={currency}
                           onChange={(e) => setCurrency(e.target.value)}
                           disabled={freeWebinar}
-                        >
-                          <option value="" disabled selected hidden>
-                            Select Currency
-                          </option>
-                          <option value={"NGN"}>NGN</option>
-                          <option value={"USD"}>USD</option>
-                        </select>
+                        > */}
+                        
+                          <p value={"USD"}>USD</p>
+                        {/* </select> */}
                         <input
                           type="text"
                           inputMode="numeric"

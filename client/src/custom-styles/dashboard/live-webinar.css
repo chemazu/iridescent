@@ -1536,6 +1536,12 @@
 .watcher-username {
   font-weight: 600;
 }
+.no-video{
+  position: relative;
+  top: 0;
+  left: 0;
+  right: 0;
+}
 @media screen and (max-width: 812px) {
   .expand-wrapper {
     display: block;

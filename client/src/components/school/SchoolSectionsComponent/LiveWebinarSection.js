@@ -1,13 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { useStore } from "react-redux";
+import { connect, useStore } from "react-redux";
 import "../../../custom-styles/schoollandingpagecomponents/livewebinarsectionstyles.css";
 import { Button } from "reactstrap";
 import { Link } from "react-router-dom";
 import setAuthToken from "../../../utilities/setAuthToken";
 import AuthenticationModal from "../AuthenticationModal";
+import roundToTwoDecimalPlaces from "../../../utilities/roundToTwoDecimalPlaces";
+import CurrencyFormat from "react-currency-format";
 
-export default function LiveWebinarSection({ schoolname, theme }) {
+function LiveWebinarSection({ schoolname, theme, currency }) {
   const [userStreams, setUserStreams] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authModal, setAuthModal] = useState(false);
@@ -21,7 +23,7 @@ export default function LiveWebinarSection({ schoolname, theme }) {
   const { authenticated } = student;
 
   let themeData = theme;
-   
+  console.log(currency);
   const toggleAuthModal = () => {
     setAuthModal(!authModal);
   };
@@ -244,7 +246,22 @@ export default function LiveWebinarSection({ schoolname, theme }) {
                                 {webinaritem.fee <= 0 ? (
                                   <p>Free Webinar</p>
                                 ) : (
-                                  <>&#8358; {webinaritem.fee}</>
+                                  <>
+                                    <span
+                                      dangerouslySetInnerHTML={{
+                                        __html: currency.htmlCurrencySymbol,
+                                      }}
+                                    ></span>
+                                    <CurrencyFormat
+                                      value={roundToTwoDecimalPlaces(
+                                        webinaritem.fee * currency.exchangeRate
+                                      )}
+                                      displayType="text"
+                                      thousandSeparator={true}
+                                      decimalScale={1}
+                                      fixedDecimalScale={true}
+                                    />
+                                  </>
                                 )}
                               </div>
                               <div
@@ -329,3 +346,8 @@ export default function LiveWebinarSection({ schoolname, theme }) {
     </>
   );
 }
+const mapStateToProps = (state) => ({
+  currency: state.currency,
+});
+
+export default connect(mapStateToProps)(LiveWebinarSection);

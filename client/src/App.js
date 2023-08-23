@@ -11,6 +11,7 @@ import "./styles/assets/css/argon-design-system-react.css";
 
 import "react-toastify/dist/ReactToastify.css";
 import { LOAD_SUBDOMAIN_IN_STATE } from "./actions/types";
+import { fetchCurrencyData } from "./actions/currency";
 
 import AppLoader from "./components/layout/AppLoader";
 import PaymentModal from "./components/layout/PaymentModal";
@@ -65,6 +66,13 @@ function App() {
     }
   }, []);
 
+   // useEffect call to load information on users currency based on
+  // location
+
+  useEffect(() => {
+    store.dispatch(fetchCurrencyData());
+  }, []);
+  
   return (
     <Provider store={store}>
       <Router>

@@ -28,6 +28,11 @@ const classroomResourceSchema = new mongoose.Schema(
       ref: "user", // Assuming the reference model is named "User"
       required: true,
     },
+    persist: {
+      type: Boolean,
+      required: true,
+      default: false,
+    },
     school: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,

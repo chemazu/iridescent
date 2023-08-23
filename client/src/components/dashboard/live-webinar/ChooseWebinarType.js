@@ -225,7 +225,7 @@ function ChooseWebinarType({school}) {
                           onChange={() => {
                             if (!freeWebinar) {
                               // Disable the "Webinar Fee" functionality when free webinar is checked
-                              setCurrency("NGN");
+                              setCurrency("USD");
                               setFee(0);
                             }
                             setFreeWebinar(!freeWebinar);
@@ -246,10 +246,7 @@ function ChooseWebinarType({school}) {
                             onChange={(e) => setCurrency(e.target.value)}
                             disabled={freeWebinar}
                           >
-                            <option value="" disabled selected hidden>
-                              Select Currency
-                            </option>
-                            <option value={"NGN"}>NGN</option>
+                         
                             <option value={"USD"}>USD</option>
                           </select>
                           <input

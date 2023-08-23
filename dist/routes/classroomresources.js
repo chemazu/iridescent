@@ -46,7 +46,8 @@ router.post("/:type", [_auth.default], async (req, res) => {
         quizHolder,
         timeStamp,
         answers,
-        durationInSec
+        durationInSec,
+        persist
       } = req.body;
       const newResource = new _ClassroomResource.default({
         quizHolder,
@@ -55,7 +56,8 @@ router.post("/:type", [_auth.default], async (req, res) => {
         durationInSec,
         creator,
         type,
-        school
+        school,
+        persist
       });
       await newResource.save();
       res.json({
@@ -68,7 +70,8 @@ router.post("/:type", [_auth.default], async (req, res) => {
         title,
         options,
         durationInSec,
-        timeStamp
+        timeStamp,
+        persist
       } = req.body;
       const newResource = new _ClassroomResource.default({
         title,
@@ -77,7 +80,8 @@ router.post("/:type", [_auth.default], async (req, res) => {
         creator,
         timeStamp,
         type,
-        school
+        school,
+        persist
       });
       await newResource.save();
       res.json({
@@ -112,8 +116,9 @@ router.get("/creator-resources/:type", [_auth.default], async (req, res) => {
     const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
     const resources = await _ClassroomResource.default.find({
       creator,
-      type
-    }).skip((page - 1) * ITEMS_PER_PAGE).limit(ITEMS_PER_PAGE);
+      type,
+      persist: true
+    });
 
     if (!resources.length) {
       return res.json({
@@ -135,8 +140,11 @@ router.get("/creator-resources/:type", [_auth.default], async (req, res) => {
     });
   }
 });
+router.get("/purge", async (req, res) => {
+  await _ClassroomResource.default.deleteMany({});
+  res.json("all records deleted");
+});
 router.get("/count", [_auth.default], async (req, res) => {
-  console.log("first");
   const creator = req.user.id;
 
   try {

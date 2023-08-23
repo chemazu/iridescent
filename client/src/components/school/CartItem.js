@@ -4,12 +4,14 @@ import CurrencyFormat from "react-currency-format";
 import { Button } from "reactstrap";
 import { removeFromCart } from "../../actions/cart";
 import calculateDiscountForCourseCart from "../../utilities/calculateDiscountForCourseCart";
+import roundToTwoDecimalPlaces from "../../utilities/roundToTwoDecimalPlaces";
 
 export const CartItem = ({
   cartItem,
   removeItem,
   theme,
   addCourseToStudentSaveCourses,
+  currency,
 }) => {
   function secondsToTime(e) {
     var h = Math.floor(e / 3600)
@@ -92,7 +94,7 @@ export const CartItem = ({
                   >
                     {cartItem?.itemFileType?.substring(1)}
                   </span>
-                  {cartItem?.itemFileType && "File"}
+                  File
                 </div>
                 <div
                   style={{
@@ -116,9 +118,15 @@ export const CartItem = ({
         {cartItem.itemDiscount && (
           <div className="old-price">
             <h2>
-              &#8358;
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: currency.htmlCurrencySymbol,
+                }}
+              ></span>
               <CurrencyFormat
-                value={cartItem.itemPrice}
+                value={roundToTwoDecimalPlaces(
+                  cartItem.itemPriceUSD * currency.exchangeRate
+                )}
                 displayType="text"
                 thousandSeparator={true}
                 fixedDecimalScale={true}
@@ -163,16 +171,24 @@ export const CartItem = ({
                 color: theme.themestyles.coursecardtextcolor,
               }}
             >
-              &#8358;
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: currency.htmlCurrencySymbol,
+                }}
+              ></span>
               {
                 <CurrencyFormat
                   value={
                     cartItem.itemDiscount !== undefined
                       ? calculateDiscountForCourseCart(
-                          cartItem.itemPrice,
+                          roundToTwoDecimalPlaces(
+                            cartItem.itemPriceUSD * currency.exchangeRate
+                          ),
                           cartItem.itemDiscount
                         )
-                      : cartItem.itemPrice
+                      : roundToTwoDecimalPlaces(
+                          cartItem.itemPriceUSD * currency.exchangeRate
+                        )
                   }
                   displayType="text"
                   thousandSeparator={true}
@@ -187,8 +203,12 @@ export const CartItem = ({
   );
 };
 
+const mapStateToProps = (state) => ({
+  currency: state.currency,
+});
+
 const mapDispatchToProps = (dispatch) => ({
   removeItem: (itemId) => dispatch(removeFromCart(itemId)),
 });
 
-export default connect(null, mapDispatchToProps)(CartItem);
+export default connect(mapStateToProps, mapDispatchToProps)(CartItem);

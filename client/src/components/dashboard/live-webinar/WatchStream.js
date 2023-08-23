@@ -34,6 +34,7 @@ function WatchStream({ schoolname }) {
   let history = useHistory();
   let [currentPeer, setCurrentPeer] = useState(null);
   let [presenterPeer, setPresenterPeer] = useState(null);
+  let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
 
   const myVideoRef = useRef();
   const videoRef = useRef(null);
@@ -153,20 +154,29 @@ function WatchStream({ schoolname }) {
     if (playerRef.current) {
       playerRef.current.dispose(); // Dispose the videojs player
       playerRef.current = null;
-      videoRef.current.innerHTML = ""; // Clear the video container
+      if (videoRef.current) {
+        videoRef.current.innerHTML = "";
+      } // Clear the video container
     }
 
     const videoElement = document.createElement("video");
     videoElement.setAttribute("playsinline", "true");
     videoElement.classList.add("video-js", "vjs-big-play-centered");
     videoElement.srcObject = stream;
-    videoElement.height="100%"
+    videoElement.height = "100%";
 
     videoRef.current.appendChild(videoElement);
+    const shouldMuteVideo = !audioVisuals.audio;
 
-    const player = (playerRef.current = videojs(videoElement, {}, () => {
-      console.log("Player is ready");
-    }));
+    const player = (playerRef.current = videojs(
+      videoElement,
+      {
+        muted: shouldMuteVideo,
+      },
+      () => {
+        console.log("Player is ready");
+      }
+    ));
 
     player.autoplay(true);
   };
@@ -179,9 +189,19 @@ function WatchStream({ schoolname }) {
 
       videoRef.current.appendChild(videoElement);
 
-      const player = (playerRef.current = videojs(videoElement, {}, () => {
-        console.log("Player is ready");
-      }));
+      const shouldMuteVideo = !audioVisuals.audio;
+
+      // work with the audio visual object to know if the video will be muted or not
+
+      const player = (playerRef.current = videojs(
+        videoElement,
+        {
+          muted: shouldMuteVideo,
+        },
+        () => {
+          console.log("Player is ready");
+        }
+      ));
 
       player.autoplay(true);
 
@@ -197,18 +217,6 @@ function WatchStream({ schoolname }) {
     }
   };
 
-  const handlePlayerReady = (player) => {
-    playerRef.current = player;
-
-    // You can handle player events here, for example:
-    player.on("waiting", () => {
-      videojs.log("player is waiting");
-    });
-
-    player.on("dispose", () => {
-      videojs.log("player will dispose");
-    });
-  };
   // const onReady = (player) => {
   //   playerRef.current = player;
 
@@ -508,30 +516,46 @@ function WatchStream({ schoolname }) {
     setSubmitted(true);
   };
 
-  const initiateCall = (peerId) => {
-    if (currentPeer) {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((newStream) => {
-          const call = currentPeer?.call(peerId, newStream);
-          call?.on("stream", (remoteStream) => {
-            setWaiting(false);
-            addVideoStream(remoteStream);
+  // const initiateCall = (peerId) => {
+  //   if (currentPeer) {
+  //     navigator.mediaDevices
+  //       .getUserMedia({ video: true, audio: true })
+  //       .then((newStream) => {
+  //         const call = currentPeer?.call(peerId, newStream);
+  //         call?.on("stream", (remoteStream) => {
+  //           setWaiting(false);
+  //           addVideoStream(remoteStream);
 
-            // Handle the incoming stream
-          });
-        });
+  //           // Handle the incoming stream
+  //         });
+  //       });
+  //   }
+  // };
+  useEffect(() => {
+    if (playerRef.current) {
+      playerRef.current.muted(!audioVisuals.audio);
     }
-  };
+  }, [audioVisuals]);
 
+  useEffect(() => {
+    socket.on("audioVisuals", (status) => {
+      console.log("first ica", status);
+      setAudioVisuals(status);
+    });
+    return () => {
+      socket.off("audioVisuals");
+    };
+  }, [roomid]);
   useEffect(() => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
 
     peerInstance.on("open", (user) => {
       socket.emit("watcher", roomid, user);
+      console.log(audioVisuals);
     });
     const startClass = (peerId, stat) => {
+      console.log(audioVisuals);
       console.log("startClass ", stat, peerId);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
@@ -545,9 +569,12 @@ function WatchStream({ schoolname }) {
           });
         });
     };
-    socket.on("join stream", (roomSize, peerId) => {
+    socket.on("join stream", (roomSize, peerId, roomStatus) => {
+      // setAudioVisuals(roomStatus)
+
       startClass(peerId, "join");
       setPresenterPeer(peerId);
+      console.log(roomStatus);
       // Handle the join stream event
       // triger som bs that run the stream
       // initiateCall(peerId)
@@ -563,21 +590,16 @@ function WatchStream({ schoolname }) {
       console.log(status);
       console.log(peerId);
 
-
       if (status) {
-      startClass(peerId, "screen");
-
-   
+        startClass(peerId, "screen");
       } else {
         if (playerRef.current) {
           playerRef.current.dispose(); // Dispose the videojs player
           playerRef.current = null;
           videoRef.current.innerHTML = ""; // Clear the video container
         }
-        console.log("iii")
-      startClass(peerId, "screenss");
-
-
+        console.log("iii");
+        startClass(peerId, "screenss");
       }
     });
     return () => {
@@ -585,6 +607,18 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
       socket.off("screenSharingStatus");
+    };
+  }, [roomid, audioVisuals]);
+
+  useEffect(() => {
+    socket.on("join stream", (roomSize, peerId, roomStatus) => {
+      setAudioVisuals(roomStatus);
+
+      // setPresenterPeer(peerId);
+      console.log(roomStatus);
+    });
+    return () => {
+      socket.off("join stream");
     };
   }, [roomid]);
 
@@ -1200,7 +1234,9 @@ function WatchStream({ schoolname }) {
                                     ></i>
                                   </div>
                                 </div>
-
+<div style={{
+  position:"relative"
+}}>
                                 <div
                                   ref={videoRef}
                                   className={
@@ -1212,6 +1248,20 @@ function WatchStream({ schoolname }) {
                                   //   height: VideoFill ? "100vh" : "",
                                   // }}
                                 ></div>
+                                {!audioVisuals.video && (
+                                  <div className="broadcaster-disconnected reconnect-loading no-video">
+
+                                    <img
+                                      src={presenterAvatar}
+                                      alt=""
+                                      style={{
+                                        borderRadius: "50%",
+                                        width: "15%",
+                                      }}
+                                    />
+                                  </div>
+                                )}
+                                </div>
                               </div>
                             )}
                           </div>

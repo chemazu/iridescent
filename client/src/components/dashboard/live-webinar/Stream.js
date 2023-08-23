@@ -32,13 +32,14 @@ import CountdownTimer from "./CountdownTimer";
 export default function Stream() {
   const { roomid } = useParams();
   const dispatch = useDispatch();
-
   const myVideoRef = useRef();
   const peerRef = useRef();
   const screenStreamRef = useRef(null);
   const [audioDevices, setAudioDevices] = useState([]);
   const [videoDevices, setVideoDevices] = useState([]);
   const [resources, setResources] = useState([]);
+  const [freeTimer, setFreeTimer] = useState(null);
+
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
   const alert = useAlert();
@@ -47,16 +48,13 @@ export default function Stream() {
   const [startController, setStartController] = useState(false);
   const [quizHolder, setQuizHolder] = useState([]);
   const [quizResultHolder, setQuizResultHolder] = useState([]);
-  // const [allQuizHolder, setAllQuizHolderHolder] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [chatMessage, setChatMessage] = useState(null);
   const [pollStatus, setPollStatus] = useState(false);
   const [answerHolder, setAnswerHolder] = useState({});
   const [timerHolder, setTimerHolder] = useState(false);
   const [timeLeft, setTimeLeft] = useState(null);
-  const [classEndTime, setClassEndTime] = useState(null);
-  // localStorage.getItem("classendTime")
-
+  const [resourceCount, setResourceCount] = useState(null);
   const [pollTitle, setPollTitle] = useState("");
   const [defaultChat, setDefaultChat] = useState([]);
   const [specialChat, setSpecialChat] = useState([]);
@@ -65,30 +63,17 @@ export default function Stream() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attendies, setAttendies] = useState(1);
   const [loading, setLoading] = useState(true);
-
   const [resourceModal, setResourceModal] = useState(false);
   const [resourceType, setResourceType] = useState("");
   const [editStat, setEditStat] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [saveResource, setSaveResource] = useState(false);
   const [exitModal, setExitModal] = useState(false);
-
   const [resourceId, setResourceId] = useState("");
-  // const [audioVisuals, setAudioVisuals] = useState({
-  //   video: {
-  //     width: 640,
-  //     height: 480,
-  //     mimeType: "video/H264", // Adjust according to your needs
-  //   },
-  //   audio: {
-  //     mimeType: "audio/opus", // Adjust according to your needs
-  //   },
-  // });
   const [audioVisuals, setAudioVisuals] = useState({
     video: true,
     audio: true,
   });
-
   const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(1);
@@ -97,7 +82,6 @@ export default function Stream() {
   const [quizSubmission, setQuizSubmission] = useState({});
   const [pollResultHolder, setPollResultHolder] = useState([]);
   const [answers, setAnswers] = useState([]);
-
   const [durationValue, setDurationValue] = useState(""); // State to track the input value
   const [durationUnit, setDurationUnit] = useState("secs"); // State to track the selected unit
   const [viewDuration, setViewDuration] = useState(false);
@@ -105,10 +89,32 @@ export default function Stream() {
   const [totalQuestion, setTotalQuestion] = useState(0);
   const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
-  const [screenStream, setScreenStream] = useState(null);
   const [mobileChat, setMobileChat] = useState(false);
 
-  //
+  const toggleAudioVisuals = (type) => {
+    switch (type) {
+      case "cam":
+        console.log("firstdsd")
+        let updated= {
+          audio: audioVisuals.audio,
+          video: !audioVisuals.video,
+        }
+        setAudioVisuals(updated);
+        socket.emit("audioVisuals",roomid, updated);
+        break;
+      case "mic":
+        let newUpdated = {
+          audio: !audioVisuals.audio,
+          video: audioVisuals.video,
+        }
+        setAudioVisuals(newUpdated);
+        socket.emit("audioVisuals",roomid, newUpdated);
+        break;
+
+      default:
+        break;
+    }
+  };
 
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
@@ -128,7 +134,6 @@ export default function Stream() {
   const handleScreenSharingEnded = () => {
     socket.emit("stopScreenSharing", roomid);
     setScreenSharing(false);
-    setScreenStream(null);
     navigator.mediaDevices
       .getUserMedia(audioVisuals)
       .then((stream) => {
@@ -176,10 +181,6 @@ export default function Stream() {
     }
     localStorage.removeItem(roomid);
     history.push("/dashboard/livewebinar");
-
-    // Refresh the current page
-    // window.location.reload();
-    // update the api
   };
   const getSchoolUrl = (schoolname) => {
     const host = window.location.host;
@@ -191,6 +192,17 @@ export default function Stream() {
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
   };
+  const getResourceCount = async () => {
+    let res = await axios.get(`/api/v1/classroomresource/count`);
+    if (res) {
+      if (res.data.paymentInfo === "free") {
+        setResourceCount(res.data.resourceCount);
+      }
+    }
+  };
+  useEffect(() => {
+    getResourceCount();
+  }, [pollTitle]);
   function copyText() {
     if (presenterDetails.fee === 0) {
       navigator.clipboard
@@ -222,21 +234,7 @@ export default function Stream() {
       });
     }
   }
-  // function copyText() {
-  //   navigator.clipboard
-  //     .writeText(
-  //       `${getSchoolUrl(presenterDetails.school)}/live/preview/${
-  //         presenterDetails.id
-  //       }`
-  //     )
-  //     .then(() => {})
-  //     .catch((error) => {
-  //       console.error("Error copying text: ", error);
-  //     });
-  //   alert.show("Link Copied", {
-  //     type: "success",
-  //   });
-  // }
+
   const validateWebinar = async () => {
     if (localStorage.getItem("tutorToken")) {
       setAuthToken(localStorage.getItem("tutorToken"));
@@ -326,12 +324,14 @@ export default function Stream() {
       },
       roomid
     );
+
     const body = {
       type: "poll",
       title: pollTitle,
       options: pollOptions,
       durationInSec,
       timeStamp: Date.now(),
+      persist: saveResource,
     };
 
     if (localStorage.getItem("token")) {
@@ -364,7 +364,7 @@ export default function Stream() {
           alert.show("Poll not edited ,try again");
         });
     }
-    if (saveResource && !editStat) {
+    if (!editStat) {
       dispatch(startLoading());
 
       await axios
@@ -372,7 +372,9 @@ export default function Stream() {
         .then((res) => {
           console.log(res);
           dispatch(stopLoading());
-          alert.show("Poll saved to resources");
+          if (saveResource) {
+            alert.show("Poll saved to resources");
+          }
 
           setPollTitle("");
           setPollOptions(["", "", "", ""]);
@@ -409,6 +411,7 @@ export default function Stream() {
     setDurationValue("");
     setDurationUnit("secs");
   };
+
   const handleQuizCreate = async () => {
     if (pollOptions.every((option) => option !== "") && pollTitle !== "") {
       // handle special chat
@@ -473,7 +476,7 @@ export default function Stream() {
             console.error(error);
           });
       }
-      if (saveResource) {
+      if (!editStat) {
         dispatch(startLoading());
 
         await axios
@@ -496,12 +499,9 @@ export default function Stream() {
       }
       const newIndex = defaultChat.length;
 
-      // let newAnswerHolder = { ...answerHolder, [newIndex]: answers };
-
       setAnswerHolder(answers);
       setAnswers([]);
-      // let newAllQuizHolder = { ...allQuizHolder, [newIndex]: quizHolder };
-      // setAllQuizHolderHolder(newAllQuizHolder);
+
       setQuizHolder([]);
 
       const messageData = {
@@ -553,13 +553,8 @@ export default function Stream() {
       ]);
       const newIndex = defaultChat.length;
 
-      // let newAnswerHolder = { ...answerHolder, [newIndex]: answers };
-
       setAnswerHolder(answers);
       setAnswers([]);
-      // let newAllQuizHolder = { ...allQuizHolder, [newIndex]: quizHolder };
-      // setAllQuizHolderHolder(newAllQuizHolder);
-
       const messageData = {
         user: 1,
         quizHolder,
@@ -606,31 +601,6 @@ export default function Stream() {
     }
   };
 
-  // const sendMessage = () => {
-  //   if (chatMessage !== null) {
-  //     socket.emit(
-  //       "message",
-  //       {
-  //         user: presenterDetails?.username,
-  //         msg: chatMessage,
-  //         timeStamp: Date.now(),
-  //         type: "text",
-  //       },
-  //       roomid
-  //     );
-
-  //     setDefaultChat([
-  //       ...defaultChat,
-  //       {
-  //         user: presenterDetails?.username,
-  //         msg: chatMessage,
-  //         timeStamp: Date.now(),
-  //         type: "text",
-  //       },
-  //     ]);
-  //   }
-  //   setChatMessage("");
-  // };
   const sendMessage = () => {
     if (chatMessage && chatMessage.trim() !== "") {
       socket.emit(
@@ -737,7 +707,6 @@ export default function Stream() {
     if (
       pollOptions.every((option) => option !== "") &&
       pollTitle !== "" &&
-      // answers.length >= totalQuestion
       answers.length === totalQuestion + 1
     ) {
       if (totalQuestion < questionNumber) {
@@ -1063,7 +1032,6 @@ export default function Stream() {
   }, [roomid]);
   let handleFreeTimer = async () => {
     let now = Date.now();
-    console.log("first", planname);
     const endTime = now + 45 * 60 * 1000;
     if (localStorage.getItem("tutorToken")) {
       setAuthToken(localStorage.getItem("tutorToken"));
@@ -1073,45 +1041,18 @@ export default function Stream() {
       if (res) {
         console.log(res, endTime);
         localStorage.setItem(roomid, res?.data.classEndTime);
-        setClassEndTime(res?.data.classEndTime || endTime);
+        setFreeTimer(res?.data.classEndTime)
       } else {
         localStorage.setItem(roomid, endTime);
+        setFreeTimer(endTime)
+
       }
     } catch (error) {
       console.log(error);
       localStorage.setItem(roomid, endTime);
     }
-
-    // const classEndTimeFromLocalStorage = localStorage.getItem(roomid);
-    // const now = Date.now();
-    // const newTime = now + 45 * 60 * 1000;
-
-    // if (classEndTimeFromLocalStorage) {
-    //   console.log(classEndTimeFromLocalStorage);
-    //   setClassEndTime(classEndTimeFromLocalStorage);
-    // } else {
-    //   console.log(newTime);
-    //   localStorage.setItem(roomid, newTime);
-    //   setClassEndTime(newTime);
-    // }
   };
-  // const onConnect = () => {
-  //   const hasAudio = audioVisuals.audio;
-  //   const hasVideo = audioVisuals.video;
-  //   const constraints = screenSharing
-  //     ? { video: { mediaSource: "screen" }, audio: true }
-  //     : { video: true, audio: true };
 
-  //   if (hasAudio || hasVideo) {
-  //     navigator.mediaDevices
-  //       // .getUserMedia(audioVisuals)
-  //       .getUserMedia(constraints)
-  //       .then((stream) => {
-  //         addVideoStream(myVideoRef.current, stream);
-  //       })
-  //       .catch((error) => console.error(error));
-  //   }
-  // };
   const initializePeer = async () => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
@@ -1122,7 +1063,6 @@ export default function Stream() {
     });
     handleFreeTimer();
 
-    // }
     if (screenSharing) {
       navigator.mediaDevices
         .getDisplayMedia({ video: true, audio: true })
@@ -1134,13 +1074,13 @@ export default function Stream() {
     } else {
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
+
         .then((stream) => {
           addVideoStream(myVideoRef.current, stream);
           screenStreamRef.current = stream;
         })
         .catch((error) => console.error(error));
     }
-    // addVideoStream(myVideoRef.current, screenStreamRef.current);
 
     peerInstance.on("call", (call) => {
       console.log(screenStreamRef.current);
@@ -1148,79 +1088,10 @@ export default function Stream() {
     });
   };
   useEffect(() => {
-    // const onConnect = () => {
-    //   // const hasAudio = audioVisuals.audio;
-    //   // const hasVideo = audioVisuals.video;
-    //   const constraints = screenSharing
-    //     ? { video: { mediaSource: "screen" }, audio: true }
-    //     : { video: true, audio: true };
-
-    //   // if (hasAudio || hasVideo) {
-    //     navigator.mediaDevices
-    //       // .getUserMedia(audioVisuals)
-    //       .getUserMedia(constraints)
-    //       .then((stream) => {
-    //         addVideoStream(myVideoRef.current, stream);
-    //       })
-    //       .catch((error) => console.error(error));
-    //   // }
-    // };
-
     if (startController) {
-      // onConnect()
       initializePeer();
     }
-    // return () => {
-    //   peerHolder?.destroy();
-    // };
   }, [roomid, startController, screenSharing]);
-  // useEffect(() => {
-  //   const initializePeer = async () => {
-  //     handleFreeTimer();
-  //     const peerInstance = new Peer();
-  //     peerRef.current = peerInstance;
-  //     setPeerHolder(peerInstance);
-
-  //     peerInstance.on("open", (peerId) => {
-  //       socket.emit("broadcaster", roomid, peerId);
-  //       if (planname === "free") {
-  //         // socket.emit("freeTimer", roomid, now);
-  //       }
-  //     });
-  //     peerInstance.on("call", (call) => {
-  //       // check if livestream
-  //       if (screenSharing && screenStreamRef.current) {
-  //         call.answer(screenStreamRef.current);
-  //       } else {
-  //         const hasAudio = audioVisuals.audio;
-  //         const hasVideo = audioVisuals.video;
-  //         const constraints = screenSharing
-  //           ? { video: { mediaSource: "screen" }, audio: true }
-  //           : { video: true, audio: true };
-  //         if (hasAudio || hasVideo) {
-  //           navigator.mediaDevices
-  //             // .getUserMedia({ audio: true, video: true })
-  //             // .getUserMedia(audioVisuals)
-  //             .getUserMedia(constraints)
-
-  //             .then((stream) => {
-  //               call.answer(stream);
-  //             });
-  //         }
-  //       }
-  //     });
-  //   };
-  //   if (startController) {
-  //     onConnect();
-
-  //     initializePeer();
-  //     handleFreeTimer();
-  //   }
-
-  //   // return () => {
-  //   //   peerHolder?.destroy();
-  //   // };
-  // }, [screenSharing, audioVisuals, startController, roomid, planname]);
 
   useEffect(() => {
     async function getMediaDevices() {
@@ -1242,11 +1113,8 @@ export default function Stream() {
     getMediaDevices();
   }, []);
 
-  // trigger intialize Peeer
-
   const handleInitializePeer = () => {
     setStartController(true);
-    // handleTriggerLive();
   };
 
   const toggleScreenSharing = () => {
@@ -1256,54 +1124,9 @@ export default function Stream() {
       socket.emit("stopScreenSharing", roomid);
     } else {
       setScreenSharing(true);
-      // navigator.mediaDevices
-      //   .getDisplayMedia({ video: true, audio: true })
-      //   .then((stream) => {
-      //     addVideoStream(myVideoRef.current, stream);
-      //     screenStreamRef.current = stream;
-      //     socket.emit("startScreenSharing", roomid);
-      //   });
     }
   };
-  // const toggleScreenSharing = () => {
-  //   if (screenSharing) {
-  //     setScreenSharing(false);
-  //     handleScreenSharingEnded();
-  //     screenStreamRef.current = null;
-  //   } else {
-  //     setScreenSharing(true);
 
-  //     navigator.mediaDevices
-  //       .getDisplayMedia({ video: true, audio: true })
-  //       .then((stream) => {
-  //         addVideoStream(myVideoRef.current, stream);
-
-  //         screenStreamRef.current = stream;
-  //         // setScreenStream(stream);
-
-  //         const screenSharingTrack = stream.getVideoTracks()[0];
-  //         screenSharingTrack.addEventListener(
-  //           "ended",
-  //           handleScreenSharingEnded
-  //         );
-  //         // if (myVideoRef.current) {
-  //         //   myVideoRef.current.srcObject = stream;
-
-  //         // }
-
-  //         socket.emit("startScreenSharing", roomid);
-
-  //         const connections = peerHolder._connections;
-  //         console.log(connections);
-  //         connections.forEach((value, key) => {
-  //           console.log(key);
-  //           const call = peerHolder.call(key, stream);
-  //           call.on("stream", (userVideoStream) => {});
-  //         });
-  //       })
-  //       .catch((error) => console.error(error));
-  //   }
-  // };
   function formatTimeAndDate(timestamp) {
     const months = [
       "Jan",
@@ -1417,14 +1240,8 @@ export default function Stream() {
       setResourceType(type);
       setResources(response.data.resources);
       dispatch(stopLoading());
-
       setResourceModal(true);
-
       setLoading(false);
-
-      // console.log(response.data.resources.totalPages > response.data.resources.currentPage);
-
-      // setHasMore(response.data.resources.totalPages > response.data.resources.currentPage);
     } catch (error) {
       console.error("Error fetching resources:", error);
       setLoading(false);
@@ -2296,10 +2113,7 @@ export default function Stream() {
                             <div
                               className="control-object"
                               onClick={() => {
-                                setAudioVisuals({
-                                  audio: !audioVisuals.audio,
-                                  video: audioVisuals.video,
-                                });
+                                toggleAudioVisuals("mic");
                               }}
                             >
                               <i
@@ -2328,16 +2142,7 @@ export default function Stream() {
                             <div
                               className="control-object"
                               onClick={() => {
-                                socket.emit(
-                                  "disablevideo",
-                                  roomid,
-                                  !audioVisuals.video
-                                );
-
-                                setAudioVisuals({
-                                  video: !audioVisuals.video,
-                                  audio: audioVisuals.audio,
-                                });
+                                toggleAudioVisuals("mic");
                               }}
                               // onClick={toggleVideo}
                             >
@@ -2387,10 +2192,8 @@ export default function Stream() {
                             <div
                               className="control-object "
                               onClick={() => {
-                                setAudioVisuals({
-                                  audio: !audioVisuals.audio,
-                                  video: audioVisuals.video,
-                                });
+                                toggleAudioVisuals("mic")
+
                               }}
                             >
                               <i
@@ -2410,16 +2213,18 @@ export default function Stream() {
                             <div
                               className="control-object"
                               onClick={() => {
-                                socket.emit(
-                                  "disablevideo",
-                                  roomid,
-                                  !audioVisuals.video
-                                );
+                                console.log("dsd")
+                                toggleAudioVisuals("cam")
+                                // socket.emit(
+                                //   "disablevideo",
+                                //   roomid,
+                                //   !audioVisuals.video
+                                // );
 
-                                setAudioVisuals({
-                                  video: !audioVisuals.video,
-                                  audio: audioVisuals.audio,
-                                });
+                                // setAudioVisuals({
+                                //   video: !audioVisuals.video,
+                                //   audio: audioVisuals.audio,
+                                // });
                               }}
                               // onClick={toggleVideo}
                             >
@@ -3071,10 +2876,8 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        setAudioVisuals({
-                          audio: !audioVisuals.audio,
-                          video: audioVisuals.video,
-                        });
+                        toggleAudioVisuals("mic")
+                       
                       }}
                     >
                       <i
@@ -3094,16 +2897,7 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        socket.emit(
-                          "disablevideo",
-                          roomid,
-                          !audioVisuals.video
-                        );
-
-                        setAudioVisuals({
-                          video: !audioVisuals.video,
-                          audio: audioVisuals.audio,
-                        });
+                        toggleAudioVisuals("cam")
                       }}
                       // onClick={toggleVideo}
                     >
@@ -3141,12 +2935,16 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        if (!timerHolder) {
-                          // setPollStatus(true);
-
-                          handleOpenResourceModal("poll");
+                        if (resourceCount >= 3) {
+                          alert.show("upgrade plan");
                         } else {
-                          alert.show("ASSESSMENT ONGOING");
+                          if (!timerHolder) {
+                            // setPollStatus(true);
+
+                            handleOpenResourceModal("poll");
+                          } else {
+                            alert.show("ASSESSMENT ONGOING");
+                          }
                         }
                       }}
                     >
@@ -3157,11 +2955,16 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        if (!timerHolder) {
-                          // setQuizStatus(true);
-                          handleOpenResourceModal("quiz");
+                        if (resourceCount >= 3) {
+                          alert.show("upgrade plan");
                         } else {
-                          alert.show("ASSESSMENT ONGOING");
+                          if (!timerHolder) {
+                            // setPollStatus(true);
+
+                            handleOpenResourceModal("quiz");
+                          } else {
+                            alert.show("ASSESSMENT ONGOING");
+                          }
                         }
                       }}
                     >

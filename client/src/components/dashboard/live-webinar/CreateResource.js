@@ -30,7 +30,7 @@ export default function CreateResource() {
   const [viewDuration, setViewDuration] = useState(false);
   const [editStat, setEditStat] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
-
+  const [resourceCount, setResourceCount] = useState(null);
   const [resourceId, setResourceId] = useState("");
   const alert = useAlert();
   const [quizStatus, setQuizStatus] = useState(false);
@@ -67,6 +67,14 @@ export default function CreateResource() {
     // eslint-disable-next-line
     [loading]
   );
+  const getResourceCount = async () => {
+    let res = await axios.get(`/api/v1/classroomresource/count`);
+    if (res) {
+      if (res.data.paymentInfo === "free") {
+        setResourceCount(res.data.resourceCount);
+      }
+    }
+  };
   const handlePollOptionChange = (index, event) => {
     if (questionNumber > totalQuestion) {
       const newOptions = [...pollOptions];
@@ -264,6 +272,7 @@ export default function CreateResource() {
       options: pollOptions,
       durationInSec,
       timeStamp,
+      persist: true,
     };
 
     if (localStorage.getItem("token")) {
@@ -327,6 +336,7 @@ export default function CreateResource() {
         type: "quiz",
         answers,
         durationInSec,
+        persist: true,
       };
 
       if (localStorage.getItem("token")) {
@@ -490,13 +500,16 @@ export default function CreateResource() {
     }
   };
   useEffect(() => {
+    getResourceCount();
+  }, [pollTitle,deleteModal]);
+  useEffect(() => {
     const fetchResources = async () => {
       try {
         setLoading(true);
         const response = await axios.get(
           `/api/v1/classroomresource/creator-resources/${type}?page=${page}`
         );
-        console.log(response);
+
         setResources(response.data.resources);
         setLoading(false);
         // console.log(response.data.resources.totalPages > response.data.resources.currentPage);
@@ -510,7 +523,7 @@ export default function CreateResource() {
     };
 
     fetchResources();
-  });
+  }, [pollTitle,deleteModal]);
   const filteredResource = resources?.filter((item) => item.type === type);
 
   return (
@@ -963,7 +976,7 @@ export default function CreateResource() {
                       <p className="page-title__text">Your Polls</p>
                     )}
                     <div className="resource-content">
-                      {filteredResource.map((item, index) => {
+                      {filteredResource?.map((item, index) => {
                         const { type, timeStamp, quizHolder, title, _id } =
                           item;
                         return (
@@ -1017,7 +1030,11 @@ export default function CreateResource() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            setQuizStatus(true);
+                            if (resourceCount >= 3) {
+                              alert.show("upgrade plan");
+                            } else {
+                              setQuizStatus(true);
+                            }
                           }}
                         >
                           <p>Click here to create new {typeText}</p>
@@ -1027,7 +1044,11 @@ export default function CreateResource() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            setPollStatus(true);
+                            if (resourceCount >= 3) {
+                              alert.show("upgrade plan");
+                            } else {
+                              setPollStatus(true);
+                            }
                           }}
                         >
                           <p>Click here to create new {typeText}</p>

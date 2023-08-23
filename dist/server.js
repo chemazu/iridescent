@@ -117,15 +117,12 @@ const io = new _socket.Server(server, {
     // origin: "http://localhost:3000",
     origin: "*"
   }
-}); // live stream
-// io.use(socketAuthMiddleware);
-
+});
 exports.io = io;
 const timers = {};
 const timerControl = {};
-const newWatcherHolder = {};
+const roomStatus = {};
 const newBroadcasterHolder = {};
-let screenSharing = false;
 const freeTimers = {};
 let pollQuizHolder = {};
 let broadcasterScreen = {};
@@ -141,56 +138,15 @@ io.on("connection", socket => {
   socket.on("disablevideo", (roomId, status) => {
     io.in(roomId).emit("disablevideo", status);
     broadcasterScreen[roomId] = status;
-  }); // socket.on("freeTimer", async (roomId, now) => {
-  //   if (freeTimers[roomId] || timerControl[roomId]) {
-  //     return;
-  //   }
-  //   if (!freeTimers[roomId]) {
-  //     let liveWebinar = await LiveWebinar.findOne({ streamKey: roomId });
-  //     if (liveWebinar) {
-  //       if (liveWebinar.classEndTime === 0) {
-  //         let newTime = now + 45 * 60 * 1000;
-  //         liveWebinar.classEndTime = newTime;
-  //         await liveWebinar.save();
-  //       }
-  //       if (liveWebinar.timeleft === 0) {
-  //         io.in(roomId).emit("timer elapsed for room", 0);
-  //       } else {
-  //         freeTimers[roomId] = liveWebinar.timeleft;
-  //         let timer = setInterval(() => {
-  //           if (freeTimers[roomId] === 0) {
-  //             clearInterval(timer);
-  //             // Perform any necessary cleanup or actions when the timer ends
-  //             // For example, emit an event to indicate the timer has ended
-  //             io.in(roomId).emit("freeTimerEnded", roomId);
-  //             // Clear the timer and remove the timer control from the objects
-  //             clearInterval(timerControl[roomId]);
-  //             delete timerControl[roomId];
-  //             delete freeTimers[roomId];
-  //             // Update the liveWebinar object if needed
-  //             liveWebinar.timeleft = 0;
-  //             liveWebinar.save((error) => {
-  //               if (error) {
-  //                 console.error("Error saving liveWebinar:", error);
-  //               }
-  //             });
-  //           } else {
-  //             io.in(roomId).emit("roomTimerTick", freeTimers[roomId]);
-  //             freeTimers[roomId]--;
-  //           }
-  //         }, 1000);
-  //         // Store the timer and timer control in the respective objects
-  //         timerControl[roomId] = timer;
-  //       }
-  //     }
-  //   }
-  // });
-  // socket.on("disconnect", () => {
-
+  });
   socket.on("watcher-exit", roomId => {
     const room = io.sockets.adapter.rooms.get(roomId);
     let roomSize = room ? room.size : 1;
     io.in(roomId).emit("watcher-exit", roomSize);
+  });
+  socket.on("audioVisuals", (roomId, status) => {
+    io.in(roomId).emit("audioVisuals", status);
+    roomStatus.roomId = status;
   });
   socket.on("watcher", async (roomId, userId) => {
     socket.join(roomId);
@@ -198,7 +154,7 @@ io.on("connection", socket => {
     let roomSize = room ? room.size : 1; // check screensharing
 
     if (newBroadcasterHolder[roomId]) {
-      io.to(socket.id).emit("join stream", roomSize, newBroadcasterHolder[roomId].peerId);
+      io.to(socket.id).emit("join stream", roomSize, newBroadcasterHolder[roomId].peerId, roomStatus.roomId);
       io.in(roomId).emit("watcher", socket.id, roomSize);
       let roomTimer = null;
 
@@ -212,11 +168,9 @@ io.on("connection", socket => {
     }
   });
   socket.on("startScreenSharing", roomId => {
-    screenSharing = true;
     io.in(roomId).emit("screenSharingStatus", true, newBroadcasterHolder[roomId].peerId);
   });
   socket.on("stopScreenSharing", roomId => {
-    screenSharing = false;
     io.in(roomId).emit("screenSharingStatus", false, newBroadcasterHolder[roomId].peerId);
   });
   socket.on("message", (message, roomId) => {

@@ -9,11 +9,11 @@ import CurrencyFormat from "react-currency-format";
 import setDocumentTitle from "../../../utilities/setDocumentTitle";
 import getUserIpAddress from "../../../utilities/getUserIpAddress";
 import { addToCart } from "../../../actions/cart";
-import liveWebImg from "../../../images/live-web-image.jpg";
 
 import "../../../custom-styles/pages/productitemdisplaypage.css";
+import roundToTwoDecimalPlaces from "../../../utilities/roundToTwoDecimalPlaces";
 
-const LiveWebinarPreview = ({ schoolname, match, cart }) => {
+const LiveWebinarPreview = ({ schoolname, match, cart, currency }) => {
   const dispatch = useDispatch();
   const alert = useAlert();
   const history = useHistory();
@@ -22,13 +22,20 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
   const [pageLoading, setPageLoading] = useState(true);
 
   const [liveWebinar, setLiveWebinar] = useState(null);
+  console.log(currency);
   const getLiveDetails = async (schoolName, liveItemId) => {
     try {
       const res = await axios.get(
         `/api/v1/livewebinar/streamdetails/${liveItemId}`
       );
 
-      setLiveWebinar({ ...res.data, price: res.data.fee, type: "webinar" });
+      setLiveWebinar({
+        ...res.data,
+        price: res.data.fee,
+        price_usd: res.data.fee,
+
+        type: "webinar",
+      });
     } catch (error) {
       if (error.response.status === 404) {
         setLiveWebinar(null);
@@ -392,16 +399,29 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
                         </p>
                         <div className="product-price-and-rating">
                           <p className="product-price">
-                            {liveWebinar?.currency === "USD" && "$"}
-                            {liveWebinar?.currency === "NGN" && "₦"}{" "}
+                          <span
+                                  dangerouslySetInnerHTML={{
+                                    __html: currency.htmlCurrencySymbol,
+                                  }}
+                                ></span>
                             {
+                              // <CurrencyFormat
+                              //   value={liveWebinar?.price}
+                              //   displayType="text"
+                              //   thousandSeparator={true}
+                              //   decimalScale={2}
+                              //   fixedDecimalScale={true}
+                              // />
                               <CurrencyFormat
-                                value={liveWebinar?.price}
-                                displayType="text"
-                                thousandSeparator={true}
-                                decimalScale={2}
-                                fixedDecimalScale={true}
-                              />
+                              value={roundToTwoDecimalPlaces(
+                                liveWebinar?.price *
+                                  currency.exchangeRate
+                              )}
+                              displayType="text"
+                              thousandSeparator={true}
+                              decimalScale={1}
+                              fixedDecimalScale={true}
+                            />
                             }
                           </p>
                         </div>
@@ -529,6 +549,7 @@ const LiveWebinarPreview = ({ schoolname, match, cart }) => {
 const mapStateToProps = (state) => ({
   cart: state.cart,
   schoolname: state.subdomain,
+  currency: state.currency,
 });
 
 export default connect(mapStateToProps)(LiveWebinarPreview);

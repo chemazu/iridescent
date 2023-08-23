@@ -76,7 +76,7 @@ const liveWebinarSchema = new _mongoose.default.Schema({
   },
   currency: {
     type: String,
-    default: "NGN"
+    default: "USD"
   },
   category: {
     type: String,

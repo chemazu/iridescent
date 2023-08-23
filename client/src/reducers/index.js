@@ -16,6 +16,7 @@ import studentNotification from "./studentNotification";
 import tutorials from "./tutorialPlayer";
 import preview from "./courseUnitPreviewPlayer";
 import tutor from "./tutor";
+import currency from "./currency";
 
 
 export default combineReducers({
@@ -36,5 +37,6 @@ export default combineReducers({
   tutorials,
   preview,
   tutor,
+  currency,
 
 });

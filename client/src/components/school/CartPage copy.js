@@ -10,16 +10,13 @@ import { Container, Row, Col, Button } from "reactstrap";
 import { clearCart } from "../../actions/cart";
 import { useAlert } from "react-alert";
 import { startLoading, stopLoading } from "../../actions/appLoading";
-import { loadStripe } from "@stripe/stripe-js";
-import { Elements } from "@stripe/react-stripe-js";
+import AuthenticationModal from "./AuthenticationModal";
+import TransactionSuccessModal from "./TransactionSuccessModal";
 import PaystackPop from "@paystack/inline-js";
 import PageNavbar from "./PageNavbar";
 import setAuthToken from "../../utilities/setAuthToken";
 import CartItem from "./CartItem";
-import AuthenticationModal from "./AuthenticationModal";
-import TransactionSuccessModal from "./TransactionSuccessModal";
 import setDocumentTitle from "../../utilities/setDocumentTitle";
-import StripeCheckoutModal from "./StripeCheckoutModal.js";
 import SubdomainNotFoundPage from "../dashboard/Subdomain404";
 import delay from "../../utilities/delay";
 
@@ -27,8 +24,6 @@ import delay from "../../utilities/delay";
 import calculateDiscountForCourseCart from "../../utilities/calculateDiscountForCourseCart";
 
 import "../../custom-styles/pages/cartpage.css";
-import roundToTwoDecimalPlaces from "../../utilities/roundToTwoDecimalPlaces";
-import StripeVerificationModal from "./StripeVerificationModal";
 
 export const CartPage = ({
   match,
@@ -39,28 +34,20 @@ export const CartPage = ({
   clearCartAfterCheckOut,
   schoolname,
   currency,
+
 }) => {
-  const [stripePromise, setStripePromise] = useState(null);
-  const [stripeClientSecret, setStripeClientSecret] = useState("");
   const [school, setSchool] = useState(null);
   const [theme, setTheme] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
-  const [
-    modalDialogForStripeTransactionVerification,
-    setModalDialogForStripeTransactionVerification,
-  ] = useState(false);
-  const [stripeClientSecretFromTransaction, setClientSecretFromTransaction] =
-    useState("");
   const dispatch = useDispatch();
   const history = useHistory();
-
+  // eslint-disable-next-line
   const [paymentMethodToUse, setPaymentMethodToUse] = useState({
-    name: "",
+    name: "paystack",
   });
+  console.log(currency)
   // const [dropdownOpen, setOpen] = useState(false); // used to control the checkout options dropdown
   const [authModal, setAuthModal] = useState(false);
-  const [stripeCheckoutModalDialog, setStripeCheckoutModalDialog] =
-    useState(false);
   const [transactionSuccessModal, setTransactionSuccessModal] = useState(false);
   const [purchasedCourses, setPurchasedCourses] = useState([]);
   const alert = useAlert();
@@ -69,31 +56,18 @@ export const CartPage = ({
   const toggleTransactionModal = () =>
     setTransactionSuccessModal(!transactionSuccessModal);
 
-  const closeStripeCheckoutModal = () => setStripeCheckoutModalDialog(false);
-
-  const closeModalDialogForStripeTrannsactionVerification = () =>
-    setModalDialogForStripeTransactionVerification(false);
-
-  const handlePostSuccessfullTransactionFeedback = () => {
-    toggleTransactionModal(); // show course purchase success modal.
-    setPurchasedCourses(cart); // show list of purchased items from cart
-    clearCartAfterCheckOut(); // clear cart after purchase verification.
-  };
-
   const cartItemSumWithDiscount = cart?.reduce((prev, curr) => {
-
     if (curr.itemDiscount) {
       return (
-        prev +
-        calculateDiscountForCourseCart(curr.itemPriceUSD, curr.itemDiscount)
+        prev + calculateDiscountForCourseCart(curr.itemPrice, curr.itemDiscount)
       );
     } else {
-      return prev + curr.itemPriceUSD;
+      return prev + curr.itemPrice;
     }
   }, 0);
 
   const actualCostWithoutDiscount = cart?.reduce((prev, curr) => {
-    return prev + curr.itemPriceUSD;
+    return prev + curr.itemPrice;
   }, 0);
 
   const getCourseTotalSavingFromDiscount = () => {
@@ -127,11 +101,7 @@ export const CartPage = ({
         payStackPaymentHandler(paymentMethodToUse);
         break;
       case "stripe":
-        // prettier-ignore
-        handleStripeMakePaymentIntent(
-          currency,
-          (cartItemSumWithDiscount * currency.exchangeRate)
-        );
+        alert("call the stripe payment gateway method");
         break;
       default:
         break;
@@ -146,8 +116,7 @@ export const CartPage = ({
           ? process.env.REACT_APP_PAYSTACK_PUBLIC_KEY
           : process.env.REACT_APP_PAYSTACK_TEST_PUBLIC_KEY,
       email: student.studentDetails.email,
-      // prettier-ignore
-      amount: roundToTwoDecimalPlaces((cartItemSumWithDiscount * currency.exchangeRate) * 100),
+      amount: cartItemSumWithDiscount * 100,
       currency: "NGN",
       channels: ["card", "bank", "ussd", "bank_transfer"],
       metadata: {
@@ -156,6 +125,7 @@ export const CartPage = ({
         schoolname: schoolname,
       },
       onSuccess: async (transaction) => {
+      
         try {
           if (localStorage.getItem("studentToken")) {
             setAuthToken(localStorage.getItem("studentToken"));
@@ -174,19 +144,21 @@ export const CartPage = ({
             purchased_course: cart,
             amount: cartItemSumWithDiscount,
           });
-
+console.log(body)
           const res = await axios.post(
             "/api/v1/school/course/verify/purchase",
             body,
             config
           );
+ console.log(res)
           if (res.data.status) {
-            toggleTransactionModal(); // show course purchase success modal.
-            setPurchasedCourses(cart); // show list of purchased items from cart
-            clearCartAfterCheckOut(); // clear cart after purchase verification.
+            toggleTransactionModal();
+            setPurchasedCourses(cart);
+            clearCartAfterCheckOut();
           }
           removeLoader();
         } catch (error) {
+          console.log(error)
           removeLoader();
           if (error.response.status === 400) {
             const errors = error.response?.data?.errors;
@@ -209,55 +181,7 @@ export const CartPage = ({
       },
     });
   };
-
-  const extractNecessaryPropertiesFromCartItems = (cart) => {
-    return cart.map((item) => ({
-      itemId: item.itemId,
-      itemPrice: roundToTwoDecimalPlaces(
-        item.itemPriceUSD * currency.exchangeRate
-      ),
-      itemType: item.itemType,
-    }));
-  };
-
-  const handleStripeMakePaymentIntent = async (currency, amount) => {
-    try {
-      displayLoader();
-      if (localStorage.getItem("studentToken")) {
-        setAuthToken(localStorage.getItem("studentToken"));
-      }
-      const currencyInfo = currency.currency;
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
-      const body = JSON.stringify({
-        currency: currencyInfo.toLowerCase(),
-        amount,
-        metadata: {
-          studentToken: `${localStorage.getItem("studentToken")}`,
-          cart: JSON.stringify(extractNecessaryPropertiesFromCartItems(cart)),
-          schoolname: `${schoolname}`,
-        },
-      });
-      const res = await axios.post(
-        "/api/v1/stripe/create-payment-intent",
-        body,
-        config
-      );
-      setStripeClientSecret(res.data.clientSecret);
-      setStripeCheckoutModalDialog(true);
-      removeLoader();
-    } catch (error) {
-      removeLoader();
-      console.log(error);
-      alert.show(error.response.data.error.message, {
-        type: "error",
-      });
-    }
-  };
-
+ 
   const validateCourseBeforePurchase = async () => {
     try {
       if (localStorage.getItem("studentToken")) {
@@ -365,40 +289,10 @@ export const CartPage = ({
   }, [schoolname]);
 
   useEffect(() => {
-    // code to use to determine payment infrastructure.
-    if (currency.countryCode === "NG") {
-      setPaymentMethodToUse({
-        ...paymentMethodToUse,
-        name: "paystack",
-      });
-    } else {
-      setPaymentMethodToUse({
-        ...paymentMethodToUse,
-        name: "stripe",
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currency]);
-
-  useEffect(() => {
-    setStripePromise(loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY));
-  }, []);
-
-  useEffect(() => {
     if (school) {
       setDocumentTitle(school);
     }
   }, [school]);
-
-  useEffect(() => {
-    const clientSecret = new URLSearchParams(window.location.search).get(
-      "payment_intent_client_secret"
-    );
-    if (clientSecret?.length > 0) {
-      setClientSecretFromTransaction(clientSecret);
-      setModalDialogForStripeTransactionVerification(true);
-    }
-  }, []);
 
   return (
     <>
@@ -517,33 +411,18 @@ export const CartPage = ({
                               }}
                             >
                               <span className="actual-price-span">
-                                
-                                <span
-                                  dangerouslySetInnerHTML={{
-                                    __html: currency.htmlCurrencySymbol,
-                                  }}
-                                ></span>
+                                &#8358;
                                 <CurrencyFormat
-                                  value={roundToTwoDecimalPlaces(
-                                    actualCostWithoutDiscount *
-                                      currency.exchangeRate
-                                  )}
+                                  value={actualCostWithoutDiscount}
                                   displayType="text"
                                   thousandSeparator={true}
                                   decimalScale={1}
                                   fixedDecimalScale={true}
                                 />
                               </span>
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: currency.htmlCurrencySymbol,
-                                }}
-                              ></span>
+                              &#8358;
                               <CurrencyFormat
-                                value={roundToTwoDecimalPlaces(
-                                  cartItemSumWithDiscount *
-                                    currency.exchangeRate
-                                )}
+                                value={cartItemSumWithDiscount}
                                 displayType="text"
                                 thousandSeparator={true}
                                 decimalScale={1}
@@ -561,17 +440,10 @@ export const CartPage = ({
                               Total Savings(%{calculateSavingsInPercentage()}):
                             </p>{" "}
                             <p>
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: currency.htmlCurrencySymbol,
-                                }}
-                              ></span>
+                              &#8358;
                               {
                                 <CurrencyFormat
-                                  value={roundToTwoDecimalPlaces(
-                                    getCourseTotalSavingFromDiscount() *
-                                      currency.exchangeRate
-                                  )}
+                                  value={getCourseTotalSavingFromDiscount()}
                                   displayType="text"
                                   thousandSeparator={true}
                                   decimalScale={1}
@@ -588,17 +460,10 @@ export const CartPage = ({
                           >
                             <p>Total</p>{" "}
                             <p>
-                              <span
-                                dangerouslySetInnerHTML={{
-                                  __html: currency.htmlCurrencySymbol,
-                                }}
-                              ></span>
+                              &#8358;
                               {
                                 <CurrencyFormat
-                                  value={roundToTwoDecimalPlaces(
-                                    cartItemSumWithDiscount *
-                                      currency.exchangeRate
-                                  )}
+                                  value={cartItemSumWithDiscount}
                                   displayType="text"
                                   thousandSeparator={true}
                                   decimalScale={1}
@@ -651,48 +516,6 @@ export const CartPage = ({
                 theme={theme}
                 successUrlRedirect="/dashboard/courses"
               />
-              {stripePromise && stripeClientSecretFromTransaction && (
-                <Elements
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret: stripeClientSecretFromTransaction,
-                  }}
-                >
-                  <StripeVerificationModal
-                    isOpen={
-                      modalDialogForStripeTransactionVerification &&
-                      stripePromise !== null &&
-                      stripeClientSecretFromTransaction.length > 0
-                    }
-                    clientSecret={stripeClientSecretFromTransaction}
-                    closeModalDialogForStripeTrannsactionVerification={
-                      closeModalDialogForStripeTrannsactionVerification
-                    }
-                    handlePostSuccessfullTransactionFeedback={
-                      handlePostSuccessfullTransactionFeedback
-                    }
-                  />
-                </Elements>
-              )}
-              {stripePromise && stripeClientSecret && (
-                <Elements
-                  stripe={stripePromise}
-                  options={{ clientSecret: stripeClientSecret }}
-                >
-                  <StripeCheckoutModal
-                    isOpen={
-                      stripeCheckoutModalDialog &&
-                      stripePromise !== null &&
-                      stripeClientSecret.length > 0
-                    }
-                    closeStripeCheckoutModal={closeStripeCheckoutModal}
-                    handlePostSuccessfullTransactionFeedback={
-                      handlePostSuccessfullTransactionFeedback
-                    }
-                    theme={theme}
-                  />
-                </Elements>
-              )}
             </>
           )}
         </>
@@ -700,6 +523,7 @@ export const CartPage = ({
     </>
   );
 };
+
 
 const mapStateToProps = (state) => ({
   cart: state.cart,
