@@ -47,26 +47,7 @@ export default function CreateResource() {
   const [pollStatus, setPollStatus] = useState(false);
   const [pollTitle, setPollTitle] = useState("");
   const [pollDuration, setPollDuration] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
 
-  const observer = useRef();
-
-  const lastBookElementRef = useCallback(
-    (node) => {
-      // if (loading) return;
-      if (observer.current) observer.current.disconnect();
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setPage((page) => {
-            return page + 1;
-          });
-        }
-      });
-      if (node) observer.current.observe(node);
-    },
-    // eslint-disable-next-line
-    [loading]
-  );
   const getResourceCount = async () => {
     let res = await axios.get(`/api/v1/classroomresource/count`);
     if (res) {
@@ -306,7 +287,11 @@ export default function CreateResource() {
         });
     } else {
       await axios
-        .post("/api/v1/classroomresource/poll", JSON.stringify(body), config)
+        .post(
+          "/api/v1/classroomresource/create/poll",
+          JSON.stringify(body),
+          config
+        )
         .then((res) => {
           console.log(res);
           dispatch(stopLoading());
@@ -375,7 +360,11 @@ export default function CreateResource() {
           });
       } else {
         await axios
-          .post("/api/v1/classroomresource/quiz", JSON.stringify(body), config)
+          .post(
+            "/api/v1/classroomresource/create/quiz",
+            JSON.stringify(body),
+            config
+          )
           .then((res) => {
             console.log(res);
             dispatch(stopLoading());
@@ -501,7 +490,8 @@ export default function CreateResource() {
   };
   useEffect(() => {
     getResourceCount();
-  }, [pollTitle,deleteModal]);
+  }, [pollTitle, deleteModal]);
+
   useEffect(() => {
     const fetchResources = async () => {
       try {
@@ -511,20 +501,22 @@ export default function CreateResource() {
         );
 
         setResources(response.data.resources);
+
+        // setResources((prevCourses) => {
+        //   return [...new Set([...prevCourses, ...response.data.resources])];
+        // });
+
         setLoading(false);
         // console.log(response.data.resources.totalPages > response.data.resources.currentPage);
 
-        // setHasMore(response.data.resources.length > 0);
         // setHasMore(response.data.resources.totalPages > response.data.resources.currentPage);
       } catch (error) {
         console.error("Error fetching resources:", error);
         setLoading(false);
       }
     };
-
     fetchResources();
-  }, [pollTitle,deleteModal]);
-  const filteredResource = resources?.filter((item) => item.type === type);
+  }, [pollTitle, deleteModal, page]);
 
   return (
     <div className="dashboard-layout">
@@ -958,7 +950,7 @@ export default function CreateResource() {
                       }}
                     >
                       <i
-                        class="fas fa-less-than"
+                        className="fas fa-less-than"
                         style={{ fontSize: "16px", paddingRight: "5px" }}
                       ></i>
                       Tuturly Classroom
@@ -975,57 +967,56 @@ export default function CreateResource() {
                     {type === "poll" && (
                       <p className="page-title__text">Your Polls</p>
                     )}
+
                     <div className="resource-content">
-                      {filteredResource?.map((item, index) => {
-                        const { type, timeStamp, quizHolder, title, _id } =
-                          item;
-                        return (
-                          <div
-                            className="single-resource-card"
-                            key={index}
-                            ref={lastBookElementRef}
-                          >
-                            <div className="resource-top">
-                              <p className="page-title__text">
-                                {typeText} 0{index + 1}
-                              </p>
-                              {type === "quiz" && (
-                                <p>{quizHolder?.length} Questions</p>
-                              )}
-                              {type === "poll" && <p>{title}</p>}
-                            </div>
-                            <div className="resource-bottom">
-                              <p>{formatTimeAndDate(timeStamp)[0]}</p>{" "}
-                              <p>{formatTimeAndDate(timeStamp)[1]}</p>
-                              <div>
-                                {type === "poll" && (
-                                  <i
-                                    className="fa fa-pencil"
-                                    onClick={() => {
-                                      handlePollEdit(_id);
-                                    }}
-                                  ></i>
-                                )}
+                      {!loading &&
+                        resources?.map((item, index) => {
+                          const { type, timeStamp, quizHolder, title, _id } =
+                            item;
+                          const isLastItem = index === resources.length - 1;
+                          return (
+                            <div className="single-resource-card" key={index}>
+                              <div className="resource-top">
+                                <p className="page-title__text">
+                                  {typeText} 0{index + 1}
+                                </p>
                                 {type === "quiz" && (
-                                  <i
-                                    className="fa fa-pencil"
-                                    onClick={() => {
-                                      handleQuizEdit(_id);
-                                    }}
-                                  ></i>
+                                  <p>{quizHolder?.length} Questions</p>
                                 )}
-                                <i
-                                  className="fa fa-trash"
-                                  onClick={() => {
-                                    handleDeleteModal(_id);
-                                  }}
-                                  style={{ marginLeft: ".5rem" }}
-                                ></i>
+                                {type === "poll" && <p>{title}</p>}
+                              </div>
+                              <div className="resource-bottom">
+                                <p>{formatTimeAndDate(timeStamp)[0]}</p>{" "}
+                                <p>{formatTimeAndDate(timeStamp)[1]}</p>
+                                <div>
+                                  {type === "poll" && (
+                                    <i
+                                      className="fa fa-pencil"
+                                      onClick={() => {
+                                        handlePollEdit(_id);
+                                      }}
+                                    ></i>
+                                  )}
+                                  {type === "quiz" && (
+                                    <i
+                                      className="fa fa-pencil"
+                                      onClick={() => {
+                                        handleQuizEdit(_id);
+                                      }}
+                                    ></i>
+                                  )}
+                                  <i
+                                    className="fa fa-trash"
+                                    onClick={() => {
+                                      handleDeleteModal(_id);
+                                    }}
+                                    style={{ marginLeft: ".5rem" }}
+                                  ></i>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                       {type.toLowerCase() === "quiz" && (
                         <div
                           className="single-resource-card empty"

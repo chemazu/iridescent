@@ -47,13 +47,12 @@ function LiveWebinar({ school, getSchool }) {
     );
 
     if (res) {
+      console.log(res)
       setUserStreams(res.data.streams);
       setLoading(false);
     } else {
       console.log("error");
       setLoading(false);
-      
-
     }
   };
   const getSchoolUrl = (schoolname) => {
@@ -154,7 +153,10 @@ function LiveWebinar({ school, getSchool }) {
         return userStreams?.filter((stream) => {
           return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
         });
-
+        case "completed":
+          return userStreams?.filter((stream) => {
+            return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
+          });
       case "":
         return userStreams ? userStreams : [];
 
@@ -210,7 +212,7 @@ function LiveWebinar({ school, getSchool }) {
     // getSchool();
 
     getWebinars();
-  },[filterState]);
+  }, [filterState]);
 
   return (
     <div className="dashboard-layout">
@@ -370,6 +372,8 @@ function LiveWebinar({ school, getSchool }) {
                             <option value="unPublished">Unpublished</option>
                             <option value="isRecurring">Recurring</option>
                             <option value="NotRecurring">One Off</option>
+                            <option value="completed">Over</option>
+                            <option value="upComing">Upcoming</option>
 
                             {/* <option value=""> {filterState === '' ? "Filter" : 'Clear Filter'}</option> */}
 
@@ -432,8 +436,8 @@ function LiveWebinar({ school, getSchool }) {
                               <p>{item.title}</p>
 
                               <div className="status">
-                                {item.timeLeft <= 0 ? (
-                                  <p>Timed Out</p>
+                                {item.endStatus  ? (
+                                  <p>Completed</p>
                                 ) : item.isLive ? (
                                   <p className="live-button"> Live</p>
                                 ) : item.isPublished ? (

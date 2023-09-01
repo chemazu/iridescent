@@ -31,6 +31,8 @@ var _dataUri = _interopRequireDefault(require("../utilities/dataUri"));
 
 var _StudentWebinar = _interopRequireDefault(require("../models/StudentWebinar"));
 
+var _AdditonalResource = _interopRequireDefault(require("../models/AdditonalResource"));
+
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
@@ -87,33 +89,7 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
     const imageToBeUploaded = (0, _dataUri.default)(`${fileType}`, req.file.buffer).content;
     const uploadResponse = await _cloudinary.default.v2.uploader.upload(imageToBeUploaded, {
       folder: `tuturly/webinar/${title}`
-    }); // {
-    //   isRecurring: 'false',
-    //   title: 'one',
-    //   category: 'Business',
-    //   description: 'egg',
-    //   fee: '1000',
-    //   currency: 'USD',
-    //   customRep: '',
-    //   recurringFrequency: '',
-    //   webinarReps: '',
-    //   startTime: 'Tue Jun 27 2023 13:40:00 GMT+0100 (West Africa Standard Time)',
-    //   endDate: 'Invalid Date'
-    // }
-    // {
-    //   isRecurring: 'true',
-    //   title: '10000',
-    //   category: 'Automobiles',
-    //   description: 'popop',
-    //   fee: '10322',
-    //   currency: 'USD',
-    //   customRep: '',
-    //   recurringFrequency: 'weekly',
-    //   webinarReps: 'Every 2 weeks',
-    //   startTime: 'Thu Jun 29 2023 13:50:00 GMT+0100 (West Africa Standard Time)',
-    //   endDate: 'Thu Jun 29 2023 19:50:00 GMT+0100 (West Africa Standard Time)'
-    // }
-
+    });
     const newStream = new _Livewebinar.default({
       title,
       description,
@@ -147,6 +123,52 @@ router.post("/", [_auth.default, createCourseThumbnailPhoto.single("file"), (0, 
     console.error(error);
     res.status(500).json({
       error: "Server error"
+    });
+  }
+}); // increase classroom time
+
+router.put("/addTime", _auth.default, async (req, res) => {
+  try {
+    const {
+      streamKey,
+      added,
+      transaction_reference,
+      amount,
+      orderType
+    } = req.body; // Save the transaction details
+
+    const addResource = new _AdditonalResource.default({
+      reference: transaction_reference,
+      orderfrom: req.user.id,
+      amount,
+      ordertype: orderType,
+      added
+    });
+    await addResource.save();
+
+    if (orderType == "time") {
+      // Find and update the webinar class end time
+      let webinar = await _Livewebinar.default.findOne({
+        streamKey
+      });
+
+      if (!webinar) {
+        return res.status(404).json({
+          message: "Classroom not found"
+        });
+      }
+
+      const additionalTimeMs = Number(added) * 60 * 1000;
+      webinar.classEndTime += additionalTimeMs;
+      await webinar.save();
+      res.json({
+        newTime: webinar.classEndTime
+      });
+    } else {}
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "An error occurred"
     });
   }
 }); // toggle webinar publish
@@ -551,15 +573,21 @@ const handleStreamFilter = (value, userStreams) => {
     case "unPublished":
       return userStreams.filter(stream => !stream["isPublished"]);
 
+    case "upComing":
+      return userStreams.filter(stream => !stream["endStatus"]);
+
     case "NotRecurring":
       return userStreams.filter(stream => !stream["isRecurring"]);
+
+    case "completed":
+      return userStreams.filter(stream => stream["endStatus"]);
 
     case "":
       return userStreams ? userStreams : [];
 
     default:
       // Assume `value` is a valid property name in the stream object
-      return userStreams.filter(stream => stream[value]);
+      return userStreams ? userStreams : [];
   }
 };
 
@@ -571,8 +599,7 @@ router.get("/streams", _auth.default, async (req, res) => {
     creator: req.user.id,
     startTime: {
       $gte: currentDateOnly
-    },
-    endStatus: false
+    }
   }).sort({
     startTime: 1
   });

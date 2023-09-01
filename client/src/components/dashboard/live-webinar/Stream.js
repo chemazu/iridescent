@@ -16,6 +16,10 @@ import {
 } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import smiley from "../../../images/emojisvg.svg";
+import classEnd from "../../../images/class-end.svg";
+import pollEnd from "../../../images/poll-end.svg";
+import quizEnd from "../../../images/quiz-end.svg";
+
 import { useAlert } from "react-alert";
 import DashboardNavbar from "../DashboardNavbar";
 import { useParams, useHistory } from "react-router-dom";
@@ -28,6 +32,7 @@ import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import CountdownTimer from "./CountdownTimer";
+import PaymentModal from "./PaymentModal";
 
 export default function Stream() {
   const { roomid } = useParams();
@@ -39,6 +44,7 @@ export default function Stream() {
   const [videoDevices, setVideoDevices] = useState([]);
   const [resources, setResources] = useState([]);
   const [freeTimer, setFreeTimer] = useState(null);
+  const [freeTimerStatus, disableFreeTimer] = useState(true);
 
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
@@ -59,6 +65,8 @@ export default function Stream() {
   const [defaultChat, setDefaultChat] = useState([]);
   const [specialChat, setSpecialChat] = useState([]);
   const [timeOutModal, setTimeOutModal] = useState(false);
+  const [moreResources, setMoreResources] = useState(false);
+
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attendies, setAttendies] = useState(1);
@@ -94,21 +102,20 @@ export default function Stream() {
   const toggleAudioVisuals = (type) => {
     switch (type) {
       case "cam":
-        console.log("firstdsd")
-        let updated= {
+        let updated = {
           audio: audioVisuals.audio,
           video: !audioVisuals.video,
-        }
+        };
         setAudioVisuals(updated);
-        socket.emit("audioVisuals",roomid, updated);
+        socket.emit("audioVisuals", roomid, updated);
         break;
       case "mic":
         let newUpdated = {
           audio: !audioVisuals.audio,
           video: audioVisuals.video,
-        }
+        };
         setAudioVisuals(newUpdated);
-        socket.emit("audioVisuals",roomid, newUpdated);
+        socket.emit("audioVisuals", roomid, newUpdated);
         break;
 
       default:
@@ -194,15 +201,19 @@ export default function Stream() {
   };
   const getResourceCount = async () => {
     let res = await axios.get(`/api/v1/classroomresource/count`);
+    console.log(res, "countsss");
+
     if (res) {
       if (res.data.paymentInfo === "free") {
-        setResourceCount(res.data.resourceCount);
+        let { pollCount, quizCount, resourceCount } = res.data;
+        setResourceCount({ pollCount, quizCount, resourceCount });
+      } else {
       }
     }
   };
   useEffect(() => {
     getResourceCount();
-  }, [pollTitle]);
+  }, [roomid]);
   function copyText() {
     if (presenterDetails.fee === 0) {
       navigator.clipboard
@@ -358,6 +369,9 @@ export default function Stream() {
           setPollOptions(["", "", "", ""]);
           setDurationValue("");
           setDurationUnit("secs");
+          getResourceCount();
+          setResourceModal(false);
+          setSaveResource(false);
         })
         .catch((error) => {
           console.error(error);
@@ -368,7 +382,11 @@ export default function Stream() {
       dispatch(startLoading());
 
       await axios
-        .post("/api/v1/classroomresource/poll", JSON.stringify(body), config)
+        .post(
+          "/api/v1/classroomresource/create/poll",
+          JSON.stringify(body),
+          config
+        )
         .then((res) => {
           console.log(res);
           dispatch(stopLoading());
@@ -380,6 +398,10 @@ export default function Stream() {
           setPollOptions(["", "", "", ""]);
           setDurationValue("");
           setDurationUnit("secs");
+          setSaveResource(false);
+          getResourceCount();
+          setResourceModal(false);
+          setSaveResource(false);
         })
         .catch((error) => {
           console.error(error);
@@ -441,8 +463,9 @@ export default function Stream() {
         type: "quiz",
         answers,
         durationInSec,
+        persist: saveResource,
       };
-
+      console.log(saveResource);
       if (localStorage.getItem("token")) {
         setAuthToken(localStorage.getItem("token"));
       }
@@ -471,6 +494,7 @@ export default function Stream() {
             setDurationUnit("secs");
             setTotalQuestion(0);
             setQuestionNumber(1);
+            setSaveResource(false);
           })
           .catch((error) => {
             console.error(error);
@@ -480,9 +504,12 @@ export default function Stream() {
         dispatch(startLoading());
 
         await axios
-          .post("/api/v1/classroomresource/quiz", JSON.stringify(body), config)
+          .post(
+            "/api/v1/classroomresource/create/quiz",
+            JSON.stringify(body),
+            config
+          )
           .then((res) => {
-            console.log(res);
             dispatch(stopLoading());
             setAnswers([]);
             setQuizHolder([]);
@@ -492,6 +519,7 @@ export default function Stream() {
             setDurationUnit("secs");
             setTotalQuestion(0);
             setQuestionNumber(1);
+            setSaveResource(false);
           })
           .catch((error) => {
             console.error(error);
@@ -531,16 +559,6 @@ export default function Stream() {
       setTotalQuestion(0);
       setQuestionNumber(1);
     } else {
-      setDefaultChat([
-        ...defaultChat,
-        {
-          user: 1,
-          quizHolder,
-          type: "quiz",
-          timeStamp: Date.now(),
-          duration: { durationUnit, durationValue },
-        },
-      ]);
       setSpecialChat([
         {
           user: 1,
@@ -1041,11 +1059,10 @@ export default function Stream() {
       if (res) {
         console.log(res, endTime);
         localStorage.setItem(roomid, res?.data.classEndTime);
-        setFreeTimer(res?.data.classEndTime)
+        setFreeTimer(res?.data.classEndTime);
       } else {
         localStorage.setItem(roomid, endTime);
-        setFreeTimer(endTime)
-
+        setFreeTimer(endTime);
       }
     } catch (error) {
       console.log(error);
@@ -1054,6 +1071,7 @@ export default function Stream() {
   };
 
   const initializePeer = async () => {
+    getResourceCount();
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
     peerInstance.on("open", (peerId) => {
@@ -1073,7 +1091,7 @@ export default function Stream() {
         });
     } else {
       navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
+        .getUserMedia(audioVisuals)
 
         .then((stream) => {
           addVideoStream(myVideoRef.current, stream);
@@ -1091,7 +1109,7 @@ export default function Stream() {
     if (startController) {
       initializePeer();
     }
-  }, [roomid, startController, screenSharing]);
+  }, [roomid, startController, screenSharing, audioVisuals]);
 
   useEffect(() => {
     async function getMediaDevices() {
@@ -1229,7 +1247,9 @@ export default function Stream() {
 
     return color;
   }
+
   const handleOpenResourceModal = async (type) => {
+    console.log(type);
     dispatch(startLoading());
     try {
       setLoading(true);
@@ -1237,6 +1257,7 @@ export default function Stream() {
       const response = await axios.get(
         `/api/v1/classroomresource/creator-resources/${type}?page=${1}`
       );
+      console.log(response);
       setResourceType(type);
       setResources(response.data.resources);
       dispatch(stopLoading());
@@ -1480,9 +1501,17 @@ export default function Stream() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            setResourceModal(false);
+                            console.log(resourceCount);
+                            if (resourceCount?.quizCount >= 3) {
+                              setMoreResources({
+                                status: "true",
+                                type: "quiz",
+                              });
+                            } else {
+                              setResourceModal(false);
 
-                            setQuizStatus(true);
+                              setQuizStatus(true);
+                            }
                           }}
                         >
                           <p>Click here to create new Quiz</p>
@@ -1492,9 +1521,18 @@ export default function Stream() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            setResourceModal(false);
+                            console.log(resourceCount);
 
-                            setPollStatus(true);
+                            if (resourceCount?.pollCount >= 3) {
+                              setMoreResources({
+                                status: "true",
+                                type: "poll",
+                              });
+                            } else {
+                              setResourceModal(false);
+
+                              setPollStatus(true);
+                            }
                           }}
                         >
                           <p>Click here to create new poll</p>
@@ -1508,13 +1546,78 @@ export default function Stream() {
                     <h4
                       onClick={() => {
                         setTimeOutModal(false);
+                        disableFreeTimer(false);
                       }}
                       style={{ alignSelf: "end" }}
                     >
                       <i className="fa fa-times"></i>
                     </h4>
+                    <img src={classEnd} alt="timer" qw />
+                    <h2 style={{ alignSelf: "center" }}>
+                      You have 10 Mins left before your class ends.
+                    </h2>
 
-                    <h2 style={{ alignSelf: "center" }}>10 minutes left</h2>
+                    <PaymentModal
+                      roomId={roomid}
+                      setFreeTimer={setFreeTimer}
+                      type={"time"}
+                      close={() => {
+                        setTimeOutModal(false);
+                      }}
+                    />
+                  </div>
+                </Modal>
+                <Modal isOpen={moreResources.status}>
+                  <div className="close-time-out">
+                    <h4
+                      onClick={() => {
+                        setMoreResources({
+                          status: false,
+                          type: moreResources.type,
+                        });
+                      }}
+                      style={{ alignSelf: "end" }}
+                    >
+                      <i className="fa fa-times"></i>
+                    </h4>
+                    {moreResources.type === "poll" && (
+                      <img src={pollEnd} alt="poll" />
+                    )}
+                    {moreResources.type === "quiz" && (
+                      <img src={quizEnd} alt="quiz" />
+                    )}
+
+                    <h2 style={{ alignSelf: "center" }}>
+                      You have reached your {moreResources.type} limit
+                    </h2>
+
+                    <PaymentModal
+                      roomId={roomid}
+                      setFreeTimer={setFreeTimer}
+                      type={moreResources.type}
+                      close={() => {
+                        setMoreResources({
+                          status: false,
+                          type: moreResources.type,
+                        });
+                      }}
+                      updateCount={(number) => {
+                        if (moreResources.type === "poll") {
+                          setResourceCount({
+                            pollCount: resourceCount.pollCount - number,
+                            quizCount: resourceCount.quizCount,
+                            resourceCount: resourceCount.resourceCount,
+                          });
+                        }
+                        if (moreResources.type === "quiz") {
+                          setResourceCount({
+                            quizCount: resourceCount.quizCount - number,
+                            pollCount: resourceCount.pollCount,
+                            resourceCount: resourceCount.resourceCount,
+                          });
+                        }
+                      }}
+                    />
                   </div>
                 </Modal>
                 <Modal isOpen={pollStatus} className="poll-modal-wrapper">
@@ -1980,6 +2083,7 @@ export default function Stream() {
                       <>
                         {planname === "free" && (
                           <div className="time-tracker">
+                            <p>Get More Time</p>
                             <p>Time Remaining</p>
                             {
                               isLoading ? (
@@ -1997,6 +2101,7 @@ export default function Stream() {
                                   classOver={() => {
                                     handlePlanTimeOut();
                                   }}
+                                  freeTimerStatus={freeTimerStatus}
                                 />
                               ) : (
                                 <span>00:00:00</span>
@@ -2142,7 +2247,7 @@ export default function Stream() {
                             <div
                               className="control-object"
                               onClick={() => {
-                                toggleAudioVisuals("mic");
+                                toggleAudioVisuals("cam");
                               }}
                               // onClick={toggleVideo}
                             >
@@ -2192,8 +2297,7 @@ export default function Stream() {
                             <div
                               className="control-object "
                               onClick={() => {
-                                toggleAudioVisuals("mic")
-
+                                toggleAudioVisuals("mic");
                               }}
                             >
                               <i
@@ -2213,8 +2317,8 @@ export default function Stream() {
                             <div
                               className="control-object"
                               onClick={() => {
-                                console.log("dsd")
-                                toggleAudioVisuals("cam")
+                                console.log("dsd");
+                                toggleAudioVisuals("cam");
                                 // socket.emit(
                                 //   "disablevideo",
                                 //   roomid,
@@ -2294,51 +2398,62 @@ export default function Stream() {
                           <div className="chat-interface">
                             <div className="chat-interface-text">
                               {defaultChat.map((item, index) => {
-                                return item.type === "quiz" ? (
-                                  <></>
-                                ) : (
-                                  <>
-                                    {item.type === "poll" ? (
-                                      <></>
-                                    ) : (
-                                      <div
+                                return (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        alignItems: "flex-end",
+                                        flex: 5,
+                                        // paddingRight: "5%",
+                                      }}
+                                    >
+                                      <p
                                         style={{
-                                          display: "flex",
-                                          flexDirection: "column",
-                                          alignItems: "flex-end",
-                                        }}
-                                      >
-                                        <p
-                                          style={{
-                                            fontWeight: 600,
+                                          fontWeight: 600,
 
-                                            marginBottom: "0",
-                                            color: item.color
-                                              ? item.color
-                                              : "#200b72",
-                                            alignSelf:
-                                              item.user ===
-                                              presenterDetails?.username
-                                                ? ""
-                                                : "flex-start",
-                                          }}
-                                        >
-                                          {item.user}
-                                        </p>
-                                        <div
-                                          key={index}
-                                          className={`${
+                                          marginBottom: "0",
+                                          color: item.color
+                                            ? item.color
+                                            : "#200b72",
+                                          alignSelf:
                                             item.user ===
                                             presenterDetails?.username
-                                              ? "user-bubble"
-                                              : "chat-bubble"
-                                          }`}
-                                        >
-                                          {item.msg}
-                                        </div>
+                                              ? ""
+                                              : "flex-start",
+                                        }}
+                                      >
+                                        {item.user}
+                                      </p>
+                                      <div
+                                        key={index}
+                                        className={`${
+                                          item.user ===
+                                          presenterDetails?.username
+                                            ? "user-bubble"
+                                            : "chat-bubble"
+                                        }`}
+                                      >
+                                        {item.msg}
                                       </div>
-                                    )}
-                                  </>
+                                    </div>
+                                    {/* <img
+                                      src={presenterDetails.avatar}
+                                      alt="user"
+                                      style={{
+                                        flex: 1,
+                                        width: "25px",
+                         
+                                        borderRadius: "50%",
+                                      }}
+                                    /> */}
+                                  </div>
                                 );
                               })}
                               <div ref={chatInterfaceRef} />
@@ -2374,7 +2489,7 @@ export default function Stream() {
                                             Quiz in Progress
                                           </p>
                                         )}
-                                        <p>Countdown</p>
+                                        <p>...</p>
                                       </div>{" "}
                                       {quizSubmission && (
                                         <div className="quiz-submission">
@@ -2847,8 +2962,8 @@ export default function Stream() {
                     ) : (
                       <div className="chat-box no-start">
                         <p>
-                          Your Live Webinar is ready, press Start to begin your
-                          Webinar
+                          Your Classroom is ready, press Start to begin your
+                          class
                         </p>
                         <Button
                           onClick={() => {
@@ -2876,8 +2991,7 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        toggleAudioVisuals("mic")
-                       
+                        toggleAudioVisuals("mic");
                       }}
                     >
                       <i
@@ -2897,7 +3011,7 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        toggleAudioVisuals("cam")
+                        toggleAudioVisuals("cam");
                       }}
                       // onClick={toggleVideo}
                     >
@@ -2935,16 +3049,10 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        if (resourceCount >= 3) {
-                          alert.show("upgrade plan");
+                        if (!timerHolder) {
+                          handleOpenResourceModal("poll");
                         } else {
-                          if (!timerHolder) {
-                            // setPollStatus(true);
-
-                            handleOpenResourceModal("poll");
-                          } else {
-                            alert.show("ASSESSMENT ONGOING");
-                          }
+                          alert.show("ASSESSMENT ONGOING");
                         }
                       }}
                     >
@@ -2955,16 +3063,12 @@ export default function Stream() {
                     <div
                       className="control-object"
                       onClick={() => {
-                        if (resourceCount >= 3) {
-                          alert.show("upgrade plan");
-                        } else {
-                          if (!timerHolder) {
-                            // setPollStatus(true);
+                        if (!timerHolder) {
+                          // setPollStatus(true);
 
-                            handleOpenResourceModal("quiz");
-                          } else {
-                            alert.show("ASSESSMENT ONGOING");
-                          }
+                          handleOpenResourceModal("quiz");
+                        } else {
+                          alert.show("ASSESSMENT ONGOING");
                         }
                       }}
                     >

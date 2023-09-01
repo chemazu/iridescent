@@ -787,6 +787,8 @@
   align-self: flex-start;
   background: #000;
   font-weight: 300;
+  overflow-wrap: break-word;
+  word-break: break-all;
 }
 
 .chat-bubble::before {
@@ -823,7 +825,8 @@
   position: relative;
   max-width: 60%;
   font-weight: 300;
-
+  overflow-wrap: break-word;
+  word-break: break-all;
   /* text-align: left;
   align-items: flex-start; */
 }
@@ -1217,13 +1220,12 @@
   display: flex;
   width: fit-content;
   align-items: center;
-
 }
-.watch-webinar-content .page-title  .page-title__text img {
+.watch-webinar-content .page-title .page-title__text img {
   width: 3.75rem;
-    border-radius: 50%;
-    margin-right: 10px;
-    display: inline;
+  border-radius: 50%;
+  margin-right: 10px;
+  display: inline;
 }
 .watch-webinar-content .page-title .time-constraints {
   display: flex;
@@ -1250,8 +1252,8 @@
   padding-top: 20px;
   padding-bottom: 10px;
 }
- 
-.live-webinar-watch .video-background  .vjs-tech {
+
+.live-webinar-watch .video-background .vjs-tech {
   height: auto;
   max-height: 60vh;
 }
@@ -1359,12 +1361,21 @@
   padding: 5%;
 }
 
- 
 .close-time-out {
   padding: 2.5% 5%;
   display: flex;
   flex-direction: column;
   width: 100%;
+}
+.close-time-out img {
+  width: 20%;
+  align-self: center;
+  margin-bottom: 1.5rem;
+}
+.close-time-out h2 {
+  text-align: center;
+  color: #000;
+  font-size: 1.5rem;
 
 }
 .waiting-image-presenter {
@@ -1531,16 +1542,41 @@
 }
 
 .video-js[tabindex="-1"] {
-    width: 100%;
+  width: 100%;
 }
 .watcher-username {
   font-weight: 600;
 }
-.no-video{
+.no-video {
   position: relative;
   top: 0;
   left: 0;
   right: 0;
+}
+.more-time-payment-modal{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.more-time {
+  align-self: center;
+  color: var(--site-cta-color) !important;
+  background-color: var(--site-white-color);
+  border-radius: 35px;
+  border:1px solid var(--site-cta-color) !important;
+  width: 60%;
+  text-transform: none;
+}
+.more-time-sec {
+  align-self: center;
+  background-color: var(--site-cta-color) !important;
+  color: var(--site-white-color);
+  border-radius: 35px;
+  border:1px solid var(--site-white-color);;
+  width: 60%;
+  text-transform: none;
+
+
 }
 @media screen and (max-width: 812px) {
   .expand-wrapper {
@@ -1801,7 +1837,6 @@
   .watcher-chat-box .chat-bubble {
     background: transparent;
     padding: 0;
-
   }
   .watcher-chat-box .chat-bubble::before {
     background: transparent;

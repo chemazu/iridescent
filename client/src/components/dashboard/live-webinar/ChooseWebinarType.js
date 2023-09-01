@@ -14,7 +14,7 @@ import { Link, useHistory } from "react-router-dom";
 import { useDispatch, connect } from "react-redux";
 import setAuthToken from "../../../utilities/setAuthToken";
 
-function ChooseWebinarType({school}) {
+function ChooseWebinarType({ school }) {
   const [webinarType, setWebinarType] = useState("");
   const alert = useAlert();
   const history = useHistory();
@@ -26,7 +26,7 @@ function ChooseWebinarType({school}) {
   const [fee, setFee] = useState("");
   const [fileToSend, setFileToSend] = useState(null);
   const timestamp = Date.now();
-  console.log(school)
+  console.log(school);
   const getSchoolUrl = (schoolname) => {
     const host = window.location.host;
     if (host.includes("localhost")) {
@@ -92,9 +92,7 @@ function ChooseWebinarType({school}) {
         .then((res) => {
           history.push(`/dashboard/livewebinar/stream/${res?.data.streamKey}`);
           console.log(res.data, res.data.school);
-          copyText(
-            `livewebinar/watch/${res?.data.streamKey}`
-          );
+          copyText(`livewebinar/watch/${res?.data.streamKey}`);
           dispatch(stopLoading());
         })
         .catch((error) => {
@@ -246,7 +244,6 @@ function ChooseWebinarType({school}) {
                             onChange={(e) => setCurrency(e.target.value)}
                             disabled={freeWebinar}
                           >
-                         
                             <option value={"USD"}>USD</option>
                           </select>
                           <input
@@ -270,17 +267,10 @@ function ChooseWebinarType({school}) {
                       </div>
                     </form>
                     <div className="button-wrapper">
-                      {(title === "" || fee === "" || currency === "") && (
+                      {title === "" || fee === "" ? (
                         <Button disabled>Start Now</Button>
-                      )}
-                      {!(title === "" || fee === "" || currency === "") && (
-                        <Button
-                          onClick={() => {
-                            handleSubmit();
-                          }}
-                        >
-                          Start Now
-                        </Button>
+                      ) : (
+                        <Button onClick={handleSubmit}>Start Now</Button>
                       )}
                     </div>
                   </Card>
@@ -293,7 +283,6 @@ function ChooseWebinarType({school}) {
     </div>
   );
 }
-
 
 const mapStateToProps = (state) => ({
   school: state.school.schoolDetails,

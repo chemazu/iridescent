@@ -114,6 +114,12 @@ const userSchema = new _mongoose.default.Schema({
     nextPaymentDate: {
       type: String
     }
+  },
+  stripeCustomerId: {
+    type: String
+  },
+  stripeSubscriptionId: {
+    type: String
   }
 }, {
   timestamps: true

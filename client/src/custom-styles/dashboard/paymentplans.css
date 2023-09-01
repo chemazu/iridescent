@@ -33,8 +33,7 @@
   position: relative;
 }
 
-.payment-plan__item-header
-.enterprise-plan__more-info {
+.payment-plan__item-header .enterprise-plan__more-info {
   background-color: var(--site-cta-color);
   color: var(--site-white-color);
   padding: 10px 20px;
@@ -60,21 +59,22 @@
 }
 
 .payment-plan__item-header-color-free {
-  background-color: #1EA9DA;
+  background-color: #1ea9da;
 }
 
 .payment-plan__item-header-color-basic {
-  background-color: #3F7BF5;
+  background-color: #3f7bf5;
 }
 
 .payment-plan__item-header-color-enterprise {
-  background-color: #496EFB;
+  background-color: #496efb;
 }
 
 .payment-plan__content {
   width: 95%;
   margin: 0 auto;
   color: var(--site-subtle-dark);
+  height: 43vh;
 }
 
 .payment-plan__content li {
@@ -113,8 +113,7 @@
 
 .payment-plan__item-footer button,
 .payment-plan__item-footer button:hover,
-.payment-plan__item-footer button:active
-{
+.payment-plan__item-footer button:active {
   margin: 0 auto;
   border-radius: 10px;
   box-shadow: none;

@@ -16,9 +16,6 @@ const paymentPlansSchema = new _mongoose.default.Schema({
   coursecount: {
     type: Number
   },
-  resourcecount: {
-    type: Number
-  },
   productcount: {
     type: Number
   },
@@ -26,6 +23,9 @@ const paymentPlansSchema = new _mongoose.default.Schema({
     type: Number
   },
   planprice: {
+    type: Number
+  },
+  planprice_usd: {
     type: Number
   },
   totaluploadsize: {
@@ -49,6 +49,9 @@ const paymentPlansSchema = new _mongoose.default.Schema({
     type: Boolean
   },
   paystackplancode: {
+    type: String
+  },
+  stripe_plan_code: {
     type: String
   }
 }, {

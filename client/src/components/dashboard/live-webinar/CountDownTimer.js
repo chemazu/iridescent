@@ -1,6 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
-const CountdownTimer = ({ endTime, firstReminder, classOver }) => {
+const CountdownTimer = ({
+  endTime,
+  firstReminder,
+  classOver,
+  freeTimerStatus,
+}) => {
   const [timeLeft, setTimeLeft] = useState(endTime - Date.now());
 
   useEffect(() => {
@@ -9,11 +14,8 @@ const CountdownTimer = ({ endTime, firstReminder, classOver }) => {
       setTimeLeft(newTimeLeft);
 
       if (newTimeLeft <= 0 * 60 * 1000) {
-
-        console.log("fish")
         classOver();
-
-      } else if (newTimeLeft === 10 * 60 * 1000) {
+      } else if (newTimeLeft <= 10 * 60 * 1000 && freeTimerStatus) {
         firstReminder();
       }
     }, 1000);
@@ -27,7 +29,9 @@ const CountdownTimer = ({ endTime, firstReminder, classOver }) => {
     const seconds = Math.floor(milliseconds / 1000) % 60;
     const minutes = Math.floor(milliseconds / 1000 / 60) % 60;
 
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${minutes.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
   };
 
   return (

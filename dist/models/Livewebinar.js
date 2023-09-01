@@ -101,6 +101,19 @@ const liveWebinarSchema = new _mongoose.default.Schema({
     ref: "school"
   }
 });
+liveWebinarSchema.pre("save", async function (next) {
+  // Only run this logic if classEndTime exists and is greater than 0
+  if (this.classEndTime && this.classEndTime > 0) {
+    const currentTime = Date.now();
+
+    if (currentTime >= this.classEndTime) {
+      this.endStatus = true;
+      console.log("Class has ended.");
+    }
+  }
+
+  next();
+});
 
 const LiveWebinar = _mongoose.default.model("LiveWebinar", liveWebinarSchema);
 

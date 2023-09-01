@@ -3,9 +3,25 @@ import { Router } from "express";
 import ClassroomResource from "../models/ClassroomResource";
 import School from "../models/School";
 import PaymentPlans from "../models/PaymentPlans";
+import AddResource from "../models/AdditonalResource";
+import User from "../models/User";
 const router = Router();
-const ITEMS_PER_PAGE = 3;
-router.post("/:type", [auth], async (req, res) => {
+
+router.post("/add-resource", [auth], async (req, res) => {
+  const { streamKey, added, transaction_reference, amount, orderType } =
+    req.body;
+
+  const addResource = new AddResource({
+    reference: transaction_reference,
+    orderfrom: req.user.id,
+    amount,
+    ordertype: orderType,
+    added,
+  });
+  await addResource.save();
+  res.json({ msg: `${added} ${orderType}s have been added` });
+});
+router.post("/create/:type", [auth], async (req, res) => {
   const { type } = req.params;
   const creator = req.user.id;
   try {
@@ -17,7 +33,6 @@ router.post("/:type", [auth], async (req, res) => {
     }
     const school = creatorSchool._id;
     if (type === "quiz") {
-      console.log("quizz");
       const { quizHolder, timeStamp, answers, durationInSec, persist } =
         req.body;
       const newResource = new ClassroomResource({
@@ -31,6 +46,7 @@ router.post("/:type", [auth], async (req, res) => {
         persist,
       });
       await newResource.save();
+      console.log(type);
       res.json({
         message: "Quiz created successfully",
       });
@@ -59,29 +75,25 @@ router.post("/:type", [auth], async (req, res) => {
 });
 router.get("/creator-resources/:type", [auth], async (req, res) => {
   const creator = req.user.id;
-  const { type } = req.params;
+  let size = 4;
 
+  const { type } = req.params;
   const page = parseInt(req.query.page) || 1;
+  const skip = parseInt(page - 1) * size;
+
+  const limit = parseInt(size);
 
   try {
-    // const resources = await ClassroomResource.find({ creator, type });
-    // if (!resources.length) {
-    //   return res
-    //     .status(404)
-    //     .json({ message: "No resources found for the creator." });
-    // }
-    const totalResources = await ClassroomResource.countDocuments({
-      creator,
-      type,
-    });
-
-    const totalPages = Math.ceil(totalResources / ITEMS_PER_PAGE);
-
     const resources = await ClassroomResource.find({
       creator,
       type,
       persist: true,
     });
+    // .limit(limit)
+    // .skip(skip)
+    // .sort({ createdAt: -1 });
+
+    const totalPages = Math.ceil(resources.length / size);
 
     if (!resources.length) {
       return res.json({
@@ -91,9 +103,6 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
 
     // res.json(resources);
     res.json({
-      totalResources,
-      totalPages,
-      currentPage: page,
       resources,
     });
   } catch (error) {
@@ -105,42 +114,161 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
 });
 router.get("/purge", async (req, res) => {
   await ClassroomResource.deleteMany({});
+  await AddResource.deleteMany({});
+
   res.json("all records deleted");
 });
 router.get("/count", [auth], async (req, res) => {
- 
   const creator = req.user.id;
+
   try {
-    const resources = await ClassroomResource.find({ creator }).populate(
-      "creator"
-    );
-    if (resources.length > 0) {
-      const payment = await PaymentPlans.findOne({
-        _id: resources[0].creator.selectedplan,
+    const user = await User.findById(creator);
+    const payment = await PaymentPlans.findOne({
+      _id: user.selectedplan,
+    });
+    if (payment.planname === "free") {
+      const addedPoll = await AddResource.find({
+        orderfrom: creator,
+        ordertype: "poll",
+      });
+      const addedQuiz = await AddResource.find({
+        orderfrom: creator,
+        ordertype: "quiz",
+      });
+      const pollResources = await ClassroomResource.find({
+        creator,
+        type: "poll",
+      });
+      const quizResources = await ClassroomResource.find({
+        creator,
+        type: "quiz",
       });
 
-      console.log({
-        resourceCount: resources.length,
-        paymentInfo: payment.planname,
-      });
+      // AddResource.aggregate([
+      //   {
+      //     $match: {
+      //       orderfrom: mongoose.Types.ObjectId(creator),
+      //       ordertype: "poll",
+      //     },
+      //   },
+      //   {
+      //     $group: {
+      //       _id: null,
+      //       totalAdded: { $sum: "$added" },
+      //     },
+      //   },
+      // ]).exec((err, result) => {
+      //   if (err) {
+      //     console.error(err);
+      //     return;
+      //   }
+
+      //   // 'result' will contain an array with one object, which has the total sum
+      //   const totalSum = result[0]?.totalAdded || 0;
+      //   console.log("Sum of 'added' values:", totalSum);
+      // });
+
+      let addedQuizLength = addedQuiz.reduce((accumulator, object) => {
+        return accumulator + object.added;
+      }, 0);
+      let addedPollLength = addedPoll.reduce((accumulator, object) => {
+        return accumulator + object.added;
+      }, 0);
+      console.log("addedp", addedQuizLength, "pollq", addedPollLength);
+      let updatedPollCount = pollResources.length - addedPollLength;
+      let updatedQuizCount = quizResources.length - addedQuizLength;
+      let totalCount = pollResources.length + quizResources.length;
 
       res.json({
-        resourceCount: resources.length,
-        paymentInfo: payment.planname,
+        resourceCount: totalCount,
+        paymentInfo: "free",
+        pollCount: updatedPollCount,
+        quizCount: updatedQuizCount,
       });
     } else {
       res.json({
         resourceCount: 0,
-        paymentInfo: null,
+        paymentInfo: 0,
+        pollCount: 0,
+        quizCount: 0,
       });
     }
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while fetching resources." });
-  }
+  } catch (error) {}
+  // try {
+  //   const addedPoll = await AddResource.find({
+  //     orderfrom: creator,
+  //     ordertype: "poll",
+  //   });
+  //   const addedQuiz = await AddResource.find({
+  //     orderfrom: creator,
+  //     ordertype: "quiz",
+  //   });
+  //   const pollResources = await ClassroomResource.find({
+  //     creator,
+  //     type: "poll",
+  //   }).populate("creator");
+  //   const quizResources = await ClassroomResource.find({
+  //     creator,
+  //     type: "quiz",
+  //   }).populate("creator");
+
+  //   if (pollResources.length > 0 || quizResources.length > 0) {
+  //     const payment = await PaymentPlans.findOne({
+  //       _id: pollResources[0].creator.selectedplan,
+  //     });
+  //     console.log(addedPoll, "ap", addedQuiz, "aq");
+  //     let updatedPollCount = pollResources.length - addedPoll.length;
+  //     let updatedQuizCount = quizResources.length - addedQuiz.length;
+
+  //     let totalCount = pollResources.length + quizResources.length;
+
+  //     res.json({
+  //       resourceCount: totalCount,
+  //       paymentInfo: payment.planname,
+  //       pollCount: updatedPollCount,
+  //       quizCount: updatedQuizCount,
+  //     });
+  //     console.log({
+  //       resourceCount: totalCount,
+  //       paymentInfo: payment.planname,
+  //       pollCount: updatedPollCount,
+  //       quizCount: updatedQuizCount,
+  //     });
+  //   } else {
+  //     res.json({
+  //       resourceCount: 0,
+  //       paymentInfo: 0,
+  //       pollCount: 0,
+  //       quizCount: 0,
+  //     });
+  //   }
+
+  //   // const resources = await ClassroomResource.find({ creator }).populate(
+  //   //   "creator"
+  //   // );
+  //   // if (resources.length > 0) {
+  //   // const payment = await PaymentPlans.findOne({
+  //   //   _id: resources[0].creator.selectedplan,
+  //   // });
+
+  //   //   res.json({
+  //   //     resourceCount: resources.length,
+  //   //     paymentInfo: payment.planname,
+  //   //   });
+  //   // } else {
+  //   //   res.json({
+  //   //     resourceCount: 0,
+  //   //     paymentInfo: null,
+  //   //   });
+  //   // }
+  // } catch (error) {
+  //   console.error(error);
+  //   res
+  //     .status(500)
+  //     .json({ error: "An error occurred while fetching resources." });
+  // }
 });
+
 // PUT endpoint to update a resource (both quiz and poll)
 router.put("/:resourceId", [auth], async (req, res) => {
   const { resourceId } = req.params;
@@ -226,6 +354,5 @@ router.delete("/:resourceId", [auth], async (req, res) => {
       .json({ error: "An error occurred while deleting the resource." });
   }
 });
-
 
 export default router;

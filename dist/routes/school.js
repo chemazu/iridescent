@@ -305,7 +305,6 @@ const checkIfCourseIsPurchasedByCourseId = async (studentId, itemId, type) => {
       student: studentId,
       webinarBought: itemId
     });
-    console.log(webinarExist);
     return webinarExist === null ? false : true;
   }
 };
@@ -321,11 +320,8 @@ router.post("/purchase/validate", _studentAuth.default, [(0, _expressValidator.b
       coursesIdToCheck.push(checkIfCourseIsPurchasedByCourseId(req.student.id, purchased_course[i].itemId, purchased_course[i].itemType));
     }
 
-    console.log(coursesIdToCheck, "checker");
     const validateCourseResult = await Promise.all(coursesIdToCheck);
-    console.log(validateCourseResult, "checker 2");
     const containsCourseAlreadyPurchased = validateCourseResult.some(result => result === true);
-    console.log(containsCourseAlreadyPurchased, "checker 3");
     res.json({
       validation_result: containsCourseAlreadyPurchased
     });
@@ -466,7 +462,6 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
           //   console.log(findWebPurchase,"web purchse")
           // } else {
           let flag = await _StudentWebinar.default.find();
-          console.log(flag, "flag");
           const studentWebinar = new _StudentWebinar.default({
             student: req.student.id,
             // with the model instantiation

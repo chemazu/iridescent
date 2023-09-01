@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { connect } from "react-redux";
 import CurrencyFormat from "react-currency-format";
 import { Col, Button, Modal, Card } from "reactstrap";
@@ -7,6 +8,7 @@ import setAuthToken from "../../../utilities/setAuthToken";
 import { useAlert } from "react-alert";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 
+// eslint-disable-next-line
 const getPlanSizeByPlanName = (planName) => {
   switch (planName.toLowerCase()) {
     case "free":
@@ -20,11 +22,20 @@ const getPlanSizeByPlanName = (planName) => {
   }
 };
 
-const PaymentPlansItem = ({ plan, showLoader, removeLoader, user }) => {
+const PaymentPlansItem = ({
+  plan,
+  showLoader,
+  removeLoader,
+  user,
+  currency,
+}) => {
   const alert = useAlert();
   const [confirmModal, setConfirmModal] = useState(false);
   const [planChoiceValidationError, setPlanChoiceValidationError] =
     useState(false);
+
+  const stripe = useStripe();
+  const elements = useElements();
 
   const choseSubscription = async () => {
     // if user is on the free plan
@@ -33,6 +44,14 @@ const PaymentPlansItem = ({ plan, showLoader, removeLoader, user }) => {
         type: "info",
       });
     }
+    if (currency.countryCode === "NG") {
+      handlePaystackSubscriptionPayment();
+    } else {
+      handleStripeSubscriptionPayment();
+    }
+  };
+
+  const handlePaystackSubscriptionPayment = async () => {
     showLoader();
     if (localStorage.getItem("token")) {
       setAuthToken(localStorage.getItem("token"));
@@ -75,6 +94,93 @@ const PaymentPlansItem = ({ plan, showLoader, removeLoader, user }) => {
     }
   };
 
+  const handleStripeSubscriptionPayment = async () => {
+    showLoader();
+    if (localStorage.getItem("token")) {
+      setAuthToken(localStorage.getItem("token"));
+    }
+    const paymentMethod = await stripe?.createPaymentMethod({
+      type: "card",
+      card: elements?.getElement(CardElement),
+      billing_details: {
+        name: `${user.firstname} ${user.lastname}`,
+        email: user.email,
+      },
+    });
+    try {
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      };
+      const body = JSON.stringify({
+        stripe_product_code: plan.stripe_plan_code,
+        payment_method: paymentMethod.paymentMethod.id,
+      });
+      const response = await axios.post(
+        "/api/v1/stripe/create-subscription",
+        body,
+        config
+      );
+      const { data } = response;
+      const confirmPayment = await stripe?.confirmCardPayment(
+        data.clientsecret
+      );
+      if (confirmPayment?.error) {
+        alert.show(confirmPayment.error.message, { type: "error" });
+      } else {
+        alert.show("Subscription completed Successfully", {
+          type: "success",
+        });
+      }
+      removeLoader();
+    } catch (error) {
+      removeLoader();
+      console.log(error);
+      alert.show(error.message, {
+        type: "error",
+      });
+    }
+  };
+
+  const handlePlanContentDisplay = (planName) => {
+    const plan = planName.toLowerCase();
+    if (plan === "free") {
+      return (
+        <ul>
+          <li>30 mins of Tuturly classsroom</li>
+          <li>3 Quiz creation</li>
+          <li>3 Polls creation</li>
+          <li>2 Digital Products</li>
+          <li>Website builder and landing page</li>
+          <li>Get paid from anywhere in the world</li>
+          <li>Unlimited Students</li>
+          <li>Tuturly Classroom</li>
+        </ul>
+      );
+    }
+    if (plan === "basic") {
+      return (
+        <ul>
+          <li>Free Plan +</li>
+          <li>Unlimited time on tuturly classroom</li>
+          <li>Unlimited tests to students</li>
+          <li>Unlimited polls</li>
+        </ul>
+      );
+    }
+    if (plan === "enterprise") {
+      return (
+        <ul>
+          <li>Free Plan +</li>
+          <li>20 Free gigabytes for uploading courses</li>
+          <li>Tuturly.com sub link removed (coming soon)</li>
+          <li>Banner of (created by tuturly.com) removed</li>
+        </ul>
+      );
+    }
+  };
+
   return (
     <>
       <Col xs="12" sm="12" md="6" lg="4">
@@ -113,9 +219,9 @@ const PaymentPlansItem = ({ plan, showLoader, removeLoader, user }) => {
                 "Free"
               ) : (
                 <>
-                  &#8358;
+                  &#36;
                   <CurrencyFormat
-                    value={plan.planprice}
+                    value={plan.planprice_usd}
                     displayType="text"
                     thousandSeparator={true}
                     fixedDecimalScale={true}
@@ -133,18 +239,7 @@ const PaymentPlansItem = ({ plan, showLoader, removeLoader, user }) => {
              } */}
           </div>
           <div className="payment-plan__content mt-5">
-            <ul>
-              <li>
-                <span className="course-counter-span">{plan.coursecount}</span>{" "}
-                Course(s) Upload
-                <span>(200MB/Video)</span>
-              </li>
-              <li>{getPlanSizeByPlanName(plan.planname)}.</li>
-              <li>Unlimited Students</li>
-              <li>Instant Payout</li>
-              <li>Course Design Templates</li>
-              <li>{plan.percentchargepercoursesale}% Commission/Sale</li>
-            </ul>
+            {handlePlanContentDisplay(plan.planname)}
           </div>
           <div className="payment-plan__item-footer">
             <Button
@@ -243,6 +338,7 @@ const PaymentPlansItem = ({ plan, showLoader, removeLoader, user }) => {
 
 const mapStatetoProps = (state) => ({
   user: state.auth.user,
+  currency: state.currency,
 });
 
 const mapDispatchToProps = (dispatch) => ({

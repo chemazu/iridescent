@@ -8,9 +8,6 @@ const paymentPlansSchema = new mongoose.Schema(
     coursecount: {
       type: Number,
     },
-    resourcecount: {
-      type: Number,
-    },
     productcount: {
       type: Number,
     },
@@ -18,6 +15,9 @@ const paymentPlansSchema = new mongoose.Schema(
       type: Number,
     },
     planprice: {
+      type: Number,
+    },
+    planprice_usd: {
       type: Number,
     },
     totaluploadsize: {
@@ -41,6 +41,9 @@ const paymentPlansSchema = new mongoose.Schema(
       type: Boolean,
     },
     paystackplancode: {
+      type: String,
+    },
+    stripe_plan_code: {
       type: String,
     },
   },

@@ -14,6 +14,7 @@ import Student from "../models/Student";
 import PaymentPlans from "../models/PaymentPlans";
 import dataUri from "../utilities/dataUri";
 import StudentWebinar from "../models/StudentWebinar";
+import AddResource from "../models/AdditonalResource";
 
 const router = Router();
 const storageDest = memoryStorage();
@@ -61,7 +62,6 @@ router.post(
     } = req.body;
     try {
       const streamKey = uuidv4();
-
       const streamUrl = `${streamKey}`;
       const creator = req.user.id;
       const creatorSchool = await School.findOne({ createdBy: req.user.id });
@@ -83,32 +83,6 @@ router.post(
           folder: `tuturly/webinar/${title}`,
         }
       );
-      // {
-      //   isRecurring: 'false',
-      //   title: 'one',
-      //   category: 'Business',
-      //   description: 'egg',
-      //   fee: '1000',
-      //   currency: 'USD',
-      //   customRep: '',
-      //   recurringFrequency: '',
-      //   webinarReps: '',
-      //   startTime: 'Tue Jun 27 2023 13:40:00 GMT+0100 (West Africa Standard Time)',
-      //   endDate: 'Invalid Date'
-      // }
-      // {
-      //   isRecurring: 'true',
-      //   title: '10000',
-      //   category: 'Automobiles',
-      //   description: 'popop',
-      //   fee: '10322',
-      //   currency: 'USD',
-      //   customRep: '',
-      //   recurringFrequency: 'weekly',
-      //   webinarReps: 'Every 2 weeks',
-      //   startTime: 'Thu Jun 29 2023 13:50:00 GMT+0100 (West Africa Standard Time)',
-      //   endDate: 'Thu Jun 29 2023 19:50:00 GMT+0100 (West Africa Standard Time)'
-      // }
 
       const newStream = new LiveWebinar({
         title,
@@ -146,6 +120,44 @@ router.post(
     }
   }
 );
+
+// increase classroom time
+
+router.put("/addTime", auth, async (req, res) => {
+  try {
+    const { streamKey, added, transaction_reference, amount, orderType } =
+      req.body;
+
+    // Save the transaction details
+    const addResource = new AddResource({
+      reference: transaction_reference,
+      orderfrom: req.user.id,
+      amount,
+      ordertype: orderType,
+      added,
+    });
+    await addResource.save();
+
+    if (orderType == "time") {
+      // Find and update the webinar class end time
+      let webinar = await LiveWebinar.findOne({ streamKey });
+      if (!webinar) {
+        return res.status(404).json({ message: "Classroom not found" });
+      }
+
+      const additionalTimeMs = Number(added) * 60 * 1000;
+      webinar.classEndTime += additionalTimeMs;
+      await webinar.save();
+
+      res.json({ newTime: webinar.classEndTime });
+    } else {
+
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "An error occurred" });
+  }
+});
 // toggle webinar publish
 
 router.put("/publish/:id", auth, async (req, res) => {
@@ -291,29 +303,27 @@ router.get("/classtimer/:streamKey", auth, async (req, res) => {
   const { streamKey } = req.params;
   let user = req.user.id;
 
-try {
-  const livestream = await LiveWebinar.findOne({ streamKey, creator: user })
-  .populate("creator")
-  .populate("school");
-  if (livestream) {
-    const timestamp = Date.now();
-    const endTime = timestamp + 45 * 60 * 1000;
-    livestream.streamStarted = timestamp;
+  try {
+    const livestream = await LiveWebinar.findOne({ streamKey, creator: user })
+      .populate("creator")
+      .populate("school");
+    if (livestream) {
+      const timestamp = Date.now();
+      const endTime = timestamp + 45 * 60 * 1000;
+      livestream.streamStarted = timestamp;
 
-    if (livestream.classEndTime === 0) {
-      livestream.classEndTime = endTime;
+      if (livestream.classEndTime === 0) {
+        livestream.classEndTime = endTime;
+      }
+      await livestream.save();
+
+      res.json({ classEndTime: livestream.classEndTime });
+    } else {
+      res.status(400).json({ error: "Stream not found" });
     }
-    await livestream.save();
-
-    res.json({ classEndTime: livestream.classEndTime });
-  } else {
-    res.status(400).json({ error: "Stream not found" });
+  } catch (error) {
+    res.status(400).json({ error: "Server error" });
   }
-} catch (error) {
-  res.status(400).json({ error: "Server error" });
-  
-}
-  
 });
 // confirm a live stream
 
@@ -516,16 +526,18 @@ const handleStreamFilter = (value, userStreams) => {
   switch (value) {
     case "unPublished":
       return userStreams.filter((stream) => !stream["isPublished"]);
-
+    case "upComing":
+      return userStreams.filter((stream) => !stream["endStatus"]);
     case "NotRecurring":
       return userStreams.filter((stream) => !stream["isRecurring"]);
-
+    case "completed":
+      return userStreams.filter((stream) => stream["endStatus"]);
     case "":
       return userStreams ? userStreams : [];
 
     default:
       // Assume `value` is a valid property name in the stream object
-      return userStreams.filter((stream) => stream[value]);
+      return userStreams ? userStreams : [];
   }
 };
 
@@ -542,7 +554,6 @@ router.get("/streams", auth, async (req, res) => {
   let streams = await LiveWebinar.find({
     creator: req.user.id,
     startTime: { $gte: currentDateOnly },
-    endStatus: false,
   }).sort({ startTime: 1 });
 
   if (!streams) {
