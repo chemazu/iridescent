@@ -410,19 +410,19 @@ export default function Stream() {
     }
 
     let newIndex = newDefaultChat.length;
-    socket.emit(
-      "message",
-      {
-        title: pollTitle,
-        user: presenterDetails.username || 1,
-        options: pollOptions,
-        type: "poll",
-        timeStamp: Date.now(),
-        questionControl: newIndex,
-        durationInSec,
-      },
-      roomid
-    );
+    // socket.emit(
+    //   "message",
+    //   {
+    //     title: pollTitle,
+    //     user: presenterDetails.username || 1,
+    //     options: pollOptions,
+    //     type: "poll",
+    //     timeStamp: Date.now(),
+    //     questionControl: newIndex,
+    //     durationInSec,
+    //   },
+    //   roomid
+    // );
     let timerData = {
       duration: durationInSec,
       roomid,
@@ -550,7 +550,7 @@ export default function Stream() {
       setQuizSubmission(false);
       setQuizResultHolder([]);
 
-      socket.emit("message", messageData, roomid);
+      // socket.emit("message", messageData, roomid);
       socket.emit("startTimer", timerData);
       setPollTitle("");
       setPollOptions(["", "", "", ""]);
@@ -591,7 +591,7 @@ export default function Stream() {
       };
       socket.emit("specialchat", messageData, roomid);
 
-      socket.emit("message", messageData, roomid);
+      // socket.emit("message", messageData, roomid);
       socket.emit("startTimer", timerData);
 
       setQuizHolder([]);
@@ -1496,7 +1496,12 @@ export default function Stream() {
                           </div>
                         );
                       })}
-
+                    </div>
+                    <div
+                      style={{
+                        paddingTop: "1rem",
+                      }}
+                    >
                       {resourceType.toLowerCase() === "quiz" && (
                         <div
                           className="single-resource-card empty"
@@ -2083,7 +2088,7 @@ export default function Stream() {
                       <>
                         {planname === "free" && (
                           <div className="time-tracker">
-                            <p>Get More Time</p>
+                            {/* <p>Get More Time</p> */}
                             <p>Time Remaining</p>
                             {
                               isLoading ? (

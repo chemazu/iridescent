@@ -1124,18 +1124,22 @@ function WatchStream({ schoolname }) {
                             </div>
                           )}
                         </div>
-                        <div
-                          className="student-room-info desktop-control"
-                          style={{
-                            backgroundColor:
-                              theme?.themestyles.secondarybackgroundcolor,
-                            color: theme?.themestyles.navbartextcolor,
-                          }}
-                        >
-                          <span className="date-span">{formattedDate}</span>
-                          <span className="divider-span"></span>
-                          <span>Attendees ({attendees})</span>
-                        </div>
+                        {disconnect || waiting ? (
+                          <></>
+                        ) : (
+                          <div
+                            className="student-room-info desktop-control"
+                            style={{
+                              backgroundColor:
+                                theme?.themestyles.secondarybackgroundcolor,
+                              color: theme?.themestyles.navbartextcolor,
+                            }}
+                          >
+                            <span className="date-span">{formattedDate}</span>
+                            <span className="divider-span"></span>
+                            <span>Attendees ({attendees - 1 || 1})</span>
+                          </div>
+                        )}
                       </>
                     )}
                     {/* {disconnect ? (
@@ -1223,7 +1227,7 @@ function WatchStream({ schoolname }) {
                       )} */}
                   </div>
 
-                  {disconnect ? (
+                  {disconnect || waiting ? (
                     <div className="chat-box"></div>
                   ) : (
                     <div className="chat-box watcher-chat-box">
