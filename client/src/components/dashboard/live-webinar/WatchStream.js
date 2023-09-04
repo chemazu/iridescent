@@ -107,41 +107,71 @@ function WatchStream({ schoolname }) {
     player.autoplay(true);
   };
   const handleAddStream = (stream) => {
-    if (!playerRef.current) {
-      const videoElement = document.createElement("video");
-      videoElement.setAttribute("playsinline", "true");
-      videoElement.classList.add("video-js", "vjs-big-play-centered");
-      videoElement.srcObject = stream; // Set the MediaStream as the source
+    // Make sure Video.js player is only initialized once
+    const pop = videoRef.current;
 
-      videoRef.current.appendChild(videoElement);
+    // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
+    if (pop) {
+      if (!playerRef.current) {
+        const videoElement = document.createElement("video-js");
+        videoElement.srcObject = stream;
+        videoElement.classList.add("vjs-big-play-centered");
 
-      const shouldMuteVideo = !audioVisuals?.audio;
+        videoRef.current.appendChild(videoElement);
 
-      // work with the audio visual object to know if the video will be muted or not
-
-      const player = (playerRef.current = videojs(
-        videoElement,
-        {
-          muted: shouldMuteVideo,
-        },
-        () => {
-          console.log("Player is ready");
-        }
-      ));
-
-      player.autoplay(true);
-
-      // You can set other options for the player here
-      // player.playbackRates([0.5, 1, 1.25, 1.5, 2]);
-      // player.dimensions(720, 300);
-
-      // Optionally add controls
-      // player.controls(true);
+        const player = (playerRef.current = videojs(
+          videoElement,
+          options,
+          () => {
+            videojs.log("player is ready");
+            // onReady && onReady(player);
+          }
+        ));
+        player.autoplay(true);
+      }
+      console.log("wer");
     } else {
-      console.log("else");
-      replaceVideoElement(stream);
+      console.log("firstyuyuy");
     }
+    // You could update an existing player in the `else` block here
+    // on prop change, for example:
   };
+  // const handleAddStream = (stream) => {
+  //   if (!playerRef.current) {
+  //     const videoElement = document.createElement("video");
+  //     videoElement.setAttribute("playsinline", "true");
+  //     videoElement.classList.add("video-js", "vjs-big-play-centered");
+  //     videoElement.srcObject = stream; // Set the MediaStream as the source
+
+  //     videoRef.current.appendChild(videoElement);
+
+  //     const shouldMuteVideo = !audioVisuals?.audio;
+
+  //     // work with the audio visual object to know if the video will be muted or not
+
+  //     const player = (playerRef.current = videojs(
+  //       videoElement,
+  //       {
+  //         muted: shouldMuteVideo,
+  //       },
+  //       () => {
+  //         console.log("Player is ready");
+  //       }
+  //     ));
+
+  //     player.autoplay(true);
+
+  //     // You can set other options for the player here
+  //     // player.playbackRates([0.5, 1, 1.25, 1.5, 2]);
+  //     // player.dimensions(720, 300);
+
+  //     // Optionally add controls
+  //     // player.controls(true);
+  //   } else {
+  //     console.log("else");
+  //     replaceVideoElement(stream);
+  //   }
+  // };
 
   // const onReady = (player) => {
   //   playerRef.current = player;
