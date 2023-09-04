@@ -40,6 +40,8 @@ export default function Stream() {
   const myVideoRef = useRef();
   const peerRef = useRef();
   const screenStreamRef = useRef(null);
+  const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
+  const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
   const [videoDevices, setVideoDevices] = useState([]);
   const [resources, setResources] = useState([]);
@@ -157,7 +159,12 @@ export default function Stream() {
   const handleExitStreamModal = () => {
     setExitModal(!exitModal);
   };
-
+  function toggleAudioDevice(device) {
+    setSelectedAudioDevice(device);
+  }
+  function toggleVideoDevice(device) {
+    setSelectedVideoDevice(device);
+  }
   const handleExitStream = () => {
     socket.emit("endstream", roomid);
 
@@ -1112,6 +1119,21 @@ export default function Stream() {
   }, [roomid, startController, screenSharing, audioVisuals]);
 
   useEffect(() => {
+    // async function getMediaDevices() {
+    //   try {
+    //     const devices = await navigator.mediaDevices.enumerateDevices();
+    //     const audioDevices = devices.filter(
+    //       (device) => device.kind === "audioinput"
+    //     );
+    //     const videoDevices = devices.filter(
+    //       (device) => device.kind === "videoinput"
+    //     );
+    //     setAudioDevices(audioDevices);
+    //     setVideoDevices(videoDevices);
+    //   } catch (error) {
+    //     console.error("Error enumerating media devices:", error);
+    //   }
+    // }
     async function getMediaDevices() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
@@ -1121,6 +1143,15 @@ export default function Stream() {
         const videoDevices = devices.filter(
           (device) => device.kind === "videoinput"
         );
+
+        // Check if there are audio devices available
+        if (audioDevices.length > 0) {
+          setSelectedAudioDevice(audioDevices[0]); // Set the first audio device as the initial selection
+        }
+        if (videoDevices.length > 0) {
+          setSelectedVideoDevice(videoDevices[0]); // Set the first video device as the initial selection
+        }
+
         setAudioDevices(audioDevices);
         setVideoDevices(videoDevices);
       } catch (error) {
@@ -2090,56 +2121,28 @@ export default function Stream() {
                           <div className="time-tracker">
                             {/* <p>Get More Time</p> */}
                             <p>Time Remaining</p>
-                            {
-                              isLoading ? (
-                                <span>00:00:00</span>
-                              ) : parseInt(
+                            {isLoading ? (
+                              <span>00:00:00</span>
+                            ) : parseInt(localStorage.getItem(`${roomid}`)) ? (
+                              <CountdownTimer
+                                endTime={parseInt(
                                   localStorage.getItem(`${roomid}`)
-                                ) ? (
-                                <CountdownTimer
-                                  endTime={parseInt(
-                                    localStorage.getItem(`${roomid}`)
-                                  )}
-                                  firstReminder={() => {
-                                    setTimeOutModal(true);
-                                  }}
-                                  classOver={() => {
-                                    handlePlanTimeOut();
-                                  }}
-                                  freeTimerStatus={freeTimerStatus}
-                                />
-                              ) : (
-                                <span>00:00:00</span>
-                              )
-                              // <p>{localStorage.getItem(`${roomid}`)}</p>
-                            }
+                                )}
+                                firstReminder={() => {
+                                  setTimeOutModal(true);
+                                }}
+                                classOver={() => {
+                                  handlePlanTimeOut();
+                                }}
+                                freeTimerStatus={freeTimerStatus}
+                              />
+                            ) : (
+                              <span>00:00:00</span>
+                            )}
                           </div>
                         )}
                       </>
                     )}
-                    {/* <div className="time-tracker">
-                      {planname ? (
-                        planname === "free" ? (
-                          !isLoading &&
-                          // <CountdownTimer
-                          //   duration={timeLeft}
-                          //   onCompletion={handlePlanTimeOut}
-                          // />
-                          //   <SecondaryTimer
-                          //   endTime={classEndTime}
-                          //   tenMins={() => setTimeOutModal(true)}
-                          //   endStream={() => {
-                          //     handleExitStream();
-                          //   }}
-                          // />
-                          ""
-                        ) : (
-                          ""
-                        )
-                      ) : (
-                        <span>00:00:00</span>
-                      )}
-                    </div> */}
 
                     <Button
                       className="page-title_cta-btn"
@@ -2151,8 +2154,6 @@ export default function Stream() {
                   <div className="title-bar">
                     <div className="page-title__text">
                       {isLoading ? "..." : title}
-                      {/* <br />
-                    <span>Chukwuemeka Chemazu</span> */}
                     </div>
                     <div
                       style={{
@@ -2220,12 +2221,7 @@ export default function Stream() {
                             </div>
                           </div>
                           <div className="waiting-controls">
-                            <div
-                              className="control-object"
-                              onClick={() => {
-                                toggleAudioVisuals("mic");
-                              }}
-                            >
+                            <div className="control-object">
                               <i
                                 className="fas fa-microphone"
                                 style={
@@ -2235,8 +2231,11 @@ export default function Stream() {
                                       }
                                     : null // No additional style for the active state
                                 }
+                                onClick={() => {
+                                  toggleAudioVisuals("mic");
+                                }}
                               ></i>
-                              <p
+                              {/* <p
                                 style={
                                   !audioVisuals.audio
                                     ? {
@@ -2247,16 +2246,52 @@ export default function Stream() {
                               >
                                 {audioDevices.length > 0 &&
                                   audioDevices[0].label}
-                              </p>
+                              </p> */}
+                              {/* {audioDevices.length > 0 &&
+                                audioDevices.map((item) => {
+                                  return <p>{item.label}</p>;
+                                })} */}
+                              <select
+                                style={
+                                  !audioVisuals.audio
+                                    ? {
+                                        textDecoration: "line-through",
+                                      }
+                                    : null // No additional style for the active state
+                                }
+                                value={
+                                  selectedAudioDevice
+                                    ? selectedAudioDevice.deviceId
+                                    : ""
+                                }
+                                onChange={(e) => {
+                                  const selectedDeviceId = e.target.value;
+                                  const selectedDevice = audioDevices.find(
+                                    (device) =>
+                                      device.deviceId === selectedDeviceId
+                                  );
+                                  toggleAudioDevice(selectedDevice);
+                                }}
+                              >
+                                {audioDevices.map((device) => (
+                                  <option
+                                    key={device.deviceId}
+                                    value={device.deviceId}
+                                  >
+                                    {device.label}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                             <div
                               className="control-object"
-                              onClick={() => {
-                                toggleAudioVisuals("cam");
-                              }}
+                             
                               // onClick={toggleVideo}
                             >
                               <i
+                               onClick={() => {
+                                toggleAudioVisuals("cam");
+                              }}
                                 className="fas fa-video"
                                 style={
                                   !audioVisuals.video
@@ -2266,7 +2301,20 @@ export default function Stream() {
                                     : null // No additional style for the active state
                                 }
                               ></i>
-                              <p
+                              <select
+                                value={
+                                  selectedVideoDevice
+                                    ? selectedVideoDevice.deviceId
+                                    : ""
+                                }
+                                onChange={(e) => {
+                                  const selectedDeviceId = e.target.value;
+                                  const selectedDevice = videoDevices.find(
+                                    (device) =>
+                                      device.deviceId === selectedDeviceId
+                                  );
+                                  toggleVideoDevice(selectedDevice);
+                                }}
                                 style={
                                   !audioVisuals.video
                                     ? {
@@ -2275,9 +2323,15 @@ export default function Stream() {
                                     : null // No additional style for the active state
                                 }
                               >
-                                {videoDevices.length > 0 &&
-                                  videoDevices[0].label}
-                              </p>
+                                {videoDevices.map((device) => (
+                                  <option
+                                    key={device.deviceId}
+                                    value={device.deviceId}
+                                  >
+                                    {device.label}
+                                  </option>
+                                ))}
+                              </select>
                             </div>
                           </div>
                         </>

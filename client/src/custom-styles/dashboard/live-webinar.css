@@ -2,6 +2,7 @@
   border: 0;
   border-radius: 2rem;
 }
+
 .modal-button {
   background-color: var(--site-cta-color) !important;
   color: var(--site-white-color) !important;
@@ -498,6 +499,9 @@
 .waiting-controls .control-object p {
   line-height: normal;
   margin: 0;
+}
+.control-object select{
+  border: 0;
 }
 .waiting-controls i {
   font-size: 36px;

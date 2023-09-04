@@ -22,7 +22,7 @@ function ChooseWebinarType({ school }) {
   const [instantClass, setInstantClass] = useState(false);
   const [title, setTitle] = useState("");
   const [freeWebinar, setFreeWebinar] = useState(null);
-  const [currency, setCurrency] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [fee, setFee] = useState("");
   const [fileToSend, setFileToSend] = useState(null);
   const timestamp = Date.now();
@@ -38,21 +38,40 @@ function ChooseWebinarType({ school }) {
       : `https://${schoolname}.${baseDomain}.com`;
   };
   function copyText(textToCopy) {
-    navigator.clipboard
-      // .writeText(`${getSchoolUrl(school.name)}/live/preview/${textToCopy}`)
-      .writeText(`${getSchoolUrl(school.name)}/${textToCopy}`)
+    console.log(textToCopy);
+    if (textToCopy.fee === 0) {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(school.name)}/livewebinar/watch/${
+            textToCopy.streamKey
+          }`
+        )
 
-      .then(() => {})
-      .catch((error) => {
-        console.error("Error copying text: ", error);
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
       });
-    alert.show("Link Copied", {
-      type: "success",
-    });
+    } else {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(school.name)}/live/preview/${textToCopy._id}`
+        )
+
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
+      });
+    }
   }
 
   const handleSubmit = async () => {
-    if (title === "" || fee === "" || currency === "") {
+    if (title === "" || fee === "") {
       alert.show("Please complete fields", {
         type: "error",
       });
@@ -92,7 +111,7 @@ function ChooseWebinarType({ school }) {
         .then((res) => {
           history.push(`/dashboard/livewebinar/stream/${res?.data.streamKey}`);
           console.log(res.data, res.data.school);
-          copyText(`livewebinar/watch/${res?.data.streamKey}`);
+          copyText(res?.data.streamKey);
           dispatch(stopLoading());
         })
         .catch((error) => {

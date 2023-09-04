@@ -58,12 +58,15 @@ import PresenterValidation from "../dashboard/live-webinar/PresenterValidation";
 import EditLiveWebinar from "../dashboard/live-webinar/EditLiveWebinar";
 import ChooseWebinarType from "../dashboard/live-webinar/ChooseWebinarType";
 import CreateResource from "../dashboard/live-webinar/CreateResource";
+import WatchStream from "../dashboard/live-webinar/WatchStream";
 
 export const MainAppViews = () => {
   return (
     <>
       <Switch>
         <Route exact path="/" component={Homepage} />
+        <Route exact path="/flav/:roomid" component={WatchStream} />
+
         <Route exact path="/pricing" component={PricingPage} />
         <Route exact path="/courses" component={CoursesPage} />
         <Route exact path="/signup" component={Signup} />

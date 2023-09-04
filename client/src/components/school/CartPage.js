@@ -125,14 +125,16 @@ export const CartPage = ({
     switch (paymentMethodToUse.name) {
       case "paystack":
         payStackPaymentHandler(paymentMethodToUse);
+        break;    case "stripe":
+        payStackPaymentHandler(paymentMethodToUse);
         break;
-      case "stripe":
-        // prettier-ignore
-        handleStripeMakePaymentIntent(
-          currency,
-          (cartItemSumWithDiscount * currency.exchangeRate)
-        );
-        break;
+      // case "stripe":
+      //   // prettier-ignore
+      //   handleStripeMakePaymentIntent(
+      //     currency,
+      //     (cartItemSumWithDiscount * currency.exchangeRate)
+      //   );
+      //   break;
       default:
         break;
     }

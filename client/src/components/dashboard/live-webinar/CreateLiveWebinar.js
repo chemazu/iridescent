@@ -94,13 +94,17 @@ function CreateLiveWebinar({ school }) {
 
   const handleEndDateChange = (e) => {
     const selectedEndDate = e.target.value;
-    if (date && selectedEndDate > date) {
-      setEndDate(selectedEndDate);
-    } else {
-      alert.show("End date must be after start date", {
-        type: "error",
-      });
-    }
+    // if (recurring) {
+    //   recurringDateCheck(e);
+    // } else {
+      if (date && selectedEndDate > date) {
+        setEndDate(selectedEndDate);
+      } else {
+        alert.show("End date must be after start date", {
+          type: "error",
+        });
+      }
+    // }
   };
 
   const formReset = () => {
@@ -366,6 +370,58 @@ function CreateLiveWebinar({ school }) {
       });
     }
   };
+  function calculateEndDate(startDate, selectedOption) {
+    const currentDate = new Date(startDate);
+
+    switch (selectedOption) {
+      case "Every 1st week of the month":
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        currentDate.setDate(1);
+        break;
+      case "Every 2nd week of the month":
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        currentDate.setDate(8);
+        break;
+      case "Every 3rd week of the month":
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        currentDate.setDate(15);
+        break;
+      case "Every Last week of the month":
+        currentDate.setMonth(currentDate.getMonth() + 2);
+        currentDate.setDate(0);
+        break;
+      default:
+        // Handle custom logic or invalid options here
+        break;
+    }
+
+    return currentDate;
+  }
+  let recurringDateCheck = (e) => {
+    const selectedEndDate = e.target.value;
+
+    if (recurring) {
+      if (recurringFrequency === "daily" && webinarReps !== "custom") {
+        let a = dailyRepOption.indexOf(webinarReps) + 1;
+
+        const newDate = new Date(date);
+        newDate.setDate(newDate.getDate() + a);
+
+        if (date && selectedEndDate >= newDate) {
+          setEndDate(selectedEndDate);
+        } else {
+          alert.show("Selected end date is too early.", {
+            type: "error",
+          });
+        }
+      }
+      if (recurringFrequency === "weekly") {
+        let a = weeklyRepOption.indexOf(webinarReps) + 1;
+     
+   
+      }
+    }
+  };
   useEffect(() => {
     getCategoryListing();
     dateCheck();
@@ -397,8 +453,7 @@ function CreateLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {getSchoolUrl(school.name)}/{streamLink}
-
+                    {getSchoolUrl(school?.name)}/{streamLink}
                   </p>
                 </ModalBody>
                 <ModalFooter>
@@ -799,8 +854,8 @@ function CreateLiveWebinar({ school }) {
                           onChange={(e) => setCurrency(e.target.value)}
                           disabled={freeWebinar}
                         > */}
-                        
-                          <p value={"USD"}>USD</p>
+
+                        <p value={"USD"}>USD</p>
                         {/* </select> */}
                         <input
                           type="text"

@@ -1,12 +1,15 @@
 import React from "react";
 import { Col } from "reactstrap";
 import { Link } from "react-router-dom";
+import { connect } from "react-redux";
+import CurrencyFormat from "react-currency-format";
 
 const WebinarItemInStudentDashboard = ({
   course,
   schoolname,
   idToLinkTo,
   theme,
+  currency,
 }) => {
   return (
     <>
@@ -50,7 +53,7 @@ const WebinarItemInStudentDashboard = ({
               }}
               className="course-item-course-level-info"
             >
-              {course.isRecurring?"Recurring":"One Time"}
+              {course.isRecurring ? "Recurring" : "One Time"}
             </p>
 
             <p
@@ -59,7 +62,20 @@ const WebinarItemInStudentDashboard = ({
               }}
               className="course-item-course-price"
             >
-              &#8358;{course.fee}
+              <span
+                dangerouslySetInnerHTML={{
+                  __html: currency.htmlCurrencySymbol,
+                }}
+              ></span>
+              {
+                <CurrencyFormat
+                  value={course.fee}
+                  displayType="text"
+                  thousandSeparator={true}
+                  decimalScale={1}
+                  fixedDecimalScale={true}
+                />
+              }
             </p>
           </div>
         </div>
@@ -68,4 +84,7 @@ const WebinarItemInStudentDashboard = ({
   );
 };
 
-export default WebinarItemInStudentDashboard;
+const mapStateToProps = (state) => ({
+  currency: state.currency,
+});
+export default connect(mapStateToProps)(WebinarItemInStudentDashboard);

@@ -48,8 +48,12 @@ function PaymentModal({
     setTransactionSuccessModal(!transactionSuccessModal);
 
   const handlePostSuccessfullTransactionFeedback = () => {
-    console.log("sds");
-    toggleTransactionModal(); // show course purchase success modal.
+    toggleTransactionModal();
+    handleSuccess();
+    setStripeCheckoutModalDialog(false);
+    setStripePromise(null);
+    setStripeClientSecret("");
+    // show course purchase success modal.
     // setPurchasedCourses(cart); // show list of purchased items from cart
     // clearCartAfterCheckOut(); // clear cart after purchase verification.
   };
@@ -104,8 +108,8 @@ function PaymentModal({
         },
       };
       const body = JSON.stringify({
-        // currency: currencyInfo.toLowerCase(),
-        currency: "usd",
+        currency: currencyInfo.toLowerCase(),
+
         amount: amountToPay,
         metadata: {
           schoolname: userDetails.schoolname,
@@ -116,7 +120,7 @@ function PaymentModal({
         body,
         config
       );
-      console.log(res);
+
       setStripeClientSecret(res.data.clientSecret);
       setStripeCheckoutModalDialog(true);
       removeLoader();
@@ -208,6 +212,7 @@ function PaymentModal({
     switch (paymentMethodToUse.name) {
       case "paystack":
         payStackPaymentHandler(paymentMethodToUse, value, newResource);
+
         break;
       case "stripe":
         handleStripeMakePaymentIntent(currency, value * currency.exchangeRate);
