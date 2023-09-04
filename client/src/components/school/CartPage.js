@@ -81,7 +81,6 @@ export const CartPage = ({
   };
 
   const cartItemSumWithDiscount = cart?.reduce((prev, curr) => {
-
     if (curr.itemDiscount) {
       return (
         prev +
@@ -124,17 +123,19 @@ export const CartPage = ({
 
     switch (paymentMethodToUse.name) {
       case "paystack":
-        payStackPaymentHandler(paymentMethodToUse);
-        break;    case "stripe":
+        console.log("first")
         payStackPaymentHandler(paymentMethodToUse);
         break;
       // case "stripe":
-      //   // prettier-ignore
-      //   handleStripeMakePaymentIntent(
-      //     currency,
-      //     (cartItemSumWithDiscount * currency.exchangeRate)
-      //   );
-      //   break;
+      // payStackPaymentHandler(paymentMethodToUse);
+      // break;
+      case "stripe":
+        // prettier-ignore
+        handleStripeMakePaymentIntent(
+          currency,
+          (cartItemSumWithDiscount * currency.exchangeRate)
+        );
+        break;
       default:
         break;
     }
@@ -519,7 +520,6 @@ export const CartPage = ({
                               }}
                             >
                               <span className="actual-price-span">
-                                
                                 <span
                                   dangerouslySetInnerHTML={{
                                     __html: currency.htmlCurrencySymbol,

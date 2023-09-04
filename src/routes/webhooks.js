@@ -1,7 +1,7 @@
 import express from "express";
-import mongoose from "mongoose";
 import bodyParser from "body-parser";
 import crypto from "crypto";
+import stripe from "stripe";
 import Wallet from "../models/Wallet";
 import User from "../models/User";
 import Order from "../models/Order";
@@ -17,8 +17,18 @@ import determineActualEarningPerCourseOrder from "../utilities/determineActualEa
 import { io } from "../server";
 import Course from "../models/Course";
 import Product from "../models/Product";
+import Decimal from "decimal.js";
+
+import convertNairaToDollar from "../utilities/convertNairaToDollar";
+import roundToTwoDecimalPlaces from "../utilities/roundToTwoDecimalPlaces";
+import LiveWebinar from "../models/Livewebinar";
+import StudentWebinar from "../models/StudentWebinar";
 
 const router = express.Router();
+const stripeServer = stripe(process.env.STRIPE_SECRET_KEY);
+// This is your Stripe CLI webhook secret for testing your endpoint locally.
+const endpointSecret =
+  "whsec_85d4a70f39f5afc6cbb5c2230822b429dcfe2789193620fd65d549801618f2af";
 
 router.post("/app", async (req, res) => {
   const paystackKey = process.env.PAYSTACK_PRIVATE_KEY;
@@ -62,9 +72,12 @@ router.post("/app", async (req, res) => {
             event.data.metadata.studentToken &&
             event.data.metadata.schoolname
           ) {
+            // find the school of which the course was purchased from.
             const school = await School.findOne({
               name: event.data.metadata.schoolname,
             }).populate("createdBy", ["email", "selectedplan"]);
+
+            // then use school information to get user payment plan
             const userPaymentPlan = await PaymentPlan.findOne({
               _id: school.createdBy.selectedplan,
             });
@@ -83,12 +96,16 @@ router.post("/app", async (req, res) => {
 
             const purchased_course = event.data.metadata.cart;
             for (let i = 0; i <= purchased_course.length - 1; i++) {
-              const [course, product] = await Promise.all([
+              const [course, product,webinar] = await Promise.all([
                 Course.findOne({ _id: purchased_course[i].itemId }),
                 Product.findOne({ _id: purchased_course[i].itemId }),
+                LiveWebinar.findOne({ _id: purchased_course[i].itemId }),
               ]);
               console.log(course, "course");
               console.log(product, "product");
+              console.log(webinar, "webinar");
+
+
               if (course) {
                 console.log("a student course was created");
                 const studentCourse = new StudentCourse({
@@ -103,6 +120,7 @@ router.post("/app", async (req, res) => {
                   orderedcourse: purchased_course[i].itemId,
                   boughtfrom: school.createdBy._id,
                   amount: purchased_course[i].itemPrice,
+                  amount_usd: purchased_course[i].itemPriceUSD,
                   ordertype: purchased_course[i].itemType,
                   createdVia: "webhook",
                   tutor: course.tutor !== null ? course.tutor : null,
@@ -111,6 +129,10 @@ router.post("/app", async (req, res) => {
                   // deducted...
                   actualearning: determineActualEarningPerCourseOrder(
                     purchased_course[i].itemPrice,
+                    userPaymentPlan.percentchargepercoursesale
+                  ),
+                  actualearning_usd: determineActualEarningPerCourseOrder(
+                    purchased_course[i].itemPriceUSD,
                     userPaymentPlan.percentchargepercoursesale
                   ),
                 });
@@ -130,7 +152,7 @@ router.post("/app", async (req, res) => {
               } else {
                 console.log("a student product was created");
                 const studentProduct = new StudentProduct({
-                  student: req.student.id, // with the model instantiation
+                  student: studentId, // with the model instantiation
                   productBought: purchased_course[i].itemId,
                   boughtfrom: school._id,
                 });
@@ -140,6 +162,7 @@ router.post("/app", async (req, res) => {
                   orderedcourse: purchased_course[i].itemId,
                   boughtfrom: school.createdBy._id,
                   amount: purchased_course[i].itemPrice,
+                  amount_usd: purchased_course[i].itemPriceUSD,
                   ordertype: purchased_course[i].itemType,
                   createdVia: "webhook",
                   tutor: product.tutor !== null ? product.tutor : null,
@@ -148,6 +171,10 @@ router.post("/app", async (req, res) => {
                   // deducted...
                   actualearning: determineActualEarningPerCourseOrder(
                     purchased_course[i].itemPrice,
+                    userPaymentPlan.percentchargepercoursesale
+                  ),
+                  actualearning_usd: determineActualEarningPerCourseOrder(
+                    purchased_course[i].itemPriceUSD,
                     userPaymentPlan.percentchargepercoursesale
                   ),
                 });
@@ -461,6 +488,221 @@ router.post(
   }
 );
 
+const convertCurrencyUsedInPurchaseToUsd = async (currencyInUse) => {
+  const url = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATE_API}/latest/${currencyInUse}`;
+  try {
+    const response = await axios.get(url);
+    const exchangeRateForUSD = response.data.conversion_rates["USD"];
+    const exchangeRateForNaira = response.data.conversion_rates["NGN"];
+    return {
+      usd_rate: exchangeRateForUSD,
+      naira_rate: exchangeRateForNaira,
+    };
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+};
+
+router.post(
+  "/stripe",
+  express.raw({ type: "application/json" }),
+  async (req, res) => {
+    const sig = req.headers["stripe-signature"];
+    const payload = req.body;
+
+    let event;
+    try {
+      event = stripeServer.webhooks.constructEvent(
+        payload,
+        sig,
+        endpointSecret
+      );
+    } catch (err) {
+      console.log(err);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
+    }
+
+    const paymentIntentSucceededData = event.data.object;
+    const currencyUsedInPurchase = paymentIntentSucceededData.currency;
+    const ratesData = await convertCurrencyUsedInPurchaseToUsd(
+      currencyUsedInPurchase
+    );
+    const usdRate = ratesData.usd_rate;
+    const nairaRate = ratesData.naira_rate;
+
+    // Handle the event
+    switch (event.type) {
+      case "payment_intent.succeeded":
+        // Then define and call a function to handle the event payment_intent.succeeded
+        const cartItems = JSON.parse(paymentIntentSucceededData.metadata.cart);
+
+        // find the school of which the course was purchased from.
+        const school = await School.findOne({
+          name: paymentIntentSucceededData.metadata.schoolname,
+        }).populate("createdBy", ["email", "selectedplan"]);
+
+        const userPaymentPlan = await PaymentPlan.findOne({
+          _id: school.createdBy.selectedplan,
+        });
+
+        // we write function for creating course(s) for stdentToken
+        const studentId = getIdFromToken(
+          paymentIntentSucceededData.metadata.studentToken
+        );
+        for (let i = 0; i <= cartItems.length - 1; i++) {
+          const [course, product, webinar] = await Promise.all([
+            Course.findOne({ _id: cartItems[i].itemId }),
+            Product.findOne({ _id: cartItems[i].itemId }),
+            LiveWebinar.findOne({ _id: cartItems[i].itemId }),
+          ]);
+          console.log(webinar, "webb");
+          const orderAmountInUSD = new Decimal(
+            cartItems[i].itemPrice * usdRate
+          );
+
+          const orderAmountInaira = new Decimal(
+            cartItems[i].itemPrice * nairaRate
+          );
+
+          if (course) {
+            const studentCourse = new StudentCourse({
+              // creating the student purchased course
+              student: studentId, // with the model instantiation
+              coursebought: cartItems[i].itemId,
+              boughtfrom: school._id,
+            });
+            const order = new Order({
+              reference: paymentIntentSucceededData.id,
+              orderfrom: studentId,
+              orderedcourse: cartItems[i].itemId,
+              boughtfrom: school.createdBy._id,
+              amount_usd: orderAmountInUSD.toFixed(2),
+              amount: orderAmountInaira.toFixed(2),
+              ordertype: cartItems[i].itemType,
+              createdVia: "webhook",
+              tutor: course.tutor !== null ? course.tutor : null,
+              // actual earning function is used to
+              // ensure only the amount after commission of sales are removed is
+              // deducted...
+              actualearning: determineActualEarningPerCourseOrder(
+                orderAmountInaira.toFixed(2),
+                userPaymentPlan.percentchargepercoursesale
+              ),
+              actualearning_usd: determineActualEarningPerCourseOrder(
+                orderAmountInUSD.toFixed(2),
+                userPaymentPlan.percentchargepercoursesale
+              ),
+            });
+
+            // this is an instace method that makes the order have a
+            // pending date for withdrawals
+            order.setPendingOrderDate();
+            try {
+              //create Order for schools admin/tutor
+              await studentCourse.save();
+              await order.save();
+            } catch (error) {
+              console.log(error, "line 573 webhooks.js error");
+            }
+          }
+          if (webinar) {
+            const studentWebinar = new StudentWebinar({
+              // creating the student purchased course
+              student: studentId, // with the model instantiation
+              webinarBought: cartItems[i].itemId,
+              boughtfrom: school._id,
+            });
+            const order = new Order({
+              reference: paymentIntentSucceededData.id,
+              orderfrom: studentId,
+              orderedcourse: cartItems[i].itemId,
+              boughtfrom: school.createdBy._id,
+              amount_usd: orderAmountInUSD.toFixed(2),
+              amount: orderAmountInaira.toFixed(2),
+              ordertype: cartItems[i].itemType,
+              createdVia: "webhook",
+              tutor: course.tutor !== null ? course.tutor : null,
+              // actual earning function is used to
+              // ensure only the amount after commission of sales are removed is
+              // deducted...
+              actualearning: determineActualEarningPerCourseOrder(
+                orderAmountInaira.toFixed(2),
+                userPaymentPlan.percentchargepercoursesale
+              ),
+              actualearning_usd: determineActualEarningPerCourseOrder(
+                orderAmountInUSD.toFixed(2),
+                userPaymentPlan.percentchargepercoursesale
+              ),
+            });
+
+            // this is an instace method that makes the order have a
+            // pending date for withdrawals
+            order.setPendingOrderDate();
+            try {
+              //create Order for schools admin/tutor
+              await studentWebinar.save();
+              await order.save();
+            } catch (error) {
+              console.log(error, "line 573 webhooks.js error");
+            }
+          } else {
+            const studentProduct = new StudentProduct({
+              student: studentId, // with the model instantiation
+              productBought: cartItems[i].itemId,
+              boughtfrom: school._id,
+            });
+            const order = new Order({
+              reference: paymentIntentSucceededData.id,
+              orderfrom: studentId,
+              orderedcourse: cartItems[i].itemId,
+              boughtfrom: school.createdBy._id,
+              amount_usd: orderAmountInUSD.toFixed(2),
+              amount: orderAmountInaira.toFixed(2),
+              ordertype: cartItems[i].itemType,
+              createdVia: "webhook",
+              tutor: product.tutor !== null ? product.tutor : null,
+              // actual earning function is used to
+              // ensure only the amount after commission of sales are removed is
+              // deducted...
+              actualearning: determineActualEarningPerCourseOrder(
+                orderAmountInaira.toFixed(2),
+                userPaymentPlan.percentchargepercoursesale
+              ),
+              actualearning_usd: determineActualEarningPerCourseOrder(
+                orderAmountInUSD.toFixed(2),
+                userPaymentPlan.percentchargepercoursesale
+              ),
+            });
+
+            // this is an instace method that makes the order have a
+            // pending date for withdrawals
+            order.setPendingOrderDate();
+            try {
+              //create Order for schools admin/tutor
+              await studentProduct.save();
+              await order.save();
+            } catch (error) {
+              console.log(error, "line 156 webhooks.js error");
+            }
+          }
+        }
+        break;
+      // ... handle other event types
+      case "customer.subscription.created": // for when a subscription is just created
+        break;
+      case "customer.subscription.updated": // for the monthly billing circle...
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    // Return a 200 response to acknowledge receipt of the event
+    res.send();
+  }
+);
+
 router.get("/upload/cloudflare/link/:courseunitId", async (req, res) => {
   const courseUnitId = req.params.courseunitId;
   try {
@@ -560,16 +802,125 @@ router.get("/course/get", async (req, res) => {
   }
 });
 
-// router.post("/google", async (req, res) => {
-//   const location = req.body.location;
-//   const { lat, lng } = location;
-//   try {
-//     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=volunteer&location=${lat},${lng}&radius=10000&key=${process.env.googleAPIKEY}&type=volunteer`;
-//     const response = await axios.get(url);
-//     res.json(response.data);
-//   } catch (error) {
-//     console.log(error);
-//   }
-// });
+router.put("/usd", async (req, res) => {
+  try {
+    const allWallets = await Product.find({ price_usd: null });
+    for (let i = 0; i < allWallets.length; i++) {
+      const courseItem = allWallets[i];
+      const amountInUsd = await convertNairaToDollar(courseItem.price, "usd");
+      // const dataInUsd = await convertNairaToDollar(walletItem.amount, "usd");
+      // walletItem["amount_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      // walletItem["actualearning_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      // walletItem["amount_usd"] = roundToTwoDecimalPlaces(dataInUsd);
+      // await walletItem.save();
+      courseItem["price_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      await courseItem.save();
+    }
+    const updatedCourses = await Product.find({ price_usd: null });
+    res.json(updatedCourses);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+router.put("/usd/course", async (req, res) => {
+  try {
+    const allWallets = await Course.find({ price_usd: null });
+    for (let i = 0; i < allWallets.length; i++) {
+      const courseItem = allWallets[i];
+      const amountInUsd = await convertNairaToDollar(courseItem.price, "usd");
+      // const dataInUsd = await convertNairaToDollar(walletItem.amount, "usd");
+      // walletItem["amount_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      // walletItem["actualearning_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      // walletItem["amount_usd"] = roundToTwoDecimalPlaces(dataInUsd);
+      // await walletItem.save();
+      courseItem["price_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      await courseItem.save();
+    }
+    const updatedCourses = await Course.find({ price_usd: null });
+    res.json(updatedCourses);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+router.put("/order/usd", async (req, res) => {
+  try {
+    const allOrders = await Order.find({
+      amount_usd: null,
+    });
+    for (let i = 0; i < allOrders.length; i++) {
+      const orderItem = allOrders[i];
+
+      const amountInUsd = await convertNairaToDollar(orderItem.amount, "usd");
+      const actualEarningUsd = await convertNairaToDollar(
+        orderItem.actualearning,
+        "usd"
+      );
+
+      orderItem["amount_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      orderItem["actualearning_usd"] =
+        roundToTwoDecimalPlaces(actualEarningUsd);
+      await orderItem.save();
+    }
+    const updatedWallet = await Order.find({});
+    res.json(updatedWallet);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+router.put("/wallet/usd", async (req, res) => {
+  try {
+    const allWallet = await Wallet.find({
+      amount_usd: null,
+    });
+    for (let i = 0; i < allWallet.length; i++) {
+      const walletItem = allWallet[i];
+
+      const amountInUsd = await convertNairaToDollar(walletItem.amount, "usd");
+      const actualPayout = await convertNairaToDollar(
+        walletItem.actualPayout,
+        "usd"
+      );
+
+      walletItem["amount_usd"] = roundToTwoDecimalPlaces(amountInUsd);
+      walletItem["actualPayout_usd"] = roundToTwoDecimalPlaces(actualPayout);
+      await walletItem.save();
+    }
+    const updatedWallet = await Wallet.find({});
+    res.json(updatedWallet);
+  } catch (error) {
+    res.json(error);
+  }
+});
+
+router.get("/sales/data", async (req, res) => {
+  try {
+    const uniquesOrders = [];
+    const orders = await Order.find()
+      .populate("boughtfrom", ["firstname", "lastname", "email", "username"])
+      .populate("orderedcourse", ["title", "category"])
+      .select("-_id")
+      .select("-reference")
+      .select("-createdVia")
+      .select("-orderfrom");
+    for (let index = 0; index < orders.length; index++) {
+      const element = orders[index];
+      const found = uniquesOrders.find(
+        (item) =>
+          item.boughtfrom._id === element.boughtfrom._id &&
+          item.orderedcourse._id === element.orderedcourse._id
+      );
+      if (found === undefined) {
+        uniquesOrders.push(element);
+      }
+    }
+    res.json(uniquesOrders);
+  } catch (error) {
+    console.log(error);
+    res.json(error);
+  }
+});
 
 export default router;

@@ -28,6 +28,15 @@ import setAuthToken from "../../../utilities/setAuthToken";
 import Poll from "./Poll";
 import { useStore } from "react-redux";
 import videojs from "video.js";
+import "vidstack/styles/defaults.css";
+import "vidstack/styles/community-skin/video.css";
+
+import {
+  MediaCommunitySkin,
+  MediaOutlet,
+  MediaPlayer,
+  MediaPoster,
+} from "@vidstack/react";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
@@ -70,7 +79,7 @@ function WatchStream({ schoolname }) {
   const [pollResults, setPollResults] = useState(null);
   const [waiting, setWaiting] = useState(false);
   const [disconnect, setDisconnect] = useState(false);
-  const [webinarRoomTimer, setWebinarRoomTimer] = useState(null);
+  const [streamSource, setStreamSource] = useState(null);
 
   const playerRef = React.useRef(null);
 
@@ -116,11 +125,7 @@ function WatchStream({ schoolname }) {
         const videoElement = document.createElement("video-js");
         videoElement.srcObject = stream;
         videoElement.classList.add("vjs-big-play-centered");
-        videoElement.setAttribute("playsinline", "true");
-        // s
-        videoElement.addEventListener("loadedmetadata", () => {
-          videoElement.play();
-        });
+
         videoRef.current.appendChild(videoElement);
 
         const player = (playerRef.current = videojs(
@@ -206,13 +211,14 @@ function WatchStream({ schoolname }) {
 
   function addVideoStream(stream) {
     const video = myVideoRef.current;
+    setStreamSource(stream);
     if (video) {
       video.srcObject = stream;
       video.addEventListener("loadedmetadata", () => {
         video.play();
       });
     }
-    handleAddStream(stream);
+    // handleAddStream(stream);
   }
 
   var currentDate = new Date();
@@ -1135,12 +1141,20 @@ function WatchStream({ schoolname }) {
                                   borderRadius: "10px",
                                 }}
                               >
-                                <div
+                                {/* <div
                                   ref={videoRef}
                                   className={
                                     VideoFill ? "filled-video" : "empty"
                                   }
-                                ></div>
+                                ></div> */}
+                                <MediaPlayer>
+                                  <video
+                                    ref={myVideoRef}
+                                    controls
+                                    playsInline={true}
+                                  />
+                                </MediaPlayer>
+
                                 {!audioVisuals?.video ||
                                   (false && (
                                     <div className="broadcaster-disconnected reconnect-loading no-video">

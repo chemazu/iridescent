@@ -967,7 +967,36 @@ export default function CreateResource() {
                     {type === "poll" && (
                       <p className="page-title__text">Your Polls</p>
                     )}
-
+                    <div>
+                      {type.toLowerCase() === "quiz" && (
+                        <div
+                          className="single-resource-card empty"
+                          onClick={() => {
+                            if (resourceCount >= 3) {
+                              alert.show("upgrade plan");
+                            } else {
+                              setQuizStatus(true);
+                            }
+                          }}
+                        >
+                          <p>Click here to create new {typeText}</p>
+                        </div>
+                      )}
+                      {type.toLowerCase() === "poll" && (
+                        <div
+                          className="single-resource-card empty"
+                          onClick={() => {
+                            if (resourceCount >= 3) {
+                              alert.show("upgrade plan");
+                            } else {
+                              setPollStatus(true);
+                            }
+                          }}
+                        >
+                          <p>Click here to create new {typeText}</p>
+                        </div>
+                      )}
+                    </div>
                     <div className="resource-content">
                       {!loading &&
                         resources?.map((item, index) => {
@@ -1017,34 +1046,6 @@ export default function CreateResource() {
                             </div>
                           );
                         })}
-                      {type.toLowerCase() === "quiz" && (
-                        <div
-                          className="single-resource-card empty"
-                          onClick={() => {
-                            if (resourceCount >= 3) {
-                              alert.show("upgrade plan");
-                            } else {
-                              setQuizStatus(true);
-                            }
-                          }}
-                        >
-                          <p>Click here to create new {typeText}</p>
-                        </div>
-                      )}
-                      {type.toLowerCase() === "poll" && (
-                        <div
-                          className="single-resource-card empty"
-                          onClick={() => {
-                            if (resourceCount >= 3) {
-                              alert.show("upgrade plan");
-                            } else {
-                              setPollStatus(true);
-                            }
-                          }}
-                        >
-                          <p>Click here to create new {typeText}</p>
-                        </div>
-                      )}
                     </div>
                   </Card>
                 )}

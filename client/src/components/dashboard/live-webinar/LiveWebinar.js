@@ -47,7 +47,7 @@ function LiveWebinar({ school, getSchool }) {
     );
 
     if (res) {
-      console.log(res)
+      console.log(res);
       setUserStreams(res.data.streams);
       setLoading(false);
     } else {
@@ -153,10 +153,10 @@ function LiveWebinar({ school, getSchool }) {
         return userStreams?.filter((stream) => {
           return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
         });
-        case "completed":
-          return userStreams?.filter((stream) => {
-            return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
-          });
+      case "completed":
+        return userStreams?.filter((stream) => {
+          return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
+        });
       case "":
         return userStreams ? userStreams : [];
 
@@ -335,7 +335,7 @@ function LiveWebinar({ school, getSchool }) {
                     </Link>
                   </div>
                   <div className="card-title">
-                    <p className="page-title__text">Upcoming Webinars </p>
+                    <p className="page-title__text">Upcoming Classes </p>
 
                     {handleStreamFilter(filterState)?.length > 3 && (
                       <span
@@ -367,13 +367,12 @@ function LiveWebinar({ school, getSchool }) {
                               {" "}
                               {filterState === "" ? "Filter" : ""}
                             </option>
-
+                            <option value="">Upcoming</option>
                             <option value="isPublished">Published</option>
                             <option value="unPublished">Unpublished</option>
                             <option value="isRecurring">Recurring</option>
                             <option value="NotRecurring">One Off</option>
-                            <option value="completed">Over</option>
-                            <option value="upComing">Upcoming</option>
+                            <option value="completed">Completed</option>
 
                             {/* <option value=""> {filterState === '' ? "Filter" : 'Clear Filter'}</option> */}
 
@@ -414,7 +413,7 @@ function LiveWebinar({ school, getSchool }) {
                       </div>
                     ) : handleStreamFilter(filterState)?.length < 1 ? (
                       <div className="table-body-empty">
-                        <p>You have no upcoming webinars.</p>
+                        <p>You have no classroom.</p>
                       </div>
                     ) : (
                       // userStreams.map((item, index) => {
@@ -436,7 +435,7 @@ function LiveWebinar({ school, getSchool }) {
                               <p>{item.title}</p>
 
                               <div className="status">
-                                {item.endStatus  ? (
+                                {item.endStatus ? (
                                   <p>Completed</p>
                                 ) : item.isLive ? (
                                   <p className="live-button"> Live</p>

@@ -26,7 +26,6 @@ function ChooseWebinarType({ school }) {
   const [fee, setFee] = useState("");
   const [fileToSend, setFileToSend] = useState(null);
   const timestamp = Date.now();
-  console.log(school);
   const getSchoolUrl = (schoolname) => {
     const host = window.location.host;
     if (host.includes("localhost")) {
@@ -38,7 +37,6 @@ function ChooseWebinarType({ school }) {
       : `https://${schoolname}.${baseDomain}.com`;
   };
   function copyText(textToCopy) {
-    console.log(textToCopy);
     if (textToCopy.fee === 0) {
       navigator.clipboard
         .writeText(
@@ -110,7 +108,6 @@ function ChooseWebinarType({ school }) {
         .post("/api/v1/livewebinar", body, config)
         .then((res) => {
           history.push(`/dashboard/livewebinar/stream/${res?.data.streamKey}`);
-          console.log(res.data, res.data.school);
           copyText(res?.data.streamKey);
           dispatch(stopLoading());
         })

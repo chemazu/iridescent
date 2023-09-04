@@ -282,8 +282,6 @@ router.get("/course/module/:courseId", async (req, res) => {
 // })
 
 const checkIfCourseIsPurchasedByCourseId = async (studentId, itemId, type) => {
-  console.log(studentId, itemId, type);
-
   if (type === "course") {
     const courseExists = await _StudentCourse.default.findOne({
       student: studentId,
@@ -420,9 +418,6 @@ router.post("/course/verify/purchase", _studentAuth.default, [(0, _expressValida
         }), _Livewebinar.default.findOne({
           _id: purchased_course[i].itemId
         })]);
-        console.log(course, "course");
-        console.log(product, "product");
-        console.log(webinar, "livewebinar");
 
         if (course) {
           console.log("student course was created");
