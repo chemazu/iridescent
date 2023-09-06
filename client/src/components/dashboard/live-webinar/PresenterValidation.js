@@ -6,12 +6,14 @@ import { Spinner } from "reactstrap";
 import InvalidStream from "./InvalidStream";
 import Stream from "./Stream";
 import setAuthToken from "../../../utilities/setAuthToken";
+import TimedOutClass from "./TimedOutClass";
 
 const PresenterValidation = ({ school }) => {
   const { roomid } = useParams();
   const [isValid, setIsValid] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [timeout, setTimeout] = useState(false);
+  const [schoolInfo, setSchoolInfo] = useState(null);
 
   // get school name
   useEffect(() => {
@@ -26,8 +28,10 @@ const PresenterValidation = ({ school }) => {
         let res = await axios.get(`/api/v1/livewebinar/validate/${roomid}`);
 
         if (res) {
+          setSchoolInfo(res.data);
+
           if (!res.data.endStatus) {
-            if (res.data.classEndTime > now||res.data.classEndTime === 0) {
+            if (res.data.classEndTime > now || res.data.classEndTime === 0) {
               // localStorage.setItem(`${roomid}`, `${res.data.classEndTime}`);
               setIsValid(true);
               setIsLoading(false);
@@ -74,7 +78,7 @@ const PresenterValidation = ({ school }) => {
   }
 
   if (timeout) {
-    return <>TimeOut increase plan for longer webinars</>;
+    return <TimedOutClass schoolInfo={schoolInfo} />;
     // return <Stream />;
   }
 

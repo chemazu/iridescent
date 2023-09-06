@@ -215,6 +215,7 @@ router.get("/count", [_auth.default], async (req, res) => {
       let addedPollLength = addedPoll.reduce((accumulator, object) => {
         return accumulator + object.added;
       }, 0);
+      console.log("addedp", addedQuizLength, "pollq", addedPollLength);
       let updatedPollCount = pollResources.length - addedPollLength;
       let updatedQuizCount = quizResources.length - addedQuizLength;
       let totalCount = pollResources.length + quizResources.length;

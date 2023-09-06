@@ -11,6 +11,9 @@
   padding: 2.5% 5%;
   /* padding: 5% 0%; */
 }
+.interactive-buttons p {
+  margin: 0;
+}
 .interactive-buttons div {
   width: 45%;
   border-radius: 47.03px;

@@ -500,7 +500,7 @@
   line-height: normal;
   margin: 0;
 }
-.control-object select{
+.control-object select {
   border: 0;
 }
 .waiting-controls i {
@@ -1380,7 +1380,6 @@
   text-align: center;
   color: #000;
   font-size: 1.5rem;
-
 }
 .waiting-image-presenter {
   border-radius: 10px;
@@ -1557,7 +1556,7 @@
   left: 0;
   right: 0;
 }
-.more-time-payment-modal{
+.more-time-payment-modal {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1567,7 +1566,7 @@
   color: var(--site-cta-color) !important;
   background-color: var(--site-white-color);
   border-radius: 35px;
-  border:1px solid var(--site-cta-color) !important;
+  border: 1px solid var(--site-cta-color) !important;
   width: 60%;
   text-transform: none;
 }
@@ -1576,13 +1575,29 @@
   background-color: var(--site-cta-color) !important;
   color: var(--site-white-color);
   border-radius: 35px;
-  border:1px solid var(--site-white-color);;
+  border: 1px solid var(--site-white-color);
   width: 60%;
   text-transform: none;
-
-
 }
 @media screen and (max-width: 812px) {
+  .action-drop-down {
+    left: -100px;
+    padding: 20%;
+  }
+  .poll-modal .quiz-button-wrapper {
+    display: block;
+  }
+  .poll-modal .quiz-button-wrapper button {
+    width: 100%;
+    margin: 5px 0;
+  }
+  .poll-option input {
+    margin: 0 10px;
+  }
+
+  .poll-modal-wrapper {
+    max-width: 100%;
+  }
   .expand-wrapper {
     display: block;
   }
@@ -1654,6 +1669,9 @@
     width: auto;
     justify-content: space-evenly;
     padding: 5%;
+    background-color: #fff;
+    flex-direction: column;
+    align-items: flex-start;
   }
   .waiting-controls .control-object p {
     display: none;
@@ -1905,5 +1923,13 @@
   }
   .reconnect-loading {
     height: 100vh;
+  }
+  .classroom-resources {
+    /* background-color: red; */
+    width: 100%;
+  }
+  .classroom-resources .single-resource {
+    min-width: 30%;
+    /* width: 30%; */
   }
 }

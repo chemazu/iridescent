@@ -19,7 +19,7 @@ import CartItem from "./CartItem";
 import AuthenticationModal from "./AuthenticationModal";
 import TransactionSuccessModal from "./TransactionSuccessModal";
 import setDocumentTitle from "../../utilities/setDocumentTitle";
-import StripeCheckoutModal from "./StripeCheckoutModal";
+import StripeCheckoutModal from "./StripeCheckoutModal.js";
 import SubdomainNotFoundPage from "../dashboard/Subdomain404";
 import delay from "../../utilities/delay";
 
@@ -123,12 +123,12 @@ export const CartPage = ({
 
     switch (paymentMethodToUse.name) {
       case "paystack":
-        // payStackPaymentHandler(paymentMethodToUse);
-        handleStripeMakePaymentIntent(
-          currency,
-          (cartItemSumWithDiscount * currency.exchangeRate)
-        );
+        console.log("first")
+        payStackPaymentHandler(paymentMethodToUse);
         break;
+      // case "stripe":
+      // payStackPaymentHandler(paymentMethodToUse);
+      // break;
       case "stripe":
         // prettier-ignore
         handleStripeMakePaymentIntent(
@@ -236,8 +236,7 @@ export const CartPage = ({
         },
       };
       const body = JSON.stringify({
-        // currency: currencyInfo.toLowerCase(),
-        currency:"usd",
+        currency: currencyInfo.toLowerCase(),
         amount,
         metadata: {
           studentToken: `${localStorage.getItem("studentToken")}`,

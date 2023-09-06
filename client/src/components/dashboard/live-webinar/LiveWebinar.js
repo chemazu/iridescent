@@ -142,32 +142,6 @@ function LiveWebinar({ school, getSchool }) {
     return sortFunction;
   };
   userStreams?.sort(handleSort());
-  const handleStreamFilter = (value) => {
-    switch (value) {
-      case "unPublished":
-        return userStreams?.filter((stream) => {
-          return !stream["isPublished"]; // Here, `value` should be a valid property name of the stream object
-        });
-
-      case "NotRecurring":
-        return userStreams?.filter((stream) => {
-          return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
-        });
-      case "completed":
-        return userStreams?.filter((stream) => {
-          return !stream["isRecurring"]; // Here, `value` should be a valid property name of the stream object
-        });
-      case "":
-        return userStreams ? userStreams : [];
-
-      default:
-        return userStreams?.filter((stream) => {
-          return stream[value]; // Here, `value` should be a valid property name of the stream object
-        });
-    }
-  };
-
-  // isPublished
 
   function handleTimeDisplay(time) {
     const timestamp = new Date(time);
@@ -337,7 +311,7 @@ function LiveWebinar({ school, getSchool }) {
                   <div className="card-title">
                     <p className="page-title__text">Upcoming Classes </p>
 
-                    {handleStreamFilter(filterState)?.length > 3 && (
+                    {userStreams?.length > 3 && (
                       <span
                         onClick={() => {
                           setViewMore(!viewMore);
@@ -373,6 +347,7 @@ function LiveWebinar({ school, getSchool }) {
                             <option value="isRecurring">Recurring</option>
                             <option value="NotRecurring">One Off</option>
                             <option value="completed">Completed</option>
+                            <option value="all">All</option>
 
                             {/* <option value=""> {filterState === '' ? "Filter" : 'Clear Filter'}</option> */}
 
@@ -411,14 +386,15 @@ function LiveWebinar({ school, getSchool }) {
                       <div className="table-body-empty">
                         <Spinner />
                       </div>
-                    ) : handleStreamFilter(filterState)?.length < 1 ? (
+                    ) : userStreams?.length < 1 ? (
                       <div className="table-body-empty">
                         <p>You have no classroom.</p>
                       </div>
                     ) : (
                       // userStreams.map((item, index) => {
-                      handleStreamFilter(filterState).map((item, index) => {
-                        console.log(item);
+                      // handleStreamFilter(filterState).map((item, index) => {
+                      userStreams?.map((item, index) => {
+                        console.log(item, today);
                         return (
                           <>
                             <div
@@ -435,7 +411,9 @@ function LiveWebinar({ school, getSchool }) {
                               <p>{item.title}</p>
 
                               <div className="status">
-                                {item.endStatus ? (
+                                {item.endStatus ||
+                                today > item.classEndTime ||
+                                !item.classEndTime === 0 ? (
                                   <p>Completed</p>
                                 ) : item.isLive ? (
                                   <p className="live-button"> Live</p>
@@ -491,10 +469,12 @@ function LiveWebinar({ school, getSchool }) {
                                     <Link
                                       to={`livewebinar/stream/${item.streamKey}`}
                                     >
-                                      <div className="action-item">
-                                        <i className="fa fa-play"></i>
-                                        <p>Start Class</p>
-                                      </div>
+                                      {!(today > item.classEndTime) && (
+                                        <div className="action-item">
+                                          <i className="fa fa-play"></i>
+                                          <p>Start Class</p>
+                                        </div>
+                                      )}
                                     </Link>
                                     <div
                                       className="action-item delete-item"
@@ -523,13 +503,9 @@ function LiveWebinar({ school, getSchool }) {
                                   index > 2 && !viewMore ? "none" : "flex",
 
                                 width: viewMore
-                                  ? index ===
-                                      handleStreamFilter(filterState).length -
-                                        1 && "100%"
+                                  ? index === userStreams.length - 1 && "100%"
                                   : (index === 2 ||
-                                      index ===
-                                        handleStreamFilter(filterState).length -
-                                          1) &&
+                                      index === userStreams.length - 1) &&
                                     "100%",
                               }}
                             />

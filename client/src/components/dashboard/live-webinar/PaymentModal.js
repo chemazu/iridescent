@@ -392,7 +392,7 @@ function PaymentModal({
         block
         className="more-time-sec"
         onClick={() => {
-          history.push("/pricing");
+          history.push("/dashboard/plans/payment");
         }}
       >
         Upgrade your Tuturly plan for Unlimited time

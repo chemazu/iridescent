@@ -18,17 +18,27 @@ import { io } from "../server";
 import Course from "../models/Course";
 import Product from "../models/Product";
 import Decimal from "decimal.js";
+import jwt from "jsonwebtoken";
 
 import convertNairaToDollar from "../utilities/convertNairaToDollar";
 import roundToTwoDecimalPlaces from "../utilities/roundToTwoDecimalPlaces";
-import LiveWebinar from "../models/Livewebinar";
-import StudentWebinar from "../models/StudentWebinar";
 
 const router = express.Router();
-const stripeServer = stripe(process.env.STRIPE_SECRET_KEY);
+const fastMan = bodyParser.json({
+  verify: function (req, res, buf, encoding) {
+    req.rawBody = buf.toString();
+  },
+});
+router.use(fastMan);
+router.use(express.json());
+// const stripeServer = stripe(process.env.STRIPE_SECRET_KEY);
+const stripeServer = stripe(
+  "sk_test_51NnK8ADC8JSEsIUsVqcjFrFsa2A8m2M7WflVjgtiC3NDHeh80LVqraZhwRxd3qvrbGW3jE2wGydB4dSpQsVp4bbp000hJAukFO"
+);
 // This is your Stripe CLI webhook secret for testing your endpoint locally.
 const endpointSecret =
-  "whsec_85d4a70f39f5afc6cbb5c2230822b429dcfe2789193620fd65d549801618f2af";
+  "whsec_9b287e8b8a88a331234792afbbc94addb2dd307990347034486958b207441186";
+// "whsec_85d4a70f39f5afc6cbb5c2230822b429dcfe2789193620fd65d549801618f2af";
 
 router.post("/app", async (req, res) => {
   const paystackKey = process.env.PAYSTACK_PRIVATE_KEY;
@@ -96,15 +106,12 @@ router.post("/app", async (req, res) => {
 
             const purchased_course = event.data.metadata.cart;
             for (let i = 0; i <= purchased_course.length - 1; i++) {
-              const [course, product,webinar] = await Promise.all([
+              const [course, product] = await Promise.all([
                 Course.findOne({ _id: purchased_course[i].itemId }),
                 Product.findOne({ _id: purchased_course[i].itemId }),
-                LiveWebinar.findOne({ _id: purchased_course[i].itemId }),
               ]);
               console.log(course, "course");
               console.log(product, "product");
-              console.log(webinar, "webinar");
-
 
               if (course) {
                 console.log("a student course was created");
@@ -508,8 +515,13 @@ router.post(
   "/stripe",
   express.raw({ type: "application/json" }),
   async (req, res) => {
+    console.log(req, "req");
+    console.log(req.rawBody, "reqsss");
+    console.log(req.body.data, "body");
+
+
     const sig = req.headers["stripe-signature"];
-    const payload = req.body;
+    const payload = JSON.stringify(req.body.data.object);
 
     let event;
     try {
@@ -552,12 +564,11 @@ router.post(
           paymentIntentSucceededData.metadata.studentToken
         );
         for (let i = 0; i <= cartItems.length - 1; i++) {
-          const [course, product, webinar] = await Promise.all([
+          const [course, product] = await Promise.all([
             Course.findOne({ _id: cartItems[i].itemId }),
             Product.findOne({ _id: cartItems[i].itemId }),
-            LiveWebinar.findOne({ _id: cartItems[i].itemId }),
           ]);
-          console.log(webinar, "webb");
+
           const orderAmountInUSD = new Decimal(
             cartItems[i].itemPrice * usdRate
           );
@@ -602,47 +613,6 @@ router.post(
             try {
               //create Order for schools admin/tutor
               await studentCourse.save();
-              await order.save();
-            } catch (error) {
-              console.log(error, "line 573 webhooks.js error");
-            }
-          }
-          if (webinar) {
-            const studentWebinar = new StudentWebinar({
-              // creating the student purchased course
-              student: studentId, // with the model instantiation
-              webinarBought: cartItems[i].itemId,
-              boughtfrom: school._id,
-            });
-            const order = new Order({
-              reference: paymentIntentSucceededData.id,
-              orderfrom: studentId,
-              orderedcourse: cartItems[i].itemId,
-              boughtfrom: school.createdBy._id,
-              amount_usd: orderAmountInUSD.toFixed(2),
-              amount: orderAmountInaira.toFixed(2),
-              ordertype: cartItems[i].itemType,
-              createdVia: "webhook",
-              tutor: course.tutor !== null ? course.tutor : null,
-              // actual earning function is used to
-              // ensure only the amount after commission of sales are removed is
-              // deducted...
-              actualearning: determineActualEarningPerCourseOrder(
-                orderAmountInaira.toFixed(2),
-                userPaymentPlan.percentchargepercoursesale
-              ),
-              actualearning_usd: determineActualEarningPerCourseOrder(
-                orderAmountInUSD.toFixed(2),
-                userPaymentPlan.percentchargepercoursesale
-              ),
-            });
-
-            // this is an instace method that makes the order have a
-            // pending date for withdrawals
-            order.setPendingOrderDate();
-            try {
-              //create Order for schools admin/tutor
-              await studentWebinar.save();
               await order.save();
             } catch (error) {
               console.log(error, "line 573 webhooks.js error");
@@ -921,6 +891,24 @@ router.get("/sales/data", async (req, res) => {
     console.log(error);
     res.json(error);
   }
+});
+
+router.get("/token", async (req, res) => {
+  const uId = "63c80375fe4f1e002dae17a2";
+  const tokenSecret = process.env.JWTSECRET;
+
+  const payload = {
+    user: {
+      id: uId,
+    },
+  };
+
+  jwt.sign(payload, tokenSecret, { expiresIn: 900 }, (err, token) => {
+    if (err) throw err;
+    res.json({
+      token,
+    });
+  });
 });
 
 export default router;

@@ -68,7 +68,6 @@ export default function Stream() {
   const [specialChat, setSpecialChat] = useState([]);
   const [timeOutModal, setTimeOutModal] = useState(false);
   const [moreResources, setMoreResources] = useState(false);
-
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [attendies, setAttendies] = useState(1);
@@ -159,6 +158,16 @@ export default function Stream() {
   const handleExitStreamModal = () => {
     setExitModal(!exitModal);
   };
+  function removeDefaultPrefix(inputString) {
+    // Check if the input string starts with "Default - "
+    if (inputString.startsWith("Default - ")) {
+      // If it does, remove the prefix and return the rest of the string
+      return inputString.substring("Default - ".length);
+    } else {
+      // If it doesn't start with "Default - ", return the original string
+      return inputString;
+    }
+  }
   function toggleAudioDevice(device) {
     setSelectedAudioDevice(device);
   }
@@ -1537,7 +1546,7 @@ export default function Stream() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            console.log(resourceCount);
+                           
                             if (resourceCount?.quizCount >= 3) {
                               setMoreResources({
                                 status: "true",
@@ -2278,7 +2287,8 @@ export default function Stream() {
                                     key={device.deviceId}
                                     value={device.deviceId}
                                   >
-                                    {device.label}
+                                 {
+                                    removeDefaultPrefix(device.label)}
                                   </option>
                                 ))}
                               </select>

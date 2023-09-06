@@ -9,6 +9,8 @@ import {
   ModalHeader,
   ModalFooter,
 } from "reactstrap";
+import pollEnd from "../../../images/poll-end.svg";
+import quizEnd from "../../../images/quiz-end.svg";
 import DashboardNavbar from "../DashboardNavbar";
 import "../../../custom-styles/dashboard/choose-live-webinar.css";
 import pollSvg from "../../../images/poll-svg.svg";
@@ -20,6 +22,7 @@ import setAuthToken from "../../../utilities/setAuthToken";
 import { useAlert } from "react-alert";
 import axios from "axios";
 import { Link } from "react-router-dom/cjs/react-router-dom.min";
+import PaymentModal from "./PaymentModal";
 
 export default function CreateResource() {
   const { type } = useParams();
@@ -32,6 +35,9 @@ export default function CreateResource() {
   const [deleteModal, setDeleteModal] = useState(false);
   const [resourceCount, setResourceCount] = useState(null);
   const [resourceId, setResourceId] = useState("");
+  const [moreResources, setMoreResources] = useState(false);
+  const [resourceModal, setResourceModal] = useState(false);
+
   const alert = useAlert();
   const [quizStatus, setQuizStatus] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
@@ -49,10 +55,16 @@ export default function CreateResource() {
   const [pollDuration, setPollDuration] = useState(false);
 
   const getResourceCount = async () => {
+
     let res = await axios.get(`/api/v1/classroomresource/count`);
+
+    console.log(res, "countsss");
+
     if (res) {
       if (res.data.paymentInfo === "free") {
-        setResourceCount(res.data.resourceCount);
+        let { pollCount, quizCount, resourceCount } = res.data;
+        setResourceCount({ pollCount, quizCount, resourceCount });
+      } else {
       }
     }
   };
@@ -115,6 +127,7 @@ export default function CreateResource() {
 
     return seconds;
   };
+
   const handleQuizTitleChange = (event) => {
     if (questionNumber > totalQuestion) {
       setPollTitle(event.target.value);
@@ -122,6 +135,7 @@ export default function CreateResource() {
       alert.show("Can not Edit");
     }
   };
+
   const handleQuizOptionChange = (index, event) => {
     if (questionNumber > totalQuestion) {
       handlePollOptionChange(index, event);
@@ -930,6 +944,59 @@ export default function CreateResource() {
               </Button>
             </div>
           </Modal>
+          <Modal isOpen={moreResources.status}>
+            <div className="close-time-out">
+              <h4
+                onClick={() => {
+                  setMoreResources({
+                    status: false,
+                    type: moreResources.type,
+                  });
+                }}
+                style={{ alignSelf: "end" }}
+              >
+                <i className="fa fa-times"></i>
+              </h4>
+              {moreResources.type === "poll" && (
+                <img src={pollEnd} alt="poll" />
+              )}
+              {moreResources.type === "quiz" && (
+                <img src={quizEnd} alt="quiz" />
+              )}
+
+              <h2 style={{ alignSelf: "center" }}>
+                You have reached your {moreResources.type} limit
+              </h2>
+
+              <PaymentModal
+                roomId={"roomid"}
+                setFreeTimer={"setFreeTimer"}
+                type={moreResources.type}
+                close={() => {
+                  setMoreResources({
+                    status: false,
+                    type: moreResources.type,
+                  });
+                }}
+                updateCount={(number) => {
+                  if (moreResources.type === "poll") {
+                    setResourceCount({
+                      pollCount: resourceCount.pollCount - number,
+                      quizCount: resourceCount.quizCount,
+                      resourceCount: resourceCount.resourceCount,
+                    });
+                  }
+                  if (moreResources.type === "quiz") {
+                    setResourceCount({
+                      quizCount: resourceCount.quizCount - number,
+                      pollCount: resourceCount.pollCount,
+                      resourceCount: resourceCount.resourceCount,
+                    });
+                  }
+                }}
+              />
+            </div>
+          </Modal>
           <Col className="page-actions__col">
             <div className="live-webinar">
               <div className="live-webinar-content">
@@ -972,10 +1039,17 @@ export default function CreateResource() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            if (resourceCount >= 3) {
-                              alert.show("upgrade plan");
+                            console.log(resourceCount);
+
+                            if (resourceCount?.pollCount >= 3) {
+                              setMoreResources({
+                                status: "true",
+                                type: "poll",
+                              });
                             } else {
-                              setQuizStatus(true);
+                              setResourceModal(false);
+
+                              setPollStatus(true);
                             }
                           }}
                         >
@@ -984,15 +1058,22 @@ export default function CreateResource() {
                       )}
                       {type.toLowerCase() === "poll" && (
                         <div
-                          className="single-resource-card empty"
-                          onClick={() => {
-                            if (resourceCount >= 3) {
-                              alert.show("upgrade plan");
-                            } else {
-                              setPollStatus(true);
-                            }
-                          }}
-                        >
+                        className="single-resource-card empty"
+                        onClick={() => {
+                          console.log(resourceCount);
+
+                          if (resourceCount?.pollCount >= 3) {
+                            setMoreResources({
+                              status: "true",
+                              type: "poll",
+                            });
+                          } else {
+                            setResourceModal(false);
+
+                            setPollStatus(true);
+                          }
+                        }}
+                      >
                           <p>Click here to create new {typeText}</p>
                         </div>
                       )}
@@ -1052,7 +1133,7 @@ export default function CreateResource() {
                 {type === "add" && (
                   <Card className="webinar-type-options">
                     <p className="page-title__text">
-                      When do you want to start your class?
+                      Which resource do you want to create
                     </p>
                     <div
                       className="interactive-buttons"

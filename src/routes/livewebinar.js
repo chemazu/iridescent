@@ -151,7 +151,6 @@ router.put("/addTime", auth, async (req, res) => {
 
       res.json({ newTime: webinar.classEndTime });
     } else {
-
     }
   } catch (error) {
     console.error(error);
@@ -381,6 +380,12 @@ router.get("/validate/:streamKey", auth, async (req, res) => {
       res.json({
         classEndTime: livestream.classEndTime,
         endStatus: livestream.endStatus,
+        firstname: livestream.creator.firstname,
+          lastname: livestream.creator.lastname,
+          school: livestream.school.name,
+          avatar: livestream.creator.avatar,
+          title: livestream.title,
+
       });
     } else {
       res.status(400).json({ error: "Stream not found" });
@@ -530,6 +535,8 @@ const handleStreamFilter = (value, userStreams) => {
       return userStreams.filter((stream) => !stream["endStatus"]);
     case "NotRecurring":
       return userStreams.filter((stream) => !stream["isRecurring"]);
+    case "isRecurring":
+      return userStreams.filter((stream) => stream["isRecurring"]);
     case "completed":
       return userStreams.filter((stream) => stream["endStatus"]);
     case "":
@@ -551,19 +558,29 @@ router.get("/streams", auth, async (req, res) => {
 
   const filterState = req.query.filter || "";
 
-  let streams = await LiveWebinar.find({
-    creator: req.user.id,
-    startTime: { $gte: currentDateOnly },
-  }).sort({ startTime: 1 });
+  if (filterState === "all") {
+    let allStreams = await LiveWebinar.find({
+      creator: req.user.id,
+    });
+    if (!allStreams) {
+      return res.json({ error: "Stream not found" });
+    }
+    res.json({ streams: allStreams });
+  } else {
+    let streams = await LiveWebinar.find({
+      creator: req.user.id,
+      startTime: { $gte: currentDateOnly },
+    }).sort({ startTime: 1 });
 
-  if (!streams) {
-    return res.json({ error: "Stream not found" });
+    if (!streams) {
+      return res.json({ error: "Stream not found" });
+    }
+
+    // Apply the filtering based on the filterState
+    const filteredStreams = handleStreamFilter(filterState, streams);
+
+    res.json({ streams: filteredStreams });
   }
-
-  // Apply the filtering based on the filterState
-  const filteredStreams = handleStreamFilter(filterState, streams);
-
-  res.json({ streams: filteredStreams });
 });
 
 router.get("/schoolstreams/:schoolName", async (req, res) => {

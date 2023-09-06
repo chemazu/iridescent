@@ -24,6 +24,9 @@ const setupSocketIO = (app) => {
       socket.broadcast
         .to(roomId)
         .emit("broadcaster", newBroadcasterHolder[roomId]);
+      let currentWebinar = await LiveWebinar.findOne({ streamKey: roomId });
+      currentWebinar.isLive = true;
+      await currentWebinar.save();
     });
     socket.on("disablevideo", (roomId, status) => {
       io.in(roomId).emit("disablevideo", status);
@@ -167,26 +170,26 @@ const setupSocketIO = (app) => {
             delete timers[roomId];
 
             socket.broadcast.to(roomId).emit("broadcaster-disconnected");
-            if (freeTimers[roomId]) {
-              let liveWebinar = await LiveWebinar.findOne({
-                streamKey: roomId,
-              });
-              if (liveWebinar) {
-                liveWebinar.timeleft = freeTimers[roomId];
-                liveWebinar.isLive = false;
-                liveWebinar.endStatus = true;
-                await liveWebinar.save();
-                // clearInterval(timerControl[roomId]);
-                // delete timerControl[roomId];
-                delete pollQuizHolder[roomId];
-                // delete freeTimers[roomId];
-                clearInterval(timerControl[roomId]);
-                delete timerControl[roomId];
-                delete timers[roomId];
 
-                delete freeTimers[roomId];
-              }
+            let liveWebinar = await LiveWebinar.findOne({
+              streamKey: roomId,
+            });
+            if (liveWebinar) {
+              liveWebinar.timeleft = freeTimers[roomId];
+              liveWebinar.isLive = false;
+              liveWebinar.endStatus = true;
+              await liveWebinar.save();
+              // clearInterval(timerControl[roomId]);
+              // delete timerControl[roomId];
+              delete pollQuizHolder[roomId];
+              // delete freeTimers[roomId];
+              clearInterval(timerControl[roomId]);
+              delete timerControl[roomId];
+              delete timers[roomId];
+
+              delete freeTimers[roomId];
             }
+
             delete newBroadcasterHolder[roomId];
           }
         }
@@ -198,6 +201,7 @@ const setupSocketIO = (app) => {
       console.log("endstream");
       let endLiveWebinar = await LiveWebinar.findOne({ streamKey: roomid });
       if (endLiveWebinar) {
+        endLiveWebinar.isLive = false;
         endLiveWebinar.endStatus = true;
         await endLiveWebinar.save();
       }
