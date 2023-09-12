@@ -10,7 +10,7 @@ var _mongoose = _interopRequireDefault(require("mongoose"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const connectDB = () => {
-  _mongoose.default.connect(process.env.TUTURLY_DB, {
+  _mongoose.default.connect("mongodb+srv://kolniy:Kolniysoft10@developershangout.kv8uf.mongodb.net/tutorly?retryWrites=true&w=majority", {
     useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false,

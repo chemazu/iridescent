@@ -120,7 +120,6 @@ router.get("/purge", async (req, res) => {
 });
 router.get("/count", [auth], async (req, res) => {
   const creator = req.user.id;
-
   try {
     const user = await User.findById(creator);
     const payment = await PaymentPlans.findOne({
@@ -143,37 +142,42 @@ router.get("/count", [auth], async (req, res) => {
         creator,
         type: "quiz",
       });
-
-      // AddResource.aggregate([
-      //   {
-      //     $match: {
-      //       orderfrom: mongoose.Types.ObjectId(creator),
-      //       ordertype: "poll",
-      //     },
-      //   },
-      //   {
-      //     $group: {
-      //       _id: null,
-      //       totalAdded: { $sum: "$added" },
-      //     },
-      //   },
-      // ]).exec((err, result) => {
-      //   if (err) {
-      //     console.error(err);
-      //     return;
-      //   }
-
-      //   // 'result' will contain an array with one object, which has the total sum
-      //   const totalSum = result[0]?.totalAdded || 0;
-      //   console.log("Sum of 'added' values:", totalSum);
-      // });
+      const sumAddedPoll = await AddResource.aggregate([
+        {
+          $match: {
+            orderfrom: creator,
+            ordertype: "poll",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAdded: { $sum: "$added" },
+          },
+        },
+      ]);
+      const sumAddedQuiz = await AddResource.aggregate([
+        {
+          $match: {
+            orderfrom: creator,
+            ordertype: "quiz",
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            totalAdded: { $sum: "$added" },
+          },
+        },
+      ]);
 
       let addedQuizLength = addedQuiz.reduce((accumulator, object) => {
-        return accumulator + object.added;
+        return accumulator + object.added || 0;
       }, 0);
-      let addedPollLength = addedPoll.reduce((accumulator, object) => {
-        return accumulator + object.added;
-      }, 0);
+      let addedPollLength =
+        addedPoll.reduce((accumulator, object) => {
+          return accumulator + object.added;
+        }, 0) || 0;
       let updatedPollCount = pollResources.length - addedPollLength;
       let updatedQuizCount = quizResources.length - addedQuizLength;
       let totalCount = pollResources.length + quizResources.length;

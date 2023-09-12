@@ -50,9 +50,6 @@ function PaymentModal({
   const handlePostSuccessfullTransactionFeedback = () => {
     toggleTransactionModal();
     // handleSuccess();
-   
-    setFreeTimer();
-    close();
     setStripeCheckoutModalDialog(false);
     setStripePromise(null);
     setStripeClientSecret("");
@@ -98,15 +95,14 @@ function PaymentModal({
       await getSchoolThemeBySchoolId(school._id);
     }
   };
-  
-  const handleStripeMakePaymentIntent = async (currency, amount, resource) => {
+  const handleStripeMakePaymentIntent = async (currency, amount) => {
     try {
       displayLoader();
-      if (localStorage.getItem("token")) {
-        setAuthToken(localStorage.getItem("token"));
+      if (localStorage.getItem("studentToken")) {
+        setAuthToken(localStorage.getItem("studentToken"));
       }
-      const currencyInfo = currency.currency;
-      // const currencyInfo = "usd";
+      // const currencyInfo = currency.currency;
+      const currencyInfo = "usd";
 
       const config = {
         headers: {
@@ -121,9 +117,8 @@ function PaymentModal({
           schoolname: userDetails.schoolname,
           type: "user",
           streamKey: roomId,
-          added: resource,
+          added: addedResource,
           orderType: type,
-          userToken: `${localStorage.getItem("token")}`,
 
           amount: amountToPay,
         },
@@ -224,20 +219,12 @@ function PaymentModal({
     setAddedResource(newResource);
     switch (paymentMethodToUse.name) {
       case "paystack":
-        payStackPaymentHandler(paymentMethodToUse, value, newResource);
-        // handleStripeMakePaymentIntent(
-        //   currency,
-        //   value * currency.exchangeRate,
-        //   newResource
-        // );
+        // payStackPaymentHandler(paymentMethodToUse, value, newResource);
+        handleStripeMakePaymentIntent(currency, value * currency.exchangeRate);
 
         break;
       case "stripe":
-        handleStripeMakePaymentIntent(
-          currency,
-          value * currency.exchangeRate,
-          newResource
-        );
+        handleStripeMakePaymentIntent(currency, value * currency.exchangeRate);
         break;
       default:
         break;

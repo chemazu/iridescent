@@ -23,20 +23,11 @@ import setDocumentTitle from "../../../utilities/setDocumentTitle";
 import smiley from "../../../images/emojisvg.svg";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import CountdownTimer from "./CountdownTimer";
+
 import setAuthToken from "../../../utilities/setAuthToken";
 import Poll from "./Poll";
 import { useStore } from "react-redux";
 import videojs from "video.js";
-import "vidstack/styles/defaults.css";
-import "vidstack/styles/community-skin/video.css";
-
-import {
-  MediaCommunitySkin,
-  MediaOutlet,
-  MediaPlayer,
-  MediaPoster,
-} from "@vidstack/react";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
@@ -67,6 +58,9 @@ function WatchStream({ schoolname }) {
   const [disableVideoStream, setDisableVideoStream] = useState(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [VideoFill, setVideoFill] = useState(false);
+  const [vidStackSource, setVidStackSource] = useState("");
+  // "https://stream.mux.com/VZtzUzGRv02OhRnZCxcNg49OilvolTqdnFLEqBsTwaxU/low.mp4"
+
   const [presenterAvatar, setPresenterAvatar] = useState(
     "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
   );
@@ -144,6 +138,9 @@ function WatchStream({ schoolname }) {
     }
     // You could update an existing player in the `else` block here
     // on prop change, for example:
+  };
+  const handleAddScreenSharing = () => {
+    console.log("screensharing");
   };
   // const handleAddStream = (stream) => {
   //   if (!playerRef.current) {
@@ -417,32 +414,6 @@ function WatchStream({ schoolname }) {
     }
   };
 
-  // send message
-  // const sendMessage = () => {
-  //   if (chatMessage !== null) {
-  //     socket.emit(
-  //       "message",
-  //       {
-  //         user: watcherUsername || 1,
-  //         msg: chatMessage,
-  //         timeStamp: Date.now(),
-  //         type: "text",
-  //       },
-  //       roomid
-  //     );
-  //     setDefaultChat([
-  //       ...defaultChat,
-  //       {
-  //         user: watcherUsername || 1,
-  //         msg: chatMessage,
-  //         timeStamp: Date.now(),
-  //         type: "text",
-  //       },
-  //     ]);
-  //   }
-  //   setChatMessage("");
-  // };
-
   const sendMessage = () => {
     if (chatMessage.trim() !== "") {
       // Check if the trimmed chatMessage is not empty
@@ -482,21 +453,6 @@ function WatchStream({ schoolname }) {
     setSubmitted(true);
   };
 
-  // const initiateCall = (peerId) => {
-  //   if (currentPeer) {
-  //     navigator.mediaDevices
-  //       .getUserMedia({ video: true, audio: true })
-  //       .then((newStream) => {
-  //         const call = currentPeer?.call(peerId, newStream);
-  //         call?.on("stream", (remoteStream) => {
-  //           setWaiting(false);
-  //           addVideoStream(remoteStream);
-
-  //           // Handle the incoming stream
-  //         });
-  //       });
-  //   }
-  // };
   useEffect(() => {
     if (playerRef.current) {
       playerRef.current.muted(!audioVisuals?.audio);
@@ -518,7 +474,6 @@ function WatchStream({ schoolname }) {
 
     peerInstance.on("open", (user) => {
       socket.emit("watcher", roomid, user);
-      console.log(audioVisuals);
     });
     const startClass = (peerId, stat) => {
       console.log("startClass ", stat, peerId);
@@ -526,8 +481,11 @@ function WatchStream({ schoolname }) {
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
           const call = peerInstance?.call(peerId, newStream);
+          console.log(call);
           call?.on("stream", (remoteStream) => {
-            addVideoStream(remoteStream);
+            // addVideoStream(remoteStream);
+            handleAddStream(remoteStream);
+
             setWaiting(false);
 
             // Handle the incoming stream
@@ -541,7 +499,7 @@ function WatchStream({ schoolname }) {
       setPresenterPeer(peerId);
       console.log(roomStatus);
       // Handle the join stream event
-      // triger som bs that run the stream
+
       // initiateCall(peerId)
     });
     socket.on("broadcaster", (peerId) => {
@@ -552,20 +510,21 @@ function WatchStream({ schoolname }) {
       setWaiting(false);
     });
     socket.on("screenSharingStatus", (status, peerId) => {
-      console.log(status);
-      console.log(peerId);
+      // console.log(status);
+      // console.log(peerId);
 
-      if (status) {
-        startClass(peerId, "screen");
-      } else {
-        if (playerRef.current) {
-          playerRef.current.dispose(); // Dispose the videojs player
-          playerRef.current = null;
-          videoRef.current.innerHTML = ""; // Clear the video container
-        }
-        console.log("iii");
-        startClass(peerId, "screenss");
-      }
+      // if (status) {
+      //   console.log("screensharing");
+      // } else {
+      //   if (playerRef.current) {
+      //     playerRef.current.dispose(); // Dispose the videojs player
+      //     playerRef.current = null;
+      //     videoRef.current.innerHTML = ""; // Clear the video container
+      //   }
+      //   console.log("iii");
+      //   startClass(peerId, "screenss");
+      // }
+      handleAddScreenSharing(peerId);
     });
     return () => {
       peerInstance.destroy();
@@ -586,99 +545,6 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
     };
   }, [roomid]);
-
-  // useEffect(() => {
-  //   socket.on("join stream", (roomSize, peerId) => {
-  //     startClass(peerId);
-  //     // Handle the join stream event
-  //     // triger som bs that run the stream
-  //     // initiateCall(peerId)
-  //   });
-
-  //   return () => {
-  //     socket.off("join stream");
-  //   };
-  // }, [roomid, currentPeer]);
-
-  // useEffect(() => {
-  //   socket.on("broadcaster", (peerId) => {
-  //     startClass(peerId);
-  //   });
-
-  //   return () => {
-  //     socket.off("broadcaster");
-  //   };
-  // }, [roomid, waiting]);
-
-  // useEffect(() => {
-  //   const peerInstance = new Peer();
-
-  //   const initializePeer = async () => {
-  //     setCurrentPeer(peerInstance);
-  //     peerRef.current = peerInstance;
-
-  //     peerInstance.on("open", (peerId) => {
-  //       socket.emit("watcher", roomid, peerId);
-  //     });
-  //   };
-
-  //   const handleBroadcaster = () => {
-  //     setDisconnect(false);
-  //     setWaiting(false);
-
-  //     peerInstance.on("open", (user) => {
-  //       socket.emit("watcher", roomid, user);
-  //     });
-
-  //     setCurrentPeer(peerInstance);
-  //     peerRef.current = peerInstance;
-
-  //     peerInstance.on("call", (call) => {
-  //       setReconnectLoading(true);
-
-  //       call.answer();
-  //       call.on("stream", (userVideoStream) => {
-  //         setReconnectLoading(false);
-  //         console.log("wozer");
-  //         addVideoStream(userVideoStream);
-  //       });
-  //     });
-  //   };
-
-  //   initializePeer();
-
-  //   socket.on("broadcaster", handleBroadcaster);
-
-  //   return () => {
-  //     socket.off("broadcaster");
-  //     peerInstance.destroy();
-  //   };
-  // }, [roomid, waiting]);
-
-  // useEffect(() => {
-  //   socket.on("timerEnded", (questionControl, remainingTime) => {
-  //     setTimerHolder({});
-  //     handlePollSubmit();
-  //     if (specialChat && specialChat.length > 0) {
-  //       if (specialChat[0].type === "poll") {
-  //         handlePollSubmit();
-  //       }
-  //       // check if they have submitted
-
-  //       if (specialChat[0].type === "quiz") {
-  //         handleUniqueSubmission(answers, "quiz");
-  //       }
-  //     } else {
-  //       // Handle the case when specialChat is not defined or empty
-  //     }
-  //     // check if they have submitted
-
-  //     // hanlePollQuizTimeOut();
-  //   });
-  //   return () => {
-  //     socket.off("timerEnded");
-  //   };
-  // }, [roomid, timerHolder]);
 
   useEffect(() => {
     socket.on("watcher-exit", (size) => {
@@ -756,126 +622,6 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid, pollResults]);
 
-  // useEffect(() => {
-  //   socket.on("broadcaster", () => {
-  //     peerRef.current.destroy();
-  //     setDisconnect(false);
-  //     setWaiting(false);
-  //     const NewPeer = new Peer();
-  //     // different Peer
-
-  //     NewPeer.on("open", (user) => {
-  //       socket.emit("watcher", roomid, user);
-  //     });
-
-  //     setCurrentPeer(NewPeer);
-  //     peerRef.current = NewPeer;
-  //     NewPeer.on("call", (call) => {
-  //       // stop reconnecting loading
-  //       setReconnectLoading(true);
-
-  //       call.answer();
-  //       call.on("stream", (userVideoStream) => {
-  //         setReconnectLoading(false);
-  //         addVideoStream(userVideoStream);
-  //       });
-  //     });
-  //   });
-  //   return () => {
-  //     socket.off("broadcaster");
-  //   };
-  // }, [roomid, waiting]);
-
-  // useEffect(() => {
-  //   socket.on("screenSharingStatus", (status) => {
-  //     setScreenSharing(status);
-  //     let newDummyStream = createBlankVideoStream();
-  //     if (status) {
-  //       console.log("firstw5");
-  //       console.log(peerRef);
-  //       peerRef.current.on("call", (call) => {
-  //         console.log("secondw5");
-
-  //         call.answer(newDummyStream);
-
-  //         call.on("stream", (remoteStream) => {
-  //           // addVideoStream(remoteStream);
-  //           replaceVideoElement(remoteStream);
-
-  //         });
-  //       });
-  //     } else {
-  //       peerRef.current.on("call", (call) => {
-  //         navigator.mediaDevices
-  //           .getUserMedia({ video: true, audio: true })
-  //           .then((newStream) => {
-  //             call.answer(newStream);
-  //             call.on("stream", (remoteStream) => {
-  //               // Handle the received screen sharing stream
-  //               // addVideoStream(remoteStream);
-  //               replaceVideoElement(remoteStream);
-  //             });
-  //           });
-  //       });
-  //     }
-  //   });
-  //   return () => {
-  //     socket.off("screenSharingStatus");
-  //   };
-  // }, [roomid, screenSharing]);
-  // useEffect(() => {
-  //   const handleScreenSharingStatus = (status) => {
-  //     setScreenSharing(status);
-
-  //     if (status) {
-  //       const newDummyStream = createBlankVideoStream();
-
-  //       const handleCall = (call) => {
-  //         call.answer(newDummyStream);
-
-  //         call.on("stream", (remoteStream) => {
-  //           replaceVideoElement(remoteStream);
-  //         });
-  //       };
-
-  //       peerRef.current.on("call", handleCall);
-
-  //       return () => {
-  //         peerRef.current.off("call", handleCall);
-  //         if (newDummyStream) {
-  //           newDummyStream.getTracks().forEach(track => track.stop());
-  //         }
-  //       };
-  //     } else {
-  //       const handleCall = (call) => {
-  //         navigator.mediaDevices
-  //           .getUserMedia({ video: true, audio: true })
-  //           .then((newStream) => {
-  //             call.answer(newStream);
-  //             call.on("stream", (remoteStream) => {
-  //               replaceVideoElement(remoteStream);
-  //             });
-  //           });
-  //       };
-
-  //       peerRef.current.on("call", handleCall);
-
-  //       return () => {
-  //         peerRef.current.off("call", handleCall);
-  //       };
-  //     }
-  //   };
-
-  //   socket.on("screenSharingStatus", ()=>{
-  //     console.log("firstss")
-
-  //   });
-
-  //   return () => {
-  //     socket.off("screenSharingStatus");
-  //   };
-  // }, [roomid, screenSharing]);
-
   useEffect(() => {
     socket.on("timerStarted", (duration) => {
       setTimerHolder({
@@ -904,18 +650,6 @@ function WatchStream({ schoolname }) {
     };
   }, [defaultChat]);
 
-  function createBlankVideoStream() {
-    const canvas = Object.assign(document.createElement("canvas"), {
-      width: 1,
-      height: 1,
-    });
-    const context = canvas.getContext("2d");
-    context.fillRect(0, 0, canvas.width, canvas.height);
-
-    const stream = canvas.captureStream();
-    return stream;
-  }
-
   useEffect(() => {
     socket.on("broadcaster-disconnected", () => {
       setDisconnect(true);
@@ -941,27 +675,6 @@ function WatchStream({ schoolname }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolname]);
-  // const myPeer = new Peer({ videoCodec: "h264" });
-
-  // useEffect(() => {
-  //   const initializePeer = async () => {
-  //     const peerInstance = new Peer();
-  //     // different Peer
-  //     setCurrentPeer(peerInstance);
-  //     peerRef.current = peerInstance;
-
-  //     peerInstance.on("open", (peerId) => {
-  //       // socket.emit("join", peerId);
-  //       socket.emit("watcher", roomid, peerId);
-  //     });
-  //   };
-
-  //   initializePeer();
-
-  //   return () => {
-  //     currentPeer?.destroy();
-  //   };
-  // }, [roomid]);
 
   useEffect(() => {
     socket.on("watcher", (userId, roomSize) => {
@@ -1141,19 +854,12 @@ function WatchStream({ schoolname }) {
                                   borderRadius: "10px",
                                 }}
                               >
-                                {/* <div
+                                <div
                                   ref={videoRef}
                                   className={
                                     VideoFill ? "filled-video" : "empty"
                                   }
-                                ></div> */}
-                                <MediaPlayer>
-                                  <video
-                                    ref={myVideoRef}
-                                    controls
-                                    playsInline={true}
-                                  />
-                                </MediaPlayer>
+                                ></div>
 
                                 {!audioVisuals?.video ||
                                   (false && (
@@ -1335,22 +1041,6 @@ function WatchStream({ schoolname }) {
                                     Pop Quiz{" "}
                                     <i className="fas fa-book-open poll"></i>
                                   </span>
-
-                                  <CountdownTimer
-                                    // duration={convertToSeconds(
-                                    //   singleChat.duration?.durationValue,
-                                    //   singleChat.duration?.durationUnit
-                                    // )}
-                                    duration={
-                                      Number(timerHolder.remainingTime)
-                                        ? Number(timerHolder.remainingTime)
-                                        : 0
-                                    }
-                                    onCompletion={() => {
-                                      handleUniqueSubmission(answers, "quiz");
-                                    }}
-                                    style={{ color: "#fff" }}
-                                  />
                                 </div>
 
                                 <div className="bottom">
@@ -1666,7 +1356,7 @@ function WatchStream({ schoolname }) {
                           ></i>
                         </div>
 
-                        <input
+                        <textarea
                           value={chatMessage}
                           onChange={(e) => {
                             setChatMessage(e.target.value);

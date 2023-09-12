@@ -561,7 +561,7 @@ router.get("/streams", auth, async (req, res) => {
   if (filterState === "all") {
     let allStreams = await LiveWebinar.find({
       creator: req.user.id,
-    });
+    }).sort({ startTime: 1 });
     if (!allStreams) {
       return res.json({ error: "Stream not found" });
     }

@@ -142,7 +142,20 @@ function ChooseWebinarType({ school }) {
                 {/* <NotificationNavbar /> */}
 
                 <div className="page-title">
-                  <div className="page-title__text"> Start a new class</div>
+                  <div className="page-title__text">
+                    <Link
+                      to="/dashboard/livewebinar"
+                      style={{
+                        color: "#000",
+                      }}
+                    >
+                      <i
+                        className="fas fa-less-than"
+                        style={{ fontSize: "16px", paddingRight: "5px" }}
+                      ></i>
+                      Start a new class
+                    </Link>
+                  </div>
                   <div className="page-title_cta">
                     {/* <Button
                     className="page-title_cta-btn"

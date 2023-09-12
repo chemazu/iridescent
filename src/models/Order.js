@@ -30,15 +30,24 @@ const orderSchema = new mongoose.Schema(
     amount: {
       type: Number,
     },
+    amount_usd: {
+      type: Number,
+    },
     ordertype: {
       type: String,
     },
     actualearning: {
       type: Number,
     },
+    actualearning_usd: {
+      type: Number,
+    },
     orderdate: {
       type: Date,
       default: Date.now,
+    },
+    pendingOrderDate: {
+      type: Date,
     },
   },
   {
@@ -50,6 +59,14 @@ orderSchema.index({ reference: 1 });
 orderSchema.index({ boughtfrom: 1 });
 orderSchema.index({ orderdate: 1 });
 orderSchema.index({ boughtfrom: 1, orderdate: 1 });
+
+orderSchema.methods.setPendingOrderDate = async function () {
+  const sevenDaysAfterOrderDate = new Date(this.orderdate);
+  sevenDaysAfterOrderDate.setDate(sevenDaysAfterOrderDate.getDate() + 7);
+
+  // Set the amountViewDate property
+  this.pendingOrderDate = sevenDaysAfterOrderDate;
+};
 
 const Order = mongoose.model("order", orderSchema);
 

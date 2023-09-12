@@ -123,11 +123,8 @@ export const CartPage = ({
 
     switch (paymentMethodToUse.name) {
       case "paystack":
-        // payStackPaymentHandler(paymentMethodToUse);
-        handleStripeMakePaymentIntent(
-          currency,
-          (cartItemSumWithDiscount * currency.exchangeRate)
-        );
+        payStackPaymentHandler(paymentMethodToUse);
+         
         break;
       case "stripe":
         // prettier-ignore
@@ -236,8 +233,7 @@ export const CartPage = ({
         },
       };
       const body = JSON.stringify({
-        // currency: currencyInfo.toLowerCase(),
-        currency:"usd",
+        currency: currencyInfo.toLowerCase(),
         amount,
         metadata: {
           studentToken: `${localStorage.getItem("studentToken")}`,

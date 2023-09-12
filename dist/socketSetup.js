@@ -150,38 +150,7 @@ const setupSocketIO = app => {
     socket.on("updatedPollResult", (roomid, updatedResults) => {
       io.in(roomid).emit("updatedPollResult", updatedResults);
     });
-    socket.on("disconnect", async () => {
-      // Check if the socket is a broadcaster
-      const socketId = socket.id;
-      Object.entries(newBroadcasterHolder).forEach(async ([roomId, broadcaster]) => {
-        if (broadcaster.socketId === socketId) {
-          // The disconnected socket was a broadcaster
-          delete pollQuizHolder[roomId];
-          delete timers[roomId];
-          socket.broadcast.to(roomId).emit("broadcaster-disconnected");
-          let liveWebinar = await _Livewebinar.default.findOne({
-            streamKey: roomId
-          });
-
-          if (liveWebinar) {
-            liveWebinar.timeleft = freeTimers[roomId];
-            liveWebinar.isLive = false;
-            liveWebinar.endStatus = true;
-            await liveWebinar.save(); // clearInterval(timerControl[roomId]);
-            // delete timerControl[roomId];
-
-            delete pollQuizHolder[roomId]; // delete freeTimers[roomId];
-
-            clearInterval(timerControl[roomId]);
-            delete timerControl[roomId];
-            delete timers[roomId];
-            delete freeTimers[roomId];
-          }
-
-          delete newBroadcasterHolder[roomId];
-        }
-      });
-    });
+    cd;
     socket.on("endstream", async roomid => {
       // Check if the socket is a broadcaster
       const socketId = socket.id;

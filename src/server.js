@@ -1,9 +1,10 @@
 import path from "path";
 import express from "express";
 import connectDB from "./config/connection";
-
 import cloudinary from "cloudinary";
- 
+
+import { Server } from "socket.io";
+import http from "http";
 
 import userRoute from "./routes/user";
 import schoolRoute from "./routes/school";
@@ -42,13 +43,13 @@ import studentProductRoute from "./routes/studentproduct";
 import rootCategoryRoute from "./routes/rootcategory";
 import logVisitRoute from "./routes/logvisit";
 import tutorRoute from "./routes/tutor";
-import classroomresourcesRoute from "./routes/classroomresources";
-import livewebinarRoute from "./routes/livewebinar";
-import studentWebinarRoute from "./routes/studentwebinar";
 import internationalBankDetailsRoute from "./routes/Internationalbankingdetails";
 import exchangeRateRoute from "./routes/exchangeRate";
 import stripeConnectRoute from "./routes/stripeconnect";
 import stripeRoute from "./routes/stripe";
+import classroomresourcesRoute from "./routes/classroomresources";
+import livewebinarRoute from "./routes/livewebinar";
+import studentWebinarRoute from "./routes/studentwebinar";
 import setupSocketIO from "./socketSetup"; 
 
 cloudinary.v2.config({
@@ -57,19 +58,24 @@ cloudinary.v2.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// socket io implementation
-
+// const server = http.createServer(app);
 const server = setupSocketIO(app);
+
+// export const io = new Server(server, {
+//   cors: {
+//     // origin: "http://localhost:3000",
+//     origin: "*",
+//   },
+// });
 
 // middle ware to exclude cloudflare webhooks endpoint path
 // from app.use(express.json()) middleware
-const unless = function (path, middleware) {
+const unless = function (paths, middleware) {
   return function (req, res, next) {
-    if (path === req.path) {
+    if (paths.includes(req.path)) {
       return next();
     } else {
       return middleware(req, res, next);
@@ -77,12 +83,12 @@ const unless = function (path, middleware) {
   };
 };
 
-app.use(
-  unless(
-    "/api/v1/webhooks/cloudflare/upload/success/notification",
-    express.json({ extended: false })
-  )
-);
+const excludedRoutes = [
+  "/api/v1/webhooks/stripe",
+  "/api/v1/webhooks/cloudflare/upload/success/notification",
+];
+
+app.use(unless(excludedRoutes, express.json({ extended: false })));
 
 // call database instance
 connectDB();
@@ -129,13 +135,13 @@ app.use("/api/v1/studentproduct", studentProductRoute);
 app.use("/api/v1/rootcategory", rootCategoryRoute);
 app.use("/api/v1/log-visit", logVisitRoute);
 app.use("/api/v1/tutor", tutorRoute);
-app.use("/api/v1/livewebinar", livewebinarRoute);
-app.use("/api/v1/classroomresource", classroomresourcesRoute);
-app.use("/api/v1/studentwebinar", studentWebinarRoute);
 app.use("/api/v1/bank/international", internationalBankDetailsRoute);
 app.use("/api/v1/exchangerate", exchangeRateRoute);
 app.use("/api/v1/stripe/connect", stripeConnectRoute);
 app.use("/api/v1/stripe", stripeRoute);
+app.use("/api/v1/livewebinar", livewebinarRoute);
+app.use("/api/v1/classroomresource", classroomresourcesRoute);
+app.use("/api/v1/studentwebinar", studentWebinarRoute);
 
 const root = require("path").join(__dirname, "../client", "build");
 

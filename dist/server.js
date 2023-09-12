@@ -1,5 +1,10 @@
 "use strict";
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.io = void 0;
+
 var _path = _interopRequireDefault(require("path"));
 
 var _express = _interopRequireDefault(require("express"));
@@ -7,6 +12,10 @@ var _express = _interopRequireDefault(require("express"));
 var _connection = _interopRequireDefault(require("./config/connection"));
 
 var _cloudinary = _interopRequireDefault(require("cloudinary"));
+
+var _socket = require("socket.io");
+
+var _http = _interopRequireDefault(require("http"));
 
 var _user = _interopRequireDefault(require("./routes/user"));
 
@@ -82,12 +91,6 @@ var _logvisit = _interopRequireDefault(require("./routes/logvisit"));
 
 var _tutor = _interopRequireDefault(require("./routes/tutor"));
 
-var _classroomresources = _interopRequireDefault(require("./routes/classroomresources"));
-
-var _livewebinar = _interopRequireDefault(require("./routes/livewebinar"));
-
-var _studentwebinar = _interopRequireDefault(require("./routes/studentwebinar"));
-
 var _Internationalbankingdetails = _interopRequireDefault(require("./routes/Internationalbankingdetails"));
 
 var _exchangeRate = _interopRequireDefault(require("./routes/exchangeRate"));
@@ -95,6 +98,12 @@ var _exchangeRate = _interopRequireDefault(require("./routes/exchangeRate"));
 var _stripeconnect = _interopRequireDefault(require("./routes/stripeconnect"));
 
 var _stripe = _interopRequireDefault(require("./routes/stripe"));
+
+var _classroomresources = _interopRequireDefault(require("./routes/classroomresources"));
+
+var _livewebinar = _interopRequireDefault(require("./routes/livewebinar"));
+
+var _studentwebinar = _interopRequireDefault(require("./routes/studentwebinar"));
 
 var _socketSetup = _interopRequireDefault(require("./socketSetup"));
 
@@ -107,14 +116,22 @@ _cloudinary.default.v2.config({
 });
 
 const app = (0, _express.default)();
-const PORT = process.env.PORT || 5000; // socket io implementation
+const PORT = process.env.PORT || 5000; // const server = http.createServer(app);
 
-const server = (0, _socketSetup.default)(app); // middle ware to exclude cloudflare webhooks endpoint path
+const server = (0, _socketSetup.default)(app);
+const io = new _socket.Server(server, {
+  cors: {
+    // origin: "http://localhost:3000",
+    origin: "*"
+  }
+}); // middle ware to exclude cloudflare webhooks endpoint path
 // from app.use(express.json()) middleware
 
-const unless = function (path, middleware) {
+exports.io = io;
+
+const unless = function (paths, middleware) {
   return function (req, res, next) {
-    if (path === req.path) {
+    if (paths.includes(req.path)) {
       return next();
     } else {
       return middleware(req, res, next);
@@ -122,7 +139,8 @@ const unless = function (path, middleware) {
   };
 };
 
-app.use(unless("/api/v1/webhooks/cloudflare/upload/success/notification", _express.default.json({
+const excludedRoutes = ["/api/v1/webhooks/stripe", "/api/v1/webhooks/cloudflare/upload/success/notification"];
+app.use(unless(excludedRoutes, _express.default.json({
   extended: false
 }))); // call database instance
 
@@ -168,13 +186,13 @@ app.use("/api/v1/studentproduct", _studentproduct.default);
 app.use("/api/v1/rootcategory", _rootcategory.default);
 app.use("/api/v1/log-visit", _logvisit.default);
 app.use("/api/v1/tutor", _tutor.default);
-app.use("/api/v1/livewebinar", _livewebinar.default);
-app.use("/api/v1/classroomresource", _classroomresources.default);
-app.use("/api/v1/studentwebinar", _studentwebinar.default);
 app.use("/api/v1/bank/international", _Internationalbankingdetails.default);
 app.use("/api/v1/exchangerate", _exchangeRate.default);
 app.use("/api/v1/stripe/connect", _stripeconnect.default);
 app.use("/api/v1/stripe", _stripe.default);
+app.use("/api/v1/livewebinar", _livewebinar.default);
+app.use("/api/v1/classroomresource", _classroomresources.default);
+app.use("/api/v1/studentwebinar", _studentwebinar.default);
 
 const root = require("path").join(__dirname, "../client", "build"); // block of code come's after application routes
 

@@ -1666,7 +1666,9 @@
     flex-direction: column;
   }
   .waiting-controls {
-    width: auto;
+    width: 101%;
+    margin-left: -1px;
+    margin-bottom: -2px;
     justify-content: space-evenly;
     padding: 5%;
     background-color: #fff;

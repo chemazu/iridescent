@@ -607,6 +607,8 @@ router.get("/streams", _auth.default, async (req, res) => {
   if (filterState === "all") {
     let allStreams = await _Livewebinar.default.find({
       creator: req.user.id
+    }).sort({
+      startTime: 1
     });
 
     if (!allStreams) {

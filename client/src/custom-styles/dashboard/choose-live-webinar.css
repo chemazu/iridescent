@@ -2,6 +2,9 @@
   padding: 5% 10%;
   align-items: center;
 }
+.modal-content{
+  overflow: hidden;
+}
 .webinar-type-options .page-title__text {
   padding: 2.5% 0%;
 }
@@ -41,6 +44,7 @@
 .instant-webinar-options {
   padding: 3rem;
   margin-bottom: 1rem;
+  border: 0;
 }
 .resource-content {
   overflow: scroll;

@@ -1091,6 +1091,7 @@ export default function Stream() {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
     peerInstance.on("open", (peerId) => {
+      console.log("onep")
       if (!screenSharing) {
         socket.emit("broadcaster", roomid, peerId);
       }
@@ -2709,7 +2710,7 @@ export default function Stream() {
                             >
                               <img src={smiley} alt="emoji" />
                             </div>
-                            <input
+                            <textarea
                               value={chatMessage}
                               onChange={(e) => {
                                 setChatMessage(e.target.value);
@@ -2995,7 +2996,7 @@ export default function Stream() {
                               >
                                 <img src={smiley} alt="emoji" />
                               </div>
-                              <input
+                              <textarea
                                 value={chatMessage}
                                 onChange={(e) => {
                                   setChatMessage(e.target.value);

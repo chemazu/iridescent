@@ -186,7 +186,33 @@ router.get("/count", [_auth.default], async (req, res) => {
       const quizResources = await _ClassroomResource.default.find({
         creator,
         type: "quiz"
-      }); // AddResource.aggregate([
+      });
+      const sumAddedPoll = await _AdditonalResource.default.aggregate([{
+        $match: {
+          orderfrom: creator,
+          ordertype: "poll"
+        }
+      }, {
+        $group: {
+          _id: null,
+          totalAdded: {
+            $sum: "$added"
+          }
+        }
+      }]);
+      const sumAddedQuiz = await _AdditonalResource.default.aggregate([{
+        $match: {
+          orderfrom: creator,
+          ordertype: "quiz"
+        }
+      }, {
+        $group: {
+          _id: null,
+          totalAdded: {
+            $sum: "$added"
+          }
+        }
+      }]); // AddResource.aggregate([
       //   {
       //     $match: {
       //       orderfrom: mongoose.Types.ObjectId(creator),
@@ -210,14 +236,22 @@ router.get("/count", [_auth.default], async (req, res) => {
       // });
 
       let addedQuizLength = addedQuiz.reduce((accumulator, object) => {
-        return accumulator + object.added;
+        return accumulator + object.added || 0;
       }, 0);
       let addedPollLength = addedPoll.reduce((accumulator, object) => {
         return accumulator + object.added;
-      }, 0);
+      }, 0) || 0;
       let updatedPollCount = pollResources.length - addedPollLength;
       let updatedQuizCount = quizResources.length - addedQuizLength;
       let totalCount = pollResources.length + quizResources.length;
+      console.log({
+        resourceCount: totalCount,
+        paymentInfo: "free",
+        pollCount: updatedPollCount,
+        quizCount: updatedQuizCount,
+        sumAddedPoll,
+        addedPollLength
+      });
       res.json({
         resourceCount: totalCount,
         paymentInfo: "free",

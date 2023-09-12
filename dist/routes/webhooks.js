@@ -51,23 +51,21 @@ var _convertNairaToDollar = _interopRequireDefault(require("../utilities/convert
 
 var _roundToTwoDecimalPlaces = _interopRequireDefault(require("../utilities/roundToTwoDecimalPlaces"));
 
+var _Livewebinar = _interopRequireDefault(require("../models/Livewebinar"));
+
+var _StudentWebinar = _interopRequireDefault(require("../models/StudentWebinar"));
+
+var _AdditonalResource = _interopRequireDefault(require("../models/AdditonalResource"));
+
+var _getUserIdFromToken = _interopRequireDefault(require("../utilities/getUserIdFromToken"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const router = _express.default.Router();
 
-const fastMan = _bodyParser.default.json({
-  verify: function (req, res, buf, encoding) {
-    req.rawBody = buf.toString();
-  }
-});
+const stripeServer = (0, _stripe.default)(process.env.STRIPE_SECRET_KEY); // This is your Stripe CLI webhook secret for testing your endpoint locally.
 
-router.use(fastMan);
-router.use(_express.default.json()); // const stripeServer = stripe(process.env.STRIPE_SECRET_KEY);
-
-const stripeServer = (0, _stripe.default)("sk_test_51NnK8ADC8JSEsIUsVqcjFrFsa2A8m2M7WflVjgtiC3NDHeh80LVqraZhwRxd3qvrbGW3jE2wGydB4dSpQsVp4bbp000hJAukFO"); // This is your Stripe CLI webhook secret for testing your endpoint locally.
-
-const endpointSecret = "whsec_9b287e8b8a88a331234792afbbc94addb2dd307990347034486958b207441186"; // "whsec_85d4a70f39f5afc6cbb5c2230822b429dcfe2789193620fd65d549801618f2af";
-
+const endpointSecret = "whsec_9b287e8b8a88a331234792afbbc94addb2dd307990347034486958b207441186";
 router.post("/app", async (req, res) => {
   const paystackKey = process.env.PAYSTACK_PRIVATE_KEY;
 
@@ -454,6 +452,7 @@ router.post("/cloudflare/upload/success/notification", endPointBodyParser, async
 });
 
 const convertCurrencyUsedInPurchaseToUsd = async currencyInUse => {
+  // const url = `https://v6.exchangerate-api.com/v6/8db196e0a0dcaf24cc1debfd/latest/${currencyInUse}`;
   const url = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATE_API}/latest/${currencyInUse}`;
 
   try {
@@ -473,11 +472,8 @@ const convertCurrencyUsedInPurchaseToUsd = async currencyInUse => {
 router.post("/stripe", _express.default.raw({
   type: "application/json"
 }), async (req, res) => {
-  console.log(req, "req");
-  console.log(req.rawBody, "reqsss");
-  console.log(req.body.data, "body");
   const sig = req.headers["stripe-signature"];
-  const payload = JSON.stringify(req.body.data.object);
+  const payload = req.body;
   let event;
 
   try {
@@ -492,117 +488,204 @@ router.post("/stripe", _express.default.raw({
   const currencyUsedInPurchase = paymentIntentSucceededData.currency;
   const ratesData = await convertCurrencyUsedInPurchaseToUsd(currencyUsedInPurchase);
   const usdRate = ratesData.usd_rate;
-  const nairaRate = ratesData.naira_rate; // Handle the event
+  const nairaRate = ratesData.naira_rate;
 
-  switch (event.type) {
-    case "payment_intent.succeeded":
-      // Then define and call a function to handle the event payment_intent.succeeded
-      const cartItems = JSON.parse(paymentIntentSucceededData.metadata.cart); // find the school of which the course was purchased from.
+  if (paymentIntentSucceededData.metadata.type === "user") {
+    switch (event.type) {
+      case "payment_intent.succeeded":
+        const {
+          streamKey,
+          added,
+          amount,
+          orderType,
+          userToken
+        } = paymentIntentSucceededData.metadata;
+        const userId = (0, _getUserIdFromToken.default)(userToken);
+        const addResource = new _AdditonalResource.default({
+          orderfrom: userId,
+          amount,
+          ordertype: orderType,
+          added
+        });
+        await addResource.save();
 
-      const school = await _School.default.findOne({
-        name: paymentIntentSucceededData.metadata.schoolname
-      }).populate("createdBy", ["email", "selectedplan"]);
-      const userPaymentPlan = await _PaymentPlans.default.findOne({
-        _id: school.createdBy.selectedplan
-      }); // we write function for creating course(s) for stdentToken
-
-      const studentId = (0, _getIdFromToken.default)(paymentIntentSucceededData.metadata.studentToken);
-
-      for (let i = 0; i <= cartItems.length - 1; i++) {
-        const [course, product] = await Promise.all([_Course.default.findOne({
-          _id: cartItems[i].itemId
-        }), _Product.default.findOne({
-          _id: cartItems[i].itemId
-        })]);
-        const orderAmountInUSD = new _decimal.default(cartItems[i].itemPrice * usdRate);
-        const orderAmountInaira = new _decimal.default(cartItems[i].itemPrice * nairaRate);
-
-        if (course) {
-          const studentCourse = new _StudentCourse.default({
-            // creating the student purchased course
-            student: studentId,
-            // with the model instantiation
-            coursebought: cartItems[i].itemId,
-            boughtfrom: school._id
+        if (orderType == "time") {
+          // Find and update the webinar class end time
+          let webinar = await _Livewebinar.default.findOne({
+            streamKey
           });
-          const order = new _Order.default({
-            reference: paymentIntentSucceededData.id,
-            orderfrom: studentId,
-            orderedcourse: cartItems[i].itemId,
-            boughtfrom: school.createdBy._id,
-            amount_usd: orderAmountInUSD.toFixed(2),
-            amount: orderAmountInaira.toFixed(2),
-            ordertype: cartItems[i].itemType,
-            createdVia: "webhook",
-            tutor: course.tutor !== null ? course.tutor : null,
-            // actual earning function is used to
-            // ensure only the amount after commission of sales are removed is
-            // deducted...
-            actualearning: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInaira.toFixed(2), userPaymentPlan.percentchargepercoursesale),
-            actualearning_usd: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInUSD.toFixed(2), userPaymentPlan.percentchargepercoursesale)
-          }); // this is an instace method that makes the order have a
-          // pending date for withdrawals
 
-          order.setPendingOrderDate();
-
-          try {
-            //create Order for schools admin/tutor
-            await studentCourse.save();
-            await order.save();
-          } catch (error) {
-            console.log(error, "line 573 webhooks.js error");
+          if (!webinar) {
+            return res.status(404).json({
+              message: "Classroom not found"
+            });
           }
-        } else {
-          const studentProduct = new _StudentProduct.default({
-            student: studentId,
-            // with the model instantiation
-            productBought: cartItems[i].itemId,
-            boughtfrom: school._id
+
+          const additionalTimeMs = Number(added) * 60 * 1000;
+          webinar.classEndTime += additionalTimeMs;
+          await webinar.save();
+          res.json({
+            newTime: webinar.classEndTime
           });
-          const order = new _Order.default({
-            reference: paymentIntentSucceededData.id,
-            orderfrom: studentId,
-            orderedcourse: cartItems[i].itemId,
-            boughtfrom: school.createdBy._id,
-            amount_usd: orderAmountInUSD.toFixed(2),
-            amount: orderAmountInaira.toFixed(2),
-            ordertype: cartItems[i].itemType,
-            createdVia: "webhook",
-            tutor: product.tutor !== null ? product.tutor : null,
-            // actual earning function is used to
-            // ensure only the amount after commission of sales are removed is
-            // deducted...
-            actualearning: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInaira.toFixed(2), userPaymentPlan.percentchargepercoursesale),
-            actualearning_usd: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInUSD.toFixed(2), userPaymentPlan.percentchargepercoursesale)
-          }); // this is an instace method that makes the order have a
-          // pending date for withdrawals
-
-          order.setPendingOrderDate();
-
-          try {
-            //create Order for schools admin/tutor
-            await studentProduct.save();
-            await order.save();
-          } catch (error) {
-            console.log(error, "line 156 webhooks.js error");
-          }
         }
+
+      // const addResource = new AddResource({
+      //   orderfrom: req.user.id,
+      //   amount,
+      //   ordertype: orderType,
+      //   added,
+      // });
+    }
+  } // Handle the event
+  else {
+      switch (event.type) {
+        case "payment_intent.succeeded":
+          // Then define and call a function to handle the event payment_intent.succeeded
+          const cartItems = JSON.parse(paymentIntentSucceededData.metadata.cart); // find the school of which the course was purchased from.
+
+          const school = await _School.default.findOne({
+            name: paymentIntentSucceededData.metadata.schoolname
+          }).populate("createdBy", ["email", "selectedplan"]);
+          const userPaymentPlan = await _PaymentPlans.default.findOne({
+            _id: school.createdBy.selectedplan
+          }); // we write function for creating course(s) for stdentToken
+
+          const studentId = (0, _getIdFromToken.default)(paymentIntentSucceededData.metadata.studentToken);
+
+          for (let i = 0; i <= cartItems.length - 1; i++) {
+            const [course, product, webinar] = await Promise.all([_Course.default.findOne({
+              _id: cartItems[i].itemId
+            }), _Product.default.findOne({
+              _id: cartItems[i].itemId
+            }), _Livewebinar.default.findOne({
+              _id: cartItems[i].itemId
+            })]);
+            const orderAmountInUSD = new _decimal.default(cartItems[i].itemPrice * usdRate);
+            const orderAmountInaira = new _decimal.default(cartItems[i].itemPrice * nairaRate);
+
+            if (course) {
+              const studentCourse = new _StudentCourse.default({
+                // creating the student purchased course
+                student: studentId,
+                // with the model instantiation
+                coursebought: cartItems[i].itemId,
+                boughtfrom: school._id
+              });
+              const order = new _Order.default({
+                reference: paymentIntentSucceededData.id,
+                orderfrom: studentId,
+                orderedcourse: cartItems[i].itemId,
+                boughtfrom: school.createdBy._id,
+                amount_usd: orderAmountInUSD.toFixed(2),
+                amount: orderAmountInaira.toFixed(2),
+                ordertype: cartItems[i].itemType,
+                createdVia: "webhook",
+                tutor: course.tutor !== null ? course.tutor : null,
+                // actual earning function is used to
+                // ensure only the amount after commission of sales are removed is
+                // deducted...
+                actualearning: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInaira.toFixed(2), userPaymentPlan.percentchargepercoursesale),
+                actualearning_usd: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInUSD.toFixed(2), userPaymentPlan.percentchargepercoursesale)
+              }); // this is an instace method that makes the order have a
+              // pending date for withdrawals
+
+              order.setPendingOrderDate();
+
+              try {
+                //create Order for schools admin/tutor
+                await studentCourse.save();
+                await order.save();
+              } catch (error) {
+                console.log(error, "line 573 webhooks.js error");
+              }
+            }
+
+            if (webinar) {
+              const studentWebinar = new _StudentWebinar.default({
+                student: studentId,
+                // with the model instantiation
+                webinarBought: cartItems[i].itemId,
+                boughtfrom: school._id
+              });
+              const order = new _Order.default({
+                reference: paymentIntentSucceededData.id,
+                orderfrom: studentId,
+                orderedcourse: cartItems[i].itemId,
+                boughtfrom: school.createdBy._id,
+                amount_usd: orderAmountInUSD.toFixed(2),
+                amount: orderAmountInaira.toFixed(2),
+                ordertype: cartItems[i].itemType,
+                createdVia: "webhook",
+                tutor: webinar.tutor !== null ? webinar.tutor : null,
+                // actual earning function is used to
+                // ensure only the amount after commission of sales are removed is
+                // deducted...
+                actualearning: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInaira.toFixed(2), userPaymentPlan.percentchargepercoursesale),
+                actualearning_usd: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInUSD.toFixed(2), userPaymentPlan.percentchargepercoursesale)
+              }); // this is an instace method that makes the order have a
+              // pending date for withdrawals
+
+              order.setPendingOrderDate();
+
+              try {
+                //create Order for schools admin/tutor
+                await studentWebinar.save();
+                await order.save();
+              } catch (error) {
+                console.log(error, "line 573 webhooks.js error");
+              }
+            } else {
+              const studentProduct = new _StudentProduct.default({
+                student: studentId,
+                // with the model instantiation
+                productBought: cartItems[i].itemId,
+                boughtfrom: school._id
+              });
+              const order = new _Order.default({
+                reference: paymentIntentSucceededData.id,
+                orderfrom: studentId,
+                orderedcourse: cartItems[i].itemId,
+                boughtfrom: school.createdBy._id,
+                amount_usd: orderAmountInUSD.toFixed(2),
+                amount: orderAmountInaira.toFixed(2),
+                ordertype: cartItems[i].itemType,
+                createdVia: "webhook",
+                tutor: product.tutor !== null ? product.tutor : null,
+                // actual earning function is used to
+                // ensure only the amount after commission of sales are removed is
+                // deducted...
+                actualearning: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInaira.toFixed(2), userPaymentPlan.percentchargepercoursesale),
+                actualearning_usd: (0, _determineActualEaringPerCourseOrder.default)(orderAmountInUSD.toFixed(2), userPaymentPlan.percentchargepercoursesale)
+              }); // this is an instace method that makes the order have a
+              // pending date for withdrawals
+
+              order.setPendingOrderDate();
+
+              try {
+                //create Order for schools admin/tutor
+                await studentProduct.save();
+                await order.save();
+              } catch (error) {
+                console.log(error, "line 156 webhooks.js error");
+              }
+            }
+          }
+
+          break;
+        // ... handle other event types
+
+        case "customer.subscription.created":
+          // for when a subscription is just created
+          break;
+
+        case "customer.subscription.updated":
+          // for the monthly billing circle...
+          break;
+
+        default:
+          console.log(`Unhandled event type ${event.type}`);
       }
-
-      break;
-    // ... handle other event types
-
-    case "customer.subscription.created":
-      // for when a subscription is just created
-      break;
-
-    case "customer.subscription.updated":
-      // for the monthly billing circle...
-      break;
-
-    default:
-      console.log(`Unhandled event type ${event.type}`);
-  } // Return a 200 response to acknowledge receipt of the event
+    } // Return a 200 response to acknowledge receipt of the event
 
 
   res.send();
