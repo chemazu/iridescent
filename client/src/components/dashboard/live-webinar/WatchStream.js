@@ -80,7 +80,7 @@ function WatchStream({ schoolname }) {
 
   const playerRef = React.useRef(null);
   const screenPlayerRef = React.useRef(null);
-
+ 
   const handleAddStream = (stream) => {
     const pop = videoRef.current;
 
@@ -100,14 +100,17 @@ function WatchStream({ schoolname }) {
     //   player.autoplay(true);
     // } else {
     if (pop) {
+      if (!playerRef.current) {
       const videoElement = document.createElement("video-js");
       videoElement.srcObject = stream;
-      videoElement.classList.add("vjs-big-play-centered");
-      // Set the playsinline attribute to true
+
       videoElement.setAttribute("playsinline", true);
+
+      videoElement.classList.add("vjs-big-play-centered");
+
       videoRef.current.appendChild(videoElement);
 
-      if (!playerRef.current) {
+     
         const player = (playerRef.current = videojs(
           videoElement,
           options,
@@ -165,7 +168,7 @@ function WatchStream({ schoolname }) {
   if (localStorage.getItem("studentToken")) {
     setAuthToken(localStorage.getItem("studentToken"));
   }
-
+   
   function addVideoStream(stream) {
     const video = myVideoRef.current;
     setStreamSource(stream);
@@ -435,8 +438,10 @@ function WatchStream({ schoolname }) {
           console.log(call);
           call?.on("stream", (remoteStream) => {
             console.log("fish");
-            handleAddStream(remoteStream);
             setWaiting(false);
+            addVideoStream(remoteStream);
+  
+            // handleAddStream(remoteStream);
           });
         });
     };
@@ -456,7 +461,7 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect]);
+  }, [roomid, waiting]);
 
   useEffect(() => {
     const screenInstance = new Peer();

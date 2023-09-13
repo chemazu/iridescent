@@ -50,7 +50,7 @@ import stripeRoute from "./routes/stripe";
 import classroomresourcesRoute from "./routes/classroomresources";
 import livewebinarRoute from "./routes/livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
-import setupSocketIO from "./socketSetup";
+import setupSocketIO from "./socketSetup"; 
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -146,10 +146,7 @@ app.use("/api/v1/studentwebinar", studentWebinarRoute);
 const root = require("path").join(__dirname, "../client", "build");
 
 // block of code come's after application routes
-console.log(process.env.NODE_ENV);
-if (process.env.NODE_ENV == "production") {
-console.log(process.env.NODE_ENV);
-
+if (process.env.NODE_ENV === "production") {
   // set static files
   // app.use(express.static("client/build"));
 
