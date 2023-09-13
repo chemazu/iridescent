@@ -38,8 +38,13 @@ export default function Stream() {
   const { roomid } = useParams();
   const dispatch = useDispatch();
   const myVideoRef = useRef();
+  const myScreenRef = useRef();
   const peerRef = useRef();
+  const screenPeerRef = useRef();
+
+  const videoStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
+
   const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
   const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
@@ -99,6 +104,7 @@ export default function Stream() {
   const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
   const [mobileChat, setMobileChat] = useState(false);
+  const [screenMedia, setScreenMedia] = useState(false);
 
   const toggleAudioVisuals = (type) => {
     switch (type) {
@@ -1091,42 +1097,81 @@ export default function Stream() {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
     peerInstance.on("open", (peerId) => {
-      console.log("onep")
-      if (!screenSharing) {
-        socket.emit("broadcaster", roomid, peerId);
-      }
+      socket.emit("broadcaster", roomid, peerId);
     });
     handleFreeTimer();
 
-    if (screenSharing) {
-      navigator.mediaDevices
-        .getDisplayMedia({ video: true, audio: true })
-        .then((stream) => {
-          screenStreamRef.current = stream;
-          socket.emit("startScreenSharing", roomid);
-          addVideoStream(myVideoRef.current, stream);
-        });
-    } else {
-      navigator.mediaDevices
-        .getUserMedia(audioVisuals)
+    navigator.mediaDevices
+      .getUserMedia(audioVisuals)
 
-        .then((stream) => {
-          addVideoStream(myVideoRef.current, stream);
-          screenStreamRef.current = stream;
-        })
-        .catch((error) => console.error(error));
-    }
+      .then((stream) => {
+        addVideoStream(myVideoRef.current, stream);
+        videoStreamRef.current = stream;
+      })
+      .catch((error) => console.error(error));
 
     peerInstance.on("call", (call) => {
-      console.log(screenStreamRef.current);
-      call.answer(screenStreamRef.current);
+      console.log(videoStreamRef.current);
+      call.answer(videoStreamRef.current);
     });
+
+  };
+  const initializeScreenPeer = async () => {
+    navigator.mediaDevices
+      .getDisplayMedia({ video: true, audio: true })
+      .then((stream) => {
+        const screenInstance = new Peer();
+        screenPeerRef.current = screenInstance;
+        screenInstance.on("open", (peerId) => {
+          socket.emit("startScreenSharing", roomid, peerId);
+        });
+        // screenStreamRef.current = stream;
+        addVideoStream(myScreenRef.current, stream);
+        // screenStreamRef.current = stream;
+        // setScreenMedia(stream)
+        screenInstance.on("call", (call) => {
+          console.log("dsdsdsdcasl");
+          call.answer(stream);
+        });
+        //   console.log(screenStreamRef.current);
+        //   console.log(screenMedia);
+        //   console.log("within")
+
+        //   call.answer(screenStreamRef.current);
+        // });}
+      });
+    // screenInstance.on("call", (call) => {
+    //   // console.log(screenStreamRef.current);
+    //   // console.log(screenMedia);
+
+    //   call.answer(screenStreamRef.current);
+    //   call.answer(screenMedia)
+    // });
+    // screenInstance.on("call", (call) => {
+    //   console.log(stream);
+    //   call.answer(screenStreamRef.current);
+    // });
   };
   useEffect(() => {
     if (startController) {
       initializePeer();
+      if (screenSharing) {
+
+        initializeScreenPeer();
+      } else {
+        console.log("do stuff");
+      }
     }
-  }, [roomid, startController, screenSharing, audioVisuals]);
+    return () => {
+      // Destroy the Peer instance
+      if (peerRef.current) {
+        peerRef.current.destroy();
+      }
+
+      // Remove any references and cleanup here
+      // For example, you can remove event listeners and close streams if needed
+    };
+  }, [roomid, startController, screenSharing, audioVisuals, screenMedia]);
 
   useEffect(() => {
     // async function getMediaDevices() {
@@ -1179,10 +1224,12 @@ export default function Stream() {
   const toggleScreenSharing = () => {
     if (screenSharing) {
       setScreenSharing(false);
-      screenStreamRef.current = null;
-      socket.emit("stopScreenSharing", roomid);
+      // initializeScreenPeer()
+      // screenStreamRef.current = null;
+      // socket.emit("stopScreenSharing", roomid);
     } else {
       setScreenSharing(true);
+      // initializeScreenPeer();
     }
   };
 
@@ -1547,7 +1594,6 @@ export default function Stream() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                           
                             if (resourceCount?.quizCount >= 3) {
                               setMoreResources({
                                 status: "true",
@@ -2215,6 +2261,7 @@ export default function Stream() {
                             </div>
                           )}
                           <video ref={myVideoRef} muted />
+                          <video ref={myScreenRef} muted />
                         </>
                       ) : (
                         <>
@@ -2288,21 +2335,20 @@ export default function Stream() {
                                     key={device.deviceId}
                                     value={device.deviceId}
                                   >
-                                 {
-                                    removeDefaultPrefix(device.label)}
+                                    {removeDefaultPrefix(device.label)}
                                   </option>
                                 ))}
                               </select>
                             </div>
                             <div
                               className="control-object"
-                             
+
                               // onClick={toggleVideo}
                             >
                               <i
-                               onClick={() => {
-                                toggleAudioVisuals("cam");
-                              }}
+                                onClick={() => {
+                                  toggleAudioVisuals("cam");
+                                }}
                                 className="fas fa-video"
                                 style={
                                   !audioVisuals.video

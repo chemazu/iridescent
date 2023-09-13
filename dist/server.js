@@ -1,10 +1,5 @@
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.io = void 0;
-
 var _path = _interopRequireDefault(require("path"));
 
 var _express = _interopRequireDefault(require("express"));
@@ -118,16 +113,14 @@ _cloudinary.default.v2.config({
 const app = (0, _express.default)();
 const PORT = process.env.PORT || 5000; // const server = http.createServer(app);
 
-const server = (0, _socketSetup.default)(app);
-const io = new _socket.Server(server, {
-  cors: {
-    // origin: "http://localhost:3000",
-    origin: "*"
-  }
-}); // middle ware to exclude cloudflare webhooks endpoint path
+const server = (0, _socketSetup.default)(app); // export const io = new Server(server, {
+//   cors: {
+//     // origin: "http://localhost:3000",
+//     origin: "*",
+//   },
+// });
+// middle ware to exclude cloudflare webhooks endpoint path
 // from app.use(express.json()) middleware
-
-exports.io = io;
 
 const unless = function (paths, middleware) {
   return function (req, res, next) {

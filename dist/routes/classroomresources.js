@@ -212,29 +212,7 @@ router.get("/count", [_auth.default], async (req, res) => {
             $sum: "$added"
           }
         }
-      }]); // AddResource.aggregate([
-      //   {
-      //     $match: {
-      //       orderfrom: mongoose.Types.ObjectId(creator),
-      //       ordertype: "poll",
-      //     },
-      //   },
-      //   {
-      //     $group: {
-      //       _id: null,
-      //       totalAdded: { $sum: "$added" },
-      //     },
-      //   },
-      // ]).exec((err, result) => {
-      //   if (err) {
-      //     console.error(err);
-      //     return;
-      //   }
-      //   // 'result' will contain an array with one object, which has the total sum
-      //   const totalSum = result[0]?.totalAdded || 0;
-      //   console.log("Sum of 'added' values:", totalSum);
-      // });
-
+      }]);
       let addedQuizLength = addedQuiz.reduce((accumulator, object) => {
         return accumulator + object.added || 0;
       }, 0);
@@ -244,14 +222,6 @@ router.get("/count", [_auth.default], async (req, res) => {
       let updatedPollCount = pollResources.length - addedPollLength;
       let updatedQuizCount = quizResources.length - addedQuizLength;
       let totalCount = pollResources.length + quizResources.length;
-      console.log({
-        resourceCount: totalCount,
-        paymentInfo: "free",
-        pollCount: updatedPollCount,
-        quizCount: updatedQuizCount,
-        sumAddedPoll,
-        addedPollLength
-      });
       res.json({
         resourceCount: totalCount,
         paymentInfo: "free",

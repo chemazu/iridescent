@@ -30,6 +30,7 @@ const setupSocketIO = app => {
   let broadcasterScreen = {};
   io.on("connection", socket => {
     socket.on("broadcaster", async (roomId, peerId) => {
+      console.log("brosa");
       newBroadcasterHolder[roomId] = {
         peerId,
         socketId: socket.id
@@ -74,8 +75,9 @@ const setupSocketIO = app => {
         io.to(socket.id).emit("no stream");
       }
     });
-    socket.on("startScreenSharing", roomId => {
-      io.in(roomId).emit("screenSharingStatus", true, newBroadcasterHolder[roomId].peerId);
+    socket.on("startScreenSharing", (roomId, peerId) => {
+      io.in(roomId).emit("startScreenSharing", // newBroadcasterHolder[roomId].peerId
+      peerId);
     });
     socket.on("stopScreenSharing", roomId => {
       io.in(roomId).emit("screenSharingStatus", false, newBroadcasterHolder[roomId].peerId);
@@ -150,7 +152,6 @@ const setupSocketIO = app => {
     socket.on("updatedPollResult", (roomid, updatedResults) => {
       io.in(roomid).emit("updatedPollResult", updatedResults);
     });
-    cd;
     socket.on("endstream", async roomid => {
       // Check if the socket is a broadcaster
       const socketId = socket.id;

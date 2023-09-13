@@ -38,6 +38,9 @@ function WatchStream({ schoolname }) {
 
   const myVideoRef = useRef();
   const videoRef = useRef(null);
+  const screenRef = useRef(null);
+  const screenPeerRef = useRef(null);
+
   const peerRef = useRef(null);
   const chatInterfaceRef = useRef(null);
   const [title, setTitle] = useState("");
@@ -76,52 +79,34 @@ function WatchStream({ schoolname }) {
   const [streamSource, setStreamSource] = useState(null);
 
   const playerRef = React.useRef(null);
+  const screenPlayerRef = React.useRef(null);
 
-  const replaceVideoElement = (stream) => {
-    console.log("first");
-    // Remove the existing video element if it exists
-    if (playerRef.current) {
-      playerRef.current.dispose(); // Dispose the videojs player
-      playerRef.current = null;
-      if (videoRef.current) {
-        videoRef.current.innerHTML = "";
-      } // Clear the video container
-    }
-
-    const videoElement = document.createElement("video");
-    videoElement.setAttribute("playsinline", "true");
-    videoElement.classList.add("video-js", "vjs-big-play-centered");
-    videoElement.srcObject = stream;
-    videoElement.height = "100%";
-
-    videoRef.current.appendChild(videoElement);
-    const shouldMuteVideo = !audioVisuals?.audio || false;
-
-    const player = (playerRef.current = videojs(
-      videoElement,
-      {
-        muted: shouldMuteVideo,
-      },
-      () => {
-        console.log("Player is ready");
-      }
-    ));
-
-    player.autoplay(true);
-  };
   const handleAddStream = (stream) => {
-    // Make sure Video.js player is only initialized once
     const pop = videoRef.current;
 
     // The Video.js player needs to be _inside_ the component el for React 18 Strict Mode.
+    // if (pop) {
+    // if (!playerRef.current) {
+    //   const videoElement = document.createElement("video-js");
+    //   videoElement.srcObject = stream;
+    //   videoElement.classList.add("vjs-big-play-centered");
+
+    //   videoRef.current.appendChild(videoElement);
+
+    //   const player = (playerRef.current = videojs(videoElement, options, () => {
+    //     videojs.log("player is ready");
+    //     // onReady && onReady(player);
+    //   }));
+    //   player.autoplay(true);
+    // } else {
     if (pop) {
+      const videoElement = document.createElement("video-js");
+      videoElement.srcObject = stream;
+      videoElement.classList.add("vjs-big-play-centered");
+
+      videoRef.current.appendChild(videoElement);
+
       if (!playerRef.current) {
-        const videoElement = document.createElement("video-js");
-        videoElement.srcObject = stream;
-        videoElement.classList.add("vjs-big-play-centered");
-
-        videoRef.current.appendChild(videoElement);
-
         const player = (playerRef.current = videojs(
           videoElement,
           options,
@@ -131,66 +116,40 @@ function WatchStream({ schoolname }) {
           }
         ));
         player.autoplay(true);
+      } else {
+        console.log("disconnect");
       }
-      console.log("wer");
-    } else {
-      console.log("firstyuyuy");
     }
+    // }
+
+    // } else {
+    //   console.log("firstyuyuy");
+    // }
     // You could update an existing player in the `else` block here
     // on prop change, for example:
   };
-  const handleAddScreenSharing = () => {
-    console.log("screensharing");
+  const handleAddScreenStream = (stream) => {
+    console.log("handleAddScreenStream");
+    const pop = screenRef.current;
+    if (pop) {
+      if (!screenPlayerRef.current) {
+        const videoElement = document.createElement("video-js");
+        videoElement.srcObject = stream;
+        videoElement.classList.add("vjs-big-play-centered");
+        screenRef.current.appendChild(videoElement);
+        const screenPlayer = (screenPlayerRef.current = videojs(
+          videoElement,
+          options,
+          () => {
+            videojs.log("screen player is ready");
+          }
+        ));
+        screenPlayer.autoplay(true);
+      }
+    } else {
+    }
   };
-  // const handleAddStream = (stream) => {
-  //   if (!playerRef.current) {
-  //     const videoElement = document.createElement("video");
-  //     videoElement.setAttribute("playsinline", "true");
-  //     videoElement.classList.add("video-js", "vjs-big-play-centered");
-  //     videoElement.srcObject = stream; // Set the MediaStream as the source
 
-  //     videoRef.current.appendChild(videoElement);
-
-  //     const shouldMuteVideo = !audioVisuals?.audio;
-
-  //     // work with the audio visual object to know if the video will be muted or not
-
-  //     const player = (playerRef.current = videojs(
-  //       videoElement,
-  //       {
-  //         muted: shouldMuteVideo,
-  //       },
-  //       () => {
-  //         console.log("Player is ready");
-  //       }
-  //     ));
-
-  //     player.autoplay(true);
-
-  //     // You can set other options for the player here
-  //     // player.playbackRates([0.5, 1, 1.25, 1.5, 2]);
-  //     // player.dimensions(720, 300);
-
-  //     // Optionally add controls
-  //     // player.controls(true);
-  //   } else {
-  //     console.log("else");
-  //     replaceVideoElement(stream);
-  //   }
-  // };
-
-  // const onReady = (player) => {
-  //   playerRef.current = player;
-
-  //   // You can handle player events here, for example:
-  //   player.on("waiting", () => {
-  //     videojs.log("player is waiting");
-  //   });
-
-  //   player.on("dispose", () => {
-  //     videojs.log("player will dispose");
-  //   });
-  // };
   const store = useStore();
   const appState = store.getState();
   const { student } = appState;
@@ -460,89 +419,74 @@ function WatchStream({ schoolname }) {
   }, [audioVisuals]);
 
   useEffect(() => {
-    socket.on("audioVisuals", (status) => {
-      console.log("first ica", status);
-      setAudioVisuals(status);
-    });
-    return () => {
-      socket.off("audioVisuals");
-    };
-  }, [roomid]);
-  useEffect(() => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
-
     peerInstance.on("open", (user) => {
       socket.emit("watcher", roomid, user);
     });
     const startClass = (peerId, stat) => {
-      console.log("startClass ", stat, peerId);
+      console.log("ksdsd", stat);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
-          const call = peerInstance?.call(peerId, newStream);
+          console.log(peerInstance, peerId, newStream);
+          const call = peerInstance.call(peerId, newStream);
           console.log(call);
           call?.on("stream", (remoteStream) => {
-            // addVideoStream(remoteStream);
+            console.log("fish");
             handleAddStream(remoteStream);
-
             setWaiting(false);
-
-            // Handle the incoming stream
           });
         });
     };
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
-      // setAudioVisuals(roomStatus)
-
       startClass(peerId, "join");
-      setPresenterPeer(peerId);
-      console.log(roomStatus);
-      // Handle the join stream event
-
-      // initiateCall(peerId)
-    });
-    socket.on("broadcaster", (peerId) => {
-      setDisconnect(false);
-      setPresenterPeer(peerId);
-
-      startClass(peerId, "broad");
       setWaiting(false);
     });
-    socket.on("screenSharingStatus", (status, peerId) => {
-      // console.log(status);
-      // console.log(peerId);
-
-      // if (status) {
-      //   console.log("screensharing");
-      // } else {
-      //   if (playerRef.current) {
-      //     playerRef.current.dispose(); // Dispose the videojs player
-      //     playerRef.current = null;
-      //     videoRef.current.innerHTML = ""; // Clear the video container
-      //   }
-      //   console.log("iii");
-      //   startClass(peerId, "screenss");
-      // }
-      handleAddScreenSharing(peerId);
+    socket.on("broadcaster", (peerId) => {
+      console.log(peerId);
+      startClass(peerId, "broadcaster");
+      setWaiting(false);
+      setDisconnect(false);
     });
+
     return () => {
       peerInstance.destroy();
       socket.off("join stream");
       socket.off("broadcaster");
-      socket.off("screenSharingStatus");
     };
-  }, [roomid, audioVisuals, waiting]);
+  }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
-    socket.on("join stream", (roomSize, peerId, roomStatus) => {
-      setAudioVisuals(roomStatus);
+    const screenInstance = new Peer();
+    screenPeerRef.current = screenInstance;
+    screenInstance.on("open", (user) => {});
+    const startScreenSharing = (peerId, stat) => {
+      console.log(stat);
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((newStream) => {
+          console.log("foo");
+          const call = screenInstance?.call(peerId, newStream);
+          console.log(call);
+          call?.on("stream", (remoteStream) => {
+            console.log("start stream");
+            handleAddScreenStream(remoteStream);
+          });
+        });
+    };
+    socket.on("join screen stream", (peerId) => {
+      startScreenSharing(peerId, "enterace");
 
-      // setPresenterPeer(peerId);
-      console.log(roomStatus);
+      console.log("screensharing available");
     });
+    socket.on("startScreenSharing", (peerId) => {
+      console.log("first");
+      startScreenSharing(peerId, "screnn");
+    });
+
     return () => {
-      socket.off("join stream");
+      socket.off("screenSharingStatus");
     };
   }, [roomid]);
 
@@ -653,8 +597,11 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     socket.on("broadcaster-disconnected", () => {
       setDisconnect(true);
+      setWaiting(false);
+      playerRef.current = null;
+
       setSpecialChat([]);
-      removeStream();
+      // removeStream();
     });
     return () => {
       socket.off("broadcaster-disconnected");
@@ -737,7 +684,7 @@ function WatchStream({ schoolname }) {
       <Container fluid>
         <Row>
           <Col className="page-actions__col">
-            {waiting && <p>dsd</p>}
+            {/* {waiting && <p>dsd</p>} */}
             <div className="live-webinar watch-screen">
               <div className="stream-webinar-content watch-webinar-content">
                 <div
@@ -854,13 +801,15 @@ function WatchStream({ schoolname }) {
                                   borderRadius: "10px",
                                 }}
                               >
-                                <div
-                                  ref={videoRef}
-                                  className={
-                                    VideoFill ? "filled-video" : "empty"
-                                  }
-                                ></div>
-
+                                <div>
+                                  <div
+                                    ref={videoRef}
+                                    className={
+                                      VideoFill ? "filled-video" : "empty"
+                                    }
+                                  ></div>
+                                  <div ref={screenRef}></div>
+                                </div>
                                 {!audioVisuals?.video ||
                                   (false && (
                                     <div className="broadcaster-disconnected reconnect-loading no-video">

@@ -9,51 +9,52 @@ const setupSocketIO = (app) => {
       origin: "*",
     },
   });
-
   const timers = {};
   const timerControl = {};
   const roomStatus = {};
-  const newBroadcasterHolder = {};
+  const broadcasterHolder = {};
   const freeTimers = {};
   let pollQuizHolder = {};
   let broadcasterScreen = {};
   io.on("connection", (socket) => {
+    // broadcaster
     socket.on("broadcaster", async (roomId, peerId) => {
-      console.log("brosa");
-      newBroadcasterHolder[roomId] = { peerId, socketId: socket.id };
+      broadcasterHolder[roomId] = { peerId, socketId: socket.id };
       socket.join(roomId);
       socket.broadcast
         .to(roomId)
-        .emit("broadcaster", newBroadcasterHolder[roomId]);
+        .emit("broadcaster", broadcasterHolder[roomId].peerId);
       let currentWebinar = await LiveWebinar.findOne({ streamKey: roomId });
       currentWebinar.isLive = true;
       await currentWebinar.save();
     });
-    socket.on("disablevideo", (roomId, status) => {
-      io.in(roomId).emit("disablevideo", status);
-      broadcasterScreen[roomId] = status;
-    });
+
     socket.on("watcher-exit", (roomId) => {
       const room = io.sockets.adapter.rooms.get(roomId);
       let roomSize = room ? room.size : 1;
       io.in(roomId).emit("watcher-exit", roomSize);
     });
-    socket.on("audioVisuals", (roomId, status) => {
-      io.in(roomId).emit("audioVisuals", status);
-      roomStatus.roomId = status;
-    });
+
     socket.on("watcher", async (roomId, userId) => {
       socket.join(roomId);
       const room = io.sockets.adapter.rooms.get(roomId);
       let roomSize = room ? room.size : 1;
       // check screensharing
-      if (newBroadcasterHolder[roomId]) {
+
+      if (broadcasterHolder[roomId]) {
+        if (broadcasterScreen[roomId]) {
+          io.to(socket.id).emit(
+            "join screen stream",
+            broadcasterScreen[roomId].peerId
+          );
+        }
+
         io.to(socket.id).emit(
           "join stream",
           roomSize,
-          newBroadcasterHolder[roomId].peerId,
-          roomStatus.roomId
+          broadcasterHolder[roomId].peerId
         );
+
         io.in(roomId).emit("watcher", socket.id, roomSize);
         let roomTimer = null;
         if (freeTimers[roomId]) {
@@ -63,28 +64,23 @@ const setupSocketIO = (app) => {
           "currentStatus",
           roomSize,
           roomTimer,
-          pollQuizHolder[roomId],
-          broadcasterScreen[roomId]
+          pollQuizHolder[roomId]
         );
       } else {
         io.to(socket.id).emit("no stream");
       }
     });
 
-    socket.on("startScreenSharing", (roomId) => {
-      io.in(roomId).emit(
-        "screenSharingStatus",
-        true,
-        newBroadcasterHolder[roomId].peerId
-      );
+    socket.on("startScreenSharing", (roomId, peerId) => {
+      broadcasterScreen[roomId] = { peerId, socketId: socket.id };
+      console.log(broadcasterScreen);
+      io.in(roomId).emit("startScreenSharing", peerId);
     });
 
     socket.on("stopScreenSharing", (roomId) => {
-      io.in(roomId).emit(
-        "screenSharingStatus",
-        false,
-        newBroadcasterHolder[roomId].peerId
-      );
+      delete broadcasterScreen[roomId];
+      console.log(broadcasterScreen);
+      io.in(roomId).emit("stopScreenSharing");
     });
 
     socket.on("message", (message, roomId) => {
@@ -170,7 +166,7 @@ const setupSocketIO = (app) => {
         await endLiveWebinar.save();
       }
 
-      Object.entries(newBroadcasterHolder).forEach(
+      Object.entries(broadcasterHolder).forEach(
         async ([roomId, broadcaster]) => {
           if (broadcaster.socketId === socketId) {
             // The disconnected socket was a broadcaster
@@ -194,7 +190,37 @@ const setupSocketIO = (app) => {
                 // await LiveWebinar.findByIdAndRemove(liveWebinar._id);
               }
             }
-            delete newBroadcasterHolder[roomId];
+            delete broadcasterHolder[roomId];
+            delete broadcasterScreen[roomId];
+          }
+        }
+      );
+    });
+    socket.on("disconnect", async () => {
+      // Check if the socket is a broadcaster
+      const socketId = socket.id;
+
+      Object.entries(broadcasterHolder).forEach(
+        async ([roomId, broadcaster]) => {
+          if (broadcaster.socketId === socketId) {
+            // The disconnected socket was a broadcaster
+            socket.broadcast.to(roomId).emit("broadcaster-disconnected");
+            if (freeTimers[roomId]) {
+              console.log(freeTimers[roomId]);
+              let liveWebinar = await LiveWebinar.findOne({
+                streamKey: roomId,
+              });
+
+              if (liveWebinar) {
+                liveWebinar.timeleft = freeTimers[roomId];
+                await liveWebinar.save();
+                clearInterval(timerControl[roomId]);
+                delete timerControl[roomId];
+
+                delete freeTimers[roomId];
+              }
+            }
+            delete broadcasterHolder[roomId];
           }
         }
       );
