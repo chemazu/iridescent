@@ -103,7 +103,8 @@ function WatchStream({ schoolname }) {
       const videoElement = document.createElement("video-js");
       videoElement.srcObject = stream;
       videoElement.classList.add("vjs-big-play-centered");
-
+      // Set the playsinline attribute to true
+      videoElement.setAttribute("playsinline", true);
       videoRef.current.appendChild(videoElement);
 
       if (!playerRef.current) {

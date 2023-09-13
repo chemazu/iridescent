@@ -147,7 +147,7 @@ const root = require("path").join(__dirname, "../client", "build");
 
 // block of code come's after application routes
 console.log(process.env.NODE_ENV);
-if (process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV == "production") {
   // set static files
   // app.use(express.static("client/build"));
 
