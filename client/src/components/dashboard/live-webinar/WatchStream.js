@@ -80,7 +80,7 @@ function WatchStream({ schoolname }) {
 
   const playerRef = React.useRef(null);
   const screenPlayerRef = React.useRef(null);
- 
+
   const handleAddStream = (stream) => {
     const pop = videoRef.current;
 
@@ -101,16 +101,14 @@ function WatchStream({ schoolname }) {
     // } else {
     if (pop) {
       if (!playerRef.current) {
-      const videoElement = document.createElement("video-js");
-      videoElement.srcObject = stream;
+        const videoElement = document.createElement("video-js");
+        videoElement.setAttribute("playsinline", true);
+        videoElement.classList.add("vjs-big-play-centered");
 
-      videoElement.setAttribute("playsinline", true);
+        videoElement.srcObject = stream;
 
-      videoElement.classList.add("vjs-big-play-centered");
+        videoRef.current.appendChild(videoElement);
 
-      videoRef.current.appendChild(videoElement);
-
-     
         const player = (playerRef.current = videojs(
           videoElement,
           options,
@@ -126,9 +124,10 @@ function WatchStream({ schoolname }) {
     }
     // }
 
-    // } else {
-    //   console.log("firstyuyuy");
-    // }
+    /*  */
+    else {
+      console.log("firstyuyuy");
+    }
     // You could update an existing player in the `else` block here
     // on prop change, for example:
   };
@@ -138,6 +137,7 @@ function WatchStream({ schoolname }) {
     if (pop) {
       if (!screenPlayerRef.current) {
         const videoElement = document.createElement("video-js");
+        videoElement.setAttribute("playsinline", true);
         videoElement.srcObject = stream;
         videoElement.classList.add("vjs-big-play-centered");
         screenRef.current.appendChild(videoElement);
@@ -168,7 +168,7 @@ function WatchStream({ schoolname }) {
   if (localStorage.getItem("studentToken")) {
     setAuthToken(localStorage.getItem("studentToken"));
   }
-   
+
   function addVideoStream(stream) {
     const video = myVideoRef.current;
     setStreamSource(stream);
@@ -438,10 +438,8 @@ function WatchStream({ schoolname }) {
           console.log(call);
           call?.on("stream", (remoteStream) => {
             console.log("fish");
+            handleAddStream(remoteStream);
             setWaiting(false);
-            addVideoStream(remoteStream);
-  
-            // handleAddStream(remoteStream);
           });
         });
     };
@@ -461,7 +459,7 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting]);
+  }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
     const screenInstance = new Peer();
