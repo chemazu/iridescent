@@ -1,0 +1,124 @@
+.tutorial-modal__header h3 {
+    color: var(--site-dark-color);
+    font-weight: 500;
+    font-size: 18px;
+    text-transform: capitalize;
+}
+
+.tutorial-modal__header i {
+    color: var(--site-dark-color);
+    font-size: 17px;
+    cursor: pointer;
+}
+
+.display-tutorial-error {
+    height: 50vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}   
+
+.display-tutorial-error p {
+    color: var(--site-dark-color);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.video-player__container {
+    padding: .4rem 1rem;
+    height: fit-content;
+}
+
+.inline-video-player {
+    height: 70vh;
+    width: 100%;
+}
+
+.more-walkthroughs__container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 40vh;
+    padding-top: .4rem;
+    overflow-y: auto;
+}
+
+.more-walkthroughs__container h4 {
+    color: var(--site-dark-color);
+    font-weight: 500;
+    font-size: 19px;
+    padding-left: 2rem;
+}
+
+.more-walkthroughs__item {
+    width: 100%;
+    padding: .7rem 2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    transition: all .4s;
+}
+
+.more-walkthroughs__item:hover {
+    background-color: var(--site-theme-color);
+}
+
+.more-walkthroughs__item
+.tutorial-item-img__container {
+    width: 200px;
+}
+
+.more-walkthroughs__item
+.tutorial-item__details {
+    display: flex;
+    width: 85%;
+    align-items: center;
+    justify-content: space-between;
+    margin-left: 1.7rem;
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.more-walkthroughs__item
+.tutorial-item__details p {
+    color: var(--site-dark-color);
+}
+
+.more-walkthroughs__item:hover 
+.tutorial-item__details p {
+    color: var(--site-white-color);
+    transition: all .4s;
+}
+
+.more-walkthroughs__item .tutorial-title {
+    font-weight: 500;
+}
+
+.more-walkthroughs__item .tutorial-duration {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.tutorial-item-active {
+    background-color: var(--site-theme-color);
+}
+
+.tutorial-item-active
+.tutorial-item__details p {
+    color: var(--site-white-color);
+}
+
+@media screen and (max-width: 682px) { 
+
+    .more-walkthroughs__item
+    .tutorial-item__details {
+        margin-left: .8rem;
+    }
+
+    .more-walkthroughs__item
+    .tutorial-item__details p {
+        font-size: 11px;
+    }
+}

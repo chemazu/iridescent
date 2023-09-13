@@ -1,0 +1,42 @@
+.courses-carousel {
+    overflow: hidden;
+  }
+  
+  .courses-inner {
+    white-space: nowrap;
+    transition: transform 0.3s;
+  }
+  
+  .courses-carousel-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 15px solid #fff;
+    width: 25%;
+    box-sizing: border-box;
+    /* color: #fff; */
+  }
+  
+  .indicators {
+    display: flex;
+    justify-content: center;
+  }
+  
+  .indicators > button {
+    margin: 5px;
+  }
+  
+  .indicators > button.active {
+    color: #fff;
+  }
+  
+  
+  @media screen and (max-width: 768px) {
+    .courses-carousel-item {
+      width: 100%;
+    border-right: 0px solid #fff;
+  
+    }
+  }
+  
+  

@@ -1,0 +1,20 @@
+.discussion-container {
+  margin-top: 10px;
+}
+
+.total-discussions {
+  color: #fff;
+}
+
+.load-more-discussions,
+.load-more-discussions:active,
+.load-more-discussions:hover {
+  cursor: pointer;
+  border: none !important;
+  /* color: var(--alt-text-color);
+  background-color: transparent; */
+}
+
+.add-new-discussion__form {
+  width: 100%;
+}

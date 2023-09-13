@@ -1,0 +1,105 @@
+.school-dafault-navbar {
+  position: relative;
+}
+
+.school-dafault-navbar .toggler-style {
+  color: #fff;
+}
+
+.navbar-edit-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 6px solid #e45e66;
+  transition: all 10;
+  cursor: pointer;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 1;
+  display: none;
+  transition: all 0.9s;
+}
+
+.school-dafault-navbar:hover .navbar-edit-overlay {
+  display: block;
+}
+
+.school-dafault-navbar:active .navbar-edit-overlay {
+  display: block;
+  cursor: grabbing;
+  border: 6px solid #f6c028;
+}
+
+.navbar-edit-overlay-controls {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.update-logo__btn,
+.update-logo__btn:hover,
+.update-logo__btn:active {
+  color: #ffffff !important;
+  background-color: #e45e66 !important;
+  border: none;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.logo-upload-body {
+  width: 100%;
+  padding: 3rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-upload-body .upload-instructions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.logo-upload-body .upload-instructions i {
+  font-size: 2.5rem;
+  color: var(--site-dark-color);
+  margin-bottom: 0.5rem;
+}
+
+.logo-upload-body .upload-instructions p {
+  color: var(--site-dark-color);
+  margin-top: 1rem;
+}
+
+.uploaded-logo-preview__container {
+  height: 10rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.uploaded-logo-preview__container p {
+  color: #18c115;
+  margin-top: 3px;
+}
+
+.uploaded-logo-preview__container img {
+  height: 100%;
+}
+
+/* .page-wrapper {
+  position: relative;
+  height: fit-content;
+  width: 100%;
+} */
+
+@media screen and (max-width: 992px) {
+  .school-navbar-btn {
+    margin: 7px;
+  }
+}

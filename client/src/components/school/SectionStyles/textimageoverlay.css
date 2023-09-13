@@ -1,0 +1,114 @@
+.text-overlay-image-background {
+    padding-top: 8vh;
+    padding-right: 1vw;
+    padding-left: 1vw;
+    padding-bottom: 10vh;
+    width: 100%;
+    position: relative;
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.text-overlay-header {
+    text-align: center;
+    font-weight: 700;
+    font-size: 3rem;
+    max-width: 80%;
+}
+
+.subtitle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.text-overlay-subtitle {
+    text-align: center;
+    max-width: 80%;
+    font-size: 18px;
+}
+
+.image-gallery-title {
+    font-weight: 700;   
+    font-size: 20px;
+    text-transform: capitalize;
+}
+
+.text-image-section-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 6px solid #e45e66;
+    transition: all 10;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+    display: none;
+    transition: all .9s;
+}
+
+.text-overlay-image-background:hover .text-image-section-overlay {
+    display: block;
+}
+
+.text-overlay-image-background:active .text-image-section-overlay {
+    display: block;
+    cursor: grabbing;
+    border: 6px solid #F6C028;
+}
+
+.text-image-section-overlay .text-image-Controls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* jvfjfkj */
+
+.text-image-section-overlay .add-section-btn {
+    width: 100px;
+    height: 50px;
+    background-color: #e45e66;
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.text-image-section-overlay .add-section-btn i {
+    color: #fff;
+    font-size: 1.8rem;
+}
+
+/* .kvfkler */
+
+.text-image-section-overlay .text-image-Controls button,
+.text-image-section-overlay .text-image-Controls button:hover,
+.text-image-section-overlay .text-image-Controls button:active
+{
+    padding-left: 50px;
+    padding-right: 50px;
+    margin: 10px;
+    background-color: #e45e66;
+    color: #fff;
+    border: none;
+}
+
+@media screen and (max-width: 767px) {
+    .text-overlay-header {
+        font-size: 1.4rem;
+    }
+}

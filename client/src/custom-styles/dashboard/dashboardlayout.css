@@ -1,0 +1,350 @@
+.dashboard-layout {
+  height: 100vh;
+  max-height: 100vh;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.dashboard-layout .col-auto,
+.col,
+.col-sm-2,
+.col-md-2,
+.col-xs-2,
+.col-xl-2 {
+  padding: 0px;
+}
+
+.page-actions__col {
+  overflow-y: auto;
+  height: 100vh;
+  max-height: 100vh;
+}
+
+.page-actions {
+  background-color: var(--site-background-color);
+  height: fit-content;
+  width: 100%;
+  overflow-y: auto;
+  min-height: 100vh;
+  position: relative;
+}
+
+.dashboard-layout .vertical-navbar {
+  background-color: var(--site-white-color);
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.dashboard-layout .tutorly-logo {
+  width: 90%;
+  margin-top: 14px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.dashboard-layout .tutorly-logo img {
+  width: 100%;
+  height: 45px;
+  object-fit: contain;
+}
+
+.vertical-navbar__col {
+  overflow-y: auto;
+  width: 100%;
+}
+
+/* .vertical-navbar {
+  overflow-y: auto;
+} */
+
+.vertical-navbar .logged-in-user__info {
+  margin-top: 15px;
+  position: relative;
+}
+
+.avatar-upload__btn {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 50%;
+  display: block;
+  color: var(--site-white-color);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  transition: all 3s;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.vertical-navbar .logged-in-user__info:hover .avatar-upload__btn {
+  display: flex;
+}
+
+.vertical-navbar .collapse-opener-link-item {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vertical-navbar .collapse-links {
+  font-size: 12px;
+}
+
+.vertical-navbar .logged-in-user__image {
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto;
+}
+
+.vertical-navbar .logged-in-user__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.vertical-navbar .logged-in-user__school-name {
+  font-weight: 800;
+  margin-bottom: 0;
+  font-size: 15px;
+  color: var(--site-dark-color);
+  margin: 0 10px;
+}
+
+.vertical-navbar .logged-in-user__email {
+  font-size: 14px;
+  color: var(--site-dark-color);
+  margin-bottom: 0;
+  margin: 0 30px;
+}
+
+.action-links {
+  flex: 1;
+  margin-top: 10px;
+  width: 100%;
+  align-items: center;
+  overflow-y: auto;
+}
+
+.action-links .nav-item {
+  padding: 10px 4px;
+  transition: all 0.5s;
+}
+
+.action-links .navbar-item-link:hover {
+  background-color: var(--site-theme-color);
+}
+
+.selected {
+  background-color: var(--site-theme-color);
+}
+
+.selected a {
+  color: var(--site-white-color) !important;
+}
+
+.action-links .navbar-item-link i {
+  margin-right: 7px;
+  width: 25px;
+  font-size: 13px;
+}
+
+.action-links .navbar-item-link .navlink-text {
+  margin-top: 5px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.action-links .navbar-item-link a {
+  margin-left: 10px;
+  color: var(--site-dark-color);
+}
+
+.action-links .navbar-item-link:hover a {
+  color: var(--site-white-color);
+}
+
+.user-settings {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  height: 50px;
+}
+
+.user-settings > div {
+  height: 100%;
+}
+
+.user-settings i {
+  color: var(--site-dark-color);
+}
+
+.user-settings .setting-option {
+  width: 75%;
+  color: var(--alt-text-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.user-settings .settings-link-selected {
+  background-color: var(--site-theme-color);
+  color: var(--site-white-color);
+}
+
+.user-settings .settings-link-selected i {
+  color: var(--site-white-color);
+}
+
+.user-settings .setting-option:hover {
+  background-color: var(--site-theme-color);
+  color: var(--site-white-color);
+  transition: all 0.3s;
+}
+
+.user-settings .setting-option:hover .settings-icon {
+  color: var(--site-white-color);
+}
+
+.user-settings .setting-option a {
+  color: var(--alt-text-color);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.user-settings .setting-option i {
+  font-size: 18px;
+}
+
+.user-settings .more-options {
+  width: 25%;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.popover-body {
+  background-color: var(--site-theme-color);
+  border-radius: 4px;
+  padding: 10px 0;
+  width: 240px;
+}
+
+.bs-popover-top > .arrow::after,
+.bs-popover-auto[x-placement^="top"] > .arrow::after {
+  border-top-color: var(--site-theme-color);
+}
+
+.popover-body .nav-item {
+  color: var(--site-white-color);
+  padding: 8px 20px;
+  transition: all 0.8s;
+}
+
+.popover-body .nav-item:hover {
+  background-color: var(--background-black);
+}
+
+.popover-body .link-text {
+  color: var(--site-white-color);
+}
+
+.popover-body .link-text i {
+  margin-right: 10px;
+}
+
+.popover-body .arrow {
+  display: none;
+}
+
+.modal-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-card-body .card-body-span {
+  color: var(--site-cta-color);
+  font-weight: 500;
+}
+
+.modal-card-body h4 {
+  color: var(--site-theme-color);
+  font-weight: 600;
+}
+
+.card-modal-logout {
+  width: 96%;
+  box-shadow: none;
+  border: none;
+  margin-top: 14px;
+  margin-left: -8px;
+}
+
+.card-modal-button {
+  width: 96%;
+  box-shadow: none;
+  border: none;
+  background-color: var(--site-cta-color) !important;
+  color: var(--site-white-color) !important;
+}
+
+@media screen and (max-width: 1270px) {
+  .action-links .navbar-item-link .navlink-text {
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .vertical-navbar__col {
+    display: none;
+  }
+
+  .navigation-bar-skeleton {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 829px) {
+  .dashboard-layout .tutorly-logo img {
+    width: 100%;
+    object-fit: contain;
+  }
+
+  .d-none-sm {
+    display: none;
+  }
+
+  .action-links .nav-item a {
+    margin-left: 10px;
+    text-align: center;
+  }
+
+  .action-links .navbar-item-link i {
+    width: 0;
+  }
+
+  .vertical-navbar .collapse-opener-link-item {
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}

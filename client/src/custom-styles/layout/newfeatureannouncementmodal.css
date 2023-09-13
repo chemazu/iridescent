@@ -1,0 +1,63 @@
+.new-feature-modal__content {
+  padding: 2.7rem 3rem;
+  border-radius: 7px;
+}
+
+.new-feature-icon-container {
+  margin: 30px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-feature-icon-container .new-feature-logo {
+  height: 40px;
+}
+
+.new-feature-annoucement__text {
+  font-size: 15px;
+  text-transform: capitalize;
+  color: var(--site-dark-color);
+  font-weight: 600;
+}
+
+.new-feature-confetti__container {
+  height: 100px;
+  width: 100%;
+  margin-top: 30px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.new-feature-confetti__container .confetti-styles {
+  height: 100px;
+}
+
+.new-feature-confetti__container .new-feature-confetti-text {
+  color: var(--site-dark-color);
+  font-size: large;
+}
+
+.modal-footer .new-feature-cancel__btn {
+  margin-top: -1px;
+}
+
+@media screen and (max-width: 480px) {
+  .new-feature-icon-container {
+    margin: 10px 0;
+  }
+
+  .new-feature-modal__content {
+    margin: 1.3rem 1.4rem;
+  }
+
+  .modal-footer .new-feature-create__btn {
+    font-size: 12px;
+  }
+
+  .modal-footer .new-feature-cancel__btn {
+    font-size: 12px;
+  }
+}
