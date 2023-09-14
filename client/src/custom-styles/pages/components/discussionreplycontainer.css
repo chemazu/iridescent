@@ -1,8 +1,0 @@
-.student-dashboard-reply-container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-end;
-  margin-bottom: 3vh;
-}
