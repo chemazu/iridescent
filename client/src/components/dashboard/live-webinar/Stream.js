@@ -104,7 +104,6 @@ export default function Stream() {
   const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
   const [mobileChat, setMobileChat] = useState(false);
-  const [screenMedia, setScreenMedia] = useState(false);
 
   const toggleAudioVisuals = (type) => {
     switch (type) {
@@ -148,18 +147,20 @@ export default function Stream() {
   const handleScreenSharingEnded = () => {
     socket.emit("stopScreenSharing", roomid);
     setScreenSharing(false);
-    navigator.mediaDevices
-      .getUserMedia(audioVisuals)
-      .then((stream) => {
-        addVideoStream(myVideoRef.current, stream);
-        const connections = peerHolder._connections;
-        const second = peerRef.current._connections;
-        connections.forEach((value, key) => {
-          const call = peerHolder.call(key, stream);
-          call.on("stream", (userVideoStream) => {});
-        });
-      })
-      .catch((error) => console.error(error));
+    console.log("age");
+
+    // navigator.mediaDevices
+    //   .getUserMedia(audioVisuals)
+    //   .then((stream) => {
+    //     addVideoStream(myVideoRef.current, stream);
+    //     const connections = peerHolder._connections;
+    //     const second = peerRef.current._connections;
+    //     connections.forEach((value, key) => {
+    //       const call = peerHolder.call(key, stream);
+    //       call.on("stream", (userVideoStream) => {});
+    //     });
+    //   })
+    //   .catch((error) => console.error(error));
   };
   const handleExitStreamModal = () => {
     setExitModal(!exitModal);
@@ -201,6 +202,9 @@ export default function Stream() {
       .getUserMedia({ audio: true, video: true })
       .then((stream) => {
         stream.getTracks().forEach((track) => track.stop());
+      })
+      .catch(() => {
+        console.log("Error");
       });
 
     // Destroy the peer connection
@@ -1114,12 +1118,15 @@ export default function Stream() {
       console.log(videoStreamRef.current);
       call.answer(videoStreamRef.current);
     });
-
   };
   const initializeScreenPeer = async () => {
     navigator.mediaDevices
       .getDisplayMedia({ video: true, audio: true })
       .then((stream) => {
+        const screenSharingTrack = stream.getVideoTracks()[0];
+        screenSharingTrack.addEventListener("ended", () => {
+          handleScreenSharingEnded();
+        });
         const screenInstance = new Peer();
         screenPeerRef.current = screenInstance;
         screenInstance.on("open", (peerId) => {
@@ -1155,40 +1162,32 @@ export default function Stream() {
   useEffect(() => {
     if (startController) {
       initializePeer();
-      if (screenSharing) {
-
-        initializeScreenPeer();
-      } else {
-        console.log("do stuff");
-      }
     }
     return () => {
       // Destroy the Peer instance
       if (peerRef.current) {
         peerRef.current.destroy();
       }
-
-      // Remove any references and cleanup here
-      // For example, you can remove event listeners and close streams if needed
     };
-  }, [roomid, startController, screenSharing, audioVisuals, screenMedia]);
+  }, [roomid, startController, audioVisuals]);
 
   useEffect(() => {
-    // async function getMediaDevices() {
-    //   try {
-    //     const devices = await navigator.mediaDevices.enumerateDevices();
-    //     const audioDevices = devices.filter(
-    //       (device) => device.kind === "audioinput"
-    //     );
-    //     const videoDevices = devices.filter(
-    //       (device) => device.kind === "videoinput"
-    //     );
-    //     setAudioDevices(audioDevices);
-    //     setVideoDevices(videoDevices);
-    //   } catch (error) {
-    //     console.error("Error enumerating media devices:", error);
-    //   }
-    // }
+    if (startController) {
+      if (screenSharing) {
+        initializeScreenPeer();
+      } else {
+        console.log("screen stuff");
+        handleScreenSharingEnded();
+      }
+    }
+    return () => {
+      if (screenPeerRef.current) {
+        screenPeerRef.current.destroy();
+      }
+    };
+  }, [roomid, screenSharing, startController]);
+
+  useEffect(() => {
     async function getMediaDevices() {
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
