@@ -1,0 +1,24 @@
+/* CART PAGE */
+.courses-cart-summary {
+  background-color: var(--site-theme-color);
+  position: sticky;
+  top: 0;
+  padding: 15px 20px;
+  border-radius: 3px;
+  color: var(--site-white-color);
+}
+
+.courses-cart-list {
+  padding-right: 15px;
+}
+.courses-cart-list .cart-item button {
+  background-color: transparent;
+  color: var(--site-white-color);
+}
+.cart-summary {
+  background-color: var(--site-theme-color);
+  color: #fff;
+}
+.cart-subtotal h4 {
+  color: #fff;
+}

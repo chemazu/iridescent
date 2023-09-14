@@ -1,0 +1,11 @@
+.add-notes__btn,
+.add-notes__btn:hover,
+.add-notes__btn:active,
+.save-note,
+.save-note:hover,
+.save-note:active {
+  border-radius: 20px;
+  border: none;
+  box-shadow: none;
+  font-weight: 600;
+}

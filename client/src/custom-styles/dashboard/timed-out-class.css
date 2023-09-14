@@ -1,0 +1,44 @@
+.timed-out {
+  display: flex;
+  flex-direction: row;
+  min-height: 70vh;
+}
+
+.time-out-container {
+  width: 100%;
+  border-radius: 10px;
+  box-shadow: 0px 4.71465px 9.42931px 0px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: row;
+}
+.time-out-container div {
+  width: 50%;
+
+}
+.time-out-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: yellow;
+}
+.time-out-left img {
+  width: 20%;
+  border-radius: 50%;
+}
+.time-out-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+
+  padding: 0 5%;
+}
+.time-out-right .button-wrapper {
+  flex-direction: column;
+  /* align-self: flex-end; */
+  width: 100%;
+}
+.time-out-right .button-wrapper button {
+  margin-bottom: 1.5rem;
+  width: 100%;
+}

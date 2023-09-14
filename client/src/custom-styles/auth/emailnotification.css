@@ -1,0 +1,53 @@
+.email-notification-wrapper {
+    background-color: var(--site-background-color);
+    width: 100%;
+    height: fit-content;
+    min-height: 100vh;
+}
+
+.page-contents {
+    background-color: var(--site-white-color);
+    padding: 4vh 1vw;
+    margin-top: 13vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.tuturly-logo {
+    color: var(--site-theme-color);
+}
+
+.para-style {
+    color: var(--site-black-color);
+    font-weight: 500;
+}
+
+.resend-mail-string {
+    color: #919191;
+    margin-top: 10px;
+    font-weight: 400;
+}
+
+.resend-mail-string span {
+    color: tomato;
+    cursor: pointer;
+    margin-left: 2px;
+    transition: all .2s;
+    display: inline-block;
+}
+
+.resend-mail-string:hover span {
+    transform: translateY(-2.3px);
+}
+
+.loader-wrapper {
+    border-radius: 3px;
+    width: 70%;
+    margin-top: 13vh;
+    margin-bottom: 0;
+    margin-left: auto;
+    margin-right: auto;
+    height: 50vh;
+}

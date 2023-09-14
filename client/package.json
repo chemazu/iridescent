@@ -1,0 +1,92 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emoji-mart/data": "^1.1.2",
+    "@emoji-mart/react": "^1.1.1",
+    "@paystack/inline-js": "^2.10.1",
+    "@stripe/react-stripe-js": "^2.1.2",
+    "@stripe/stripe-js": "^2.1.0",
+    "@testing-library/jest-dom": "^6.1.2",
+    "@testing-library/react": "^11.2.5",
+    "@testing-library/user-event": "^12.8.3",
+    "aos": "^2.3.4",
+    "axios": "^1.5.0",
+    "chart.js": "^3.3.2",
+    "classnames": "^2.3.1",
+    "emoji-mart": "^5.5.2",
+    "http-proxy-middleware": "^2.0.6",
+    "js-cookie": "^3.0.1",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.5.23",
+    "moment": "^2.29.4",
+    "peerjs": "^1.4.7",
+    "qs": "^6.10.3",
+    "rc-slider": "^9.7.2",
+    "react": "17.0.1",
+    "react-alert": "^7.0.3",
+    "react-alert-template-basic": "^1.0.2",
+    "react-beautiful-dnd": "^13.1.0",
+    "react-chartjs-2": "^3.0.0",
+    "react-circular-progressbar": "^2.0.4",
+    "react-currency-format": "^1.0.0",
+    "react-dom": "17.0.1",
+    "react-dropzone": "^14.2.3",
+    "react-flags-select": "^2.1.2",
+    "react-infinite-scroll-component": "^6.1.0",
+    "react-lazy-load-image-component": "^1.5.5",
+    "react-loading-skeleton": "2.2.0",
+    "react-paystack": "^3.0.5",
+    "react-player": "^2.9.0",
+    "react-redux": "^7.2.4",
+    "react-router-dom": "^5.3.4",
+    "react-scripts": "^5.0.1",
+    "react-scroll": "^1.8.4",
+    "react-share": "^4.4.1",
+    "react-slick": "^0.29.0",
+    "react-star-ratings": "^2.3.0",
+    "react-toastify": "^7.0.4",
+    "react-transition-group": "^4.4.5",
+    "react-webcam": "^7.1.0",
+    "reactstrap": "^8.9.0",
+    "redux": "^4.1.0",
+    "redux-devtools-extension": "^2.13.9",
+    "redux-thunk": "^2.3.0",
+    "sass": "^1.58.0",
+    "screenfull": "^5.1.0",
+    "slick-carousel": "^1.8.1",
+    "socket.io-client": "^4.5.4",
+    "uuid": "^8.3.2",
+    "video.js": "^7.20.3",
+    "videojs-contrib-quality-levels": "^3.0.0",
+    "videojs-hls-quality-selector": "^1.1.4",
+    "videojs-overlay": "^2.1.5",
+    "videojs-seek-buttons": "^3.0.1",
+    "web-vitals": "^1.1.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

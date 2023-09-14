@@ -1,0 +1,147 @@
+.student-notification__container {
+    width: 66%;
+}
+
+.studentdashboard-page-contents {
+    width: 100%;
+    height: fit-content;
+    min-height: 88vh;
+}
+
+.subdomain-notification-page__contents {
+    width: 100%;
+}
+
+.subdomain-notification__header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.notification-ellipsis__container {
+    cursor: pointer;
+}
+
+.student-notification__body {
+    width: 100%;
+}
+
+.student-notification__item {
+    width: 100%;
+    display: flex;
+    padding: 10px 0;
+    margin: 5px 0;
+}
+
+/* .student-notification-item-tooltip
+.student-notification-menu .bs-popover-top > .arrow::after, .bs-popover-auto[x-placement^="bottom"] > .arrow::after {
+    border-bottom-color: var(--site-theme-color);
+  } */
+
+.student-notification-item__actions-details {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    padding-bottom: 4px;
+    align-items: center;
+}
+
+.student-notification-item__icon {
+    display: flex;
+    height: 60px;
+    width: 60px;
+    border-radius: 50%;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    font-size: 2.3rem;
+    font-weight: 600;
+    margin-right: 18px;
+}
+
+.student-notification-item__actions-details:hover {
+    cursor: pointer;
+}
+
+.student-notification-item__name {
+    font-weight: 700;
+}
+
+.student-notification-item__name span {
+    margin-left: 10px;
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.student-notification-message {
+    font-weight: 600;
+    font-size: 15px;
+    padding: 6px 0;
+}
+
+.student-notification-item__timestamp {
+    font-size: 12px;
+}
+
+.student-notification-item__info-details {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+} 
+
+.student-notification-item__controls {
+    display: flex;
+    justify-content: space-between;
+}
+
+.student-notification-menu-control {
+    display: flex;
+    height: 100%;
+    width: 70px;
+    justify-content: space-between;
+    align-items: center;   
+    transition: all .6s;
+    transform: translateY(-4px);
+    opacity: 0;
+}
+
+
+.student-notification-comment-display__modal 
+.modal-content {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+.student-modal-comments-container {
+    width: 90%;
+    max-height: 80vh;
+}
+
+.student-modal-comments__info-header h3 {
+    font-size: 17px;
+}
+
+.student-modal-comments__info-header
+.student-notification__modal-close-btn {
+    cursor: pointer;
+    font-size: 15px;
+}
+
+.student-notification-modal__body {
+    max-height: 78vh;
+    overflow-y: auto;
+}
+
+.student-comment-info__tag {
+    padding: 5px 20px;
+    border-radius: 20px;
+}
+
+@media screen and (max-width: 829px) {
+  .student-notification__container{
+    width: 95%;
+  }
+}

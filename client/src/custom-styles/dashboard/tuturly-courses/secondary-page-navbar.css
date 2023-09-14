@@ -1,0 +1,30 @@
+.tutor-page-navbar {
+  background-color: var(--site-theme-color);
+}
+
+.tutor-page-navbar .tutor-logo-img {
+  width: 180px;
+}
+
+.tutor-page-navbar .tutor-page-navbar-button,
+.tutor-page-navbar .tutor-page-navbar-button:hover,
+.tutor-page-navbar .tutor-page-navbar-button:active {
+  background-color: transparent !important;
+  color: var(--site-white-color) !important;
+  border: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+
+@media screen and (max-width: 992px) {
+  .tutor-page-navbar .tutor-page-navbar-button,
+  .tutor-page-navbar .tutor-page-navbar-button:hover,
+  .tutor-page-navbar .tutor-page-navbar-button:active {
+    background-color: transparent !important;
+    color: var(--site-theme-color) !important;
+    border-bottom: 1px solid var(--site-theme-color);
+    font-size: 13px;
+    width: 100%;
+    border-radius: 0;
+  }
+}

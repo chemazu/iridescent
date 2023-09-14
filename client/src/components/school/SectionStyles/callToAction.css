@@ -1,0 +1,126 @@
+.callToAction {
+    position: relative;
+}
+
+.callToAction-section-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 6px solid #e45e66;
+    transition: all 10;
+    cursor: pointer;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 1;
+    display: none;
+    transition: all .9s;
+}
+
+.callToAction:hover .callToAction-section-overlay {
+    display: block;
+}
+
+.callToAction:active .callToAction-section-overlay {
+    display: block;
+    cursor: grabbing;
+    border: 6px solid #F6C028;
+}
+
+.callToAction-section-overlay .callToActionControls {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.callToAction-section-overlay .add-section-btn {
+    width: 100px;
+    height: 50px;
+    background-color: #e45e66;
+    position: absolute;
+    left: 50%;
+    top: 100%;
+    transform: translateX(-50%);
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.callToAction-section-overlay .add-section-btn i {
+    color: #fff;
+    font-size: 1.8rem;
+}
+
+
+.callToAction-section-overlay .callToActionControls button,
+.callToAction-section-overlay .callToActionControls button:hover,
+.callToAction-section-overlay .callToActionControls button:active
+{
+    padding-left: 50px;
+    padding-right: 50px;
+    margin: 10px;
+    background-color: #e45e66;
+    color: #fff;
+    border: none;
+}
+
+.callToAction-container-styles {
+    width: 90%;
+}
+
+.callToAction-contents {
+    display: flex;
+}
+
+.callToAction-section-socail-links {
+    display: flex;
+    flex-direction: column;
+}
+
+.social-icon-item {
+    margin: 0.6vh;
+    font-size: 25px;
+}
+  
+.callToAction-section-school-info {
+    margin: 0 auto;
+    text-align: center;
+  }
+  
+  .callToAction-section-school-info .callToAction-header {
+    font-weight: 800;
+    font-size: 3rem;
+    margin: 0 auto;
+    width: 85%;
+  }
+  
+  .callToAction-section-school-info .callToAction-subtitle {
+    font-size: 18px;
+    font-weight: lighter;
+    width: 65%;
+    text-align: center;
+    text-transform: capitalize;
+    margin-top: 10px;
+    margin-bottom: 0;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  
+  .callToAction-section-school-info .callToAction-btn-link {
+    padding: 18px 38px;
+    margin-top: 2vh;
+    border: none;
+  }
+
+  @media screen and (max-width: 992px) {
+
+    .callToAction-section-school-info .callToAction-header {
+        font-size: 1.7rem;
+    }
+
+    .callToAction-section-school-info .callToAction-subtitle {
+        font-size: 16px;
+    }
+  }

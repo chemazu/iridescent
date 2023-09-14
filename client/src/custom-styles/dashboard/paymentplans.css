@@ -1,0 +1,123 @@
+.payment-plans__content h1 {
+  text-align: center;
+  color: var(--site-dark-color);
+  font-weight: 600;
+  text-transform: capitalize;
+  font-size: 2.5rem;
+}
+
+.payment-plan__item {
+  min-height: 60vh;
+  height: fit-content;
+  margin-bottom: 10px;
+  width: 95%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border-radius: 5px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  position: relative;
+}
+
+.payment-plan__item-header {
+  width: 100%;
+  height: 17vh;
+  padding: 20px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  align-items: center;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  color: var(--site-white-color);
+  position: relative;
+}
+
+.payment-plan__item-header .enterprise-plan__more-info {
+  background-color: var(--site-cta-color);
+  color: var(--site-white-color);
+  padding: 10px 20px;
+  position: absolute;
+  top: 115px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 40px;
+  text-align: center;
+}
+
+.current-plan__text {
+  font-size: 11px;
+  margin-left: 3px;
+  margin-bottom: 3.7px;
+  color: var(--site-subtle-dark);
+  text-align: center;
+}
+
+.course-counter-span {
+  font-weight: bolder;
+  font-size: 16px;
+}
+
+.payment-plan__item-header-color-free {
+  background-color: #1ea9da;
+}
+
+.payment-plan__item-header-color-basic {
+  background-color: #3f7bf5;
+}
+
+.payment-plan__item-header-color-enterprise {
+  background-color: #496efb;
+}
+
+.payment-plan__content {
+  width: 95%;
+  margin: 0 auto;
+  color: var(--site-subtle-dark);
+  height: 43vh;
+}
+
+.payment-plan__content li {
+  margin: 13px;
+}
+
+.payment-plan__item-header .plan-name {
+  font-size: 18px;
+  font-weight: 550;
+  color: var(--site-subtle-dark);
+  text-align: center;
+}
+
+.payment-plan__item-header .plan-cost {
+  font-size: 35px;
+  font-weight: 800;
+  color: var(--site-subtle-dark);
+  margin-top: 10px;
+  text-align: center;
+  margin-bottom: 1px;
+}
+
+.per-month__text {
+  display: block;
+  font-size: 13px;
+  margin: 0;
+  padding-top: 0;
+  font-weight: 400;
+}
+
+.payment-plan__item-footer {
+  width: 100%;
+  padding: 20px;
+  text-align: center;
+}
+
+.payment-plan__item-footer button,
+.payment-plan__item-footer button:hover,
+.payment-plan__item-footer button:active {
+  margin: 0 auto;
+  border-radius: 10px;
+  box-shadow: none;
+  background-color: var(--site-white-color) !important;
+  border: 1px solid var(--site-dark-color);
+  color: var(--site-dark-color) !important;
+}
