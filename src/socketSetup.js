@@ -78,9 +78,10 @@ const setupSocketIO = (app) => {
     });
 
     socket.on("stopScreenSharing", (roomId) => {
+      io.in(roomId).emit("stopScreenSharing");
+
       delete broadcasterScreen[roomId];
       console.log(broadcasterScreen);
-      io.in(roomId).emit("stopScreenSharing");
     });
 
     socket.on("message", (message, roomId) => {

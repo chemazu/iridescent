@@ -88,6 +88,9 @@ export default function Stream() {
     video: true,
     audio: true,
   });
+  const [screenPeerhandler, setScreenPeerhandler] = useState(null);
+  const [screenStreamhandler, setScreenStreamhandler] = useState(null);
+
   const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(1);
@@ -145,22 +148,22 @@ export default function Stream() {
   );
 
   const handleScreenSharingEnded = () => {
+    // Emit a socket event to inform others in the room that screen sharing has ended
     socket.emit("stopScreenSharing", roomid);
-    setScreenSharing(false);
-    console.log("age");
+    console.log("first", screenPeerhandler, screenStreamhandler);
+    // Stop and release the screen-sharing stream
+    console.log(screenStreamRef.current);
+    if (screenStreamhandler) {
+      const tracks = screenStreamhandler.getTracks();
+      tracks.forEach((track) => track.stop());
+      screenStreamhandler.current = null;
+    }
 
-    // navigator.mediaDevices
-    //   .getUserMedia(audioVisuals)
-    //   .then((stream) => {
-    //     addVideoStream(myVideoRef.current, stream);
-    //     const connections = peerHolder._connections;
-    //     const second = peerRef.current._connections;
-    //     connections.forEach((value, key) => {
-    //       const call = peerHolder.call(key, stream);
-    //       call.on("stream", (userVideoStream) => {});
-    //     });
-    //   })
-    //   .catch((error) => console.error(error));
+    // Set the state to indicate that screen sharing has ended
+    setScreenSharing(false);
+
+    // Optionally, you can do any additional cleanup or actions here
+    console.log("Screen sharing has ended");
   };
   const handleExitStreamModal = () => {
     setExitModal(!exitModal);
@@ -1129,6 +1132,9 @@ export default function Stream() {
         });
         const screenInstance = new Peer();
         screenPeerRef.current = screenInstance;
+        setScreenPeerhandler(screenInstance);
+        setScreenStreamhandler(stream);
+        console.log(screenPeerRef);
         screenInstance.on("open", (peerId) => {
           socket.emit("startScreenSharing", roomid, peerId);
         });
@@ -1177,13 +1183,13 @@ export default function Stream() {
         initializeScreenPeer();
       } else {
         console.log("screen stuff");
-        handleScreenSharingEnded();
+        // handleScreenSharingEnded();
       }
     }
     return () => {
-      if (screenPeerRef.current) {
-        screenPeerRef.current.destroy();
-      }
+      // if (screenPeerRef.current) {
+      //   screenPeerRef.current.destroy();
+      // }
     };
   }, [roomid, screenSharing, startController]);
 
@@ -1223,6 +1229,7 @@ export default function Stream() {
   const toggleScreenSharing = () => {
     if (screenSharing) {
       setScreenSharing(false);
+      handleScreenSharingEnded();
       // initializeScreenPeer()
       // screenStreamRef.current = null;
       // socket.emit("stopScreenSharing", roomid);

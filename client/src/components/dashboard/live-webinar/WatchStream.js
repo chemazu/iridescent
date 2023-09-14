@@ -460,7 +460,23 @@ function WatchStream({ schoolname }) {
       socket.off("broadcaster");
     };
   }, [roomid, waiting, disconnect]);
+  const revertHandleAddScreenStream = () => {
+    const pop = screenRef.current;
 
+    if (pop) {
+      // Check if there is an existing screenPlayer and remove it
+      if (screenPlayerRef.current) {
+        screenPlayerRef.current.dispose(); // Dispose of the videojs player
+        screenPlayerRef.current = null;
+      }
+
+      // Clear any existing content in screenRef
+      screenRef.current.innerHTML = "";
+    } else {
+      // Handle the case where 'pop' is falsy (e.g., screenRef doesn't exist)
+      console.error("screenRef is not available");
+    }
+  };
   useEffect(() => {
     const screenInstance = new Peer();
     screenPeerRef.current = screenInstance;
@@ -489,6 +505,10 @@ function WatchStream({ schoolname }) {
       startScreenSharing(peerId, "screnn");
     });
 
+    socket.on("stopScreenSharing", () => {
+      console.log("stopScreenSharing available ");
+      revertHandleAddScreenStream();
+    });
     return () => {
       socket.off("screenSharingStatus");
     };
@@ -660,7 +680,7 @@ function WatchStream({ schoolname }) {
   return (
     <div className="dashboard-layout">
       <Modal isOpen={!authenticated && watcherUsername === ""}>
-        <ModalHeader>Enter Username Finally</ModalHeader>
+        <ModalHeader>Enter Username</ModalHeader>
         <ModalBody>
           <input
             placeholder="Input Username"
