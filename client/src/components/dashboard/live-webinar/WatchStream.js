@@ -660,7 +660,7 @@ function WatchStream({ schoolname }) {
   return (
     <div className="dashboard-layout">
       <Modal isOpen={!authenticated && watcherUsername === ""}>
-        <ModalHeader>Enter Username</ModalHeader>
+        <ModalHeader>Enter Username Finally</ModalHeader>
         <ModalBody>
           <input
             placeholder="Input Username"
