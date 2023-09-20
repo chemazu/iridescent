@@ -553,17 +553,16 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid, attendees]);
   const colors = [
-    "#c65e8e",
-    "#c792ea",
-    "#faa773",
-    "#f37ffe",
-    "#fe0017",
-    "#fee700",
-    "#200b72",
-    "#240638",
-    "#2cff28",
-    "#fff6d5",
-    "#96ffbe",
+    "#128C7E", // Dark Teal
+    "#D62246", // Dark Red
+    "#F06D06", // Dark Orange
+    "#485460", // Dark Grayish Blue
+    "#833471", // Dark Magenta
+    "#1E272E", // Dark Navy
+    "#006266", // Dark Cyan
+    "#5758BB", // Dark Indigo
+    "#6F1E51", // Dark Violet
+    "#009432", // Dark Green
   ];
   function generateUserColor(username) {
     const index = username.charCodeAt(0) % colors.length;
