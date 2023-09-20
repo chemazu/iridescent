@@ -410,19 +410,28 @@ function LiveWebinar({ school, getSchool }) {
                               </p>
                               <p>{item.title}</p>
 
-                              <div className="status">
-                                {item.endStatus ||
-                                today > item.classEndTime ||
-                                !item.classEndTime === 0 ? (
-                                  <p>Completed</p>
-                                ) : item.isLive ? (
-                                  <p className="live-button"> Live</p>
-                                ) : item.isPublished ? (
-                                  <p>Published</p>
-                                ) : (
-                                  <p>Not Published</p>
-                                )}
-                              </div>
+                              {item.classEndTime === 0 ? (
+                                <div className="status">
+                                  {item.isPublished ? (
+                                    <p>Published</p>
+                                  ) : (
+                                    <p>Not Published</p>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="status">
+                                  {item.endStatus ||
+                                  today > item.classEndTime ? (
+                                    <p>Completed</p>
+                                  ) : item.isLive ? (
+                                    <p className="live-button"> Live</p>
+                                  ) : item.isPublished ? (
+                                    <p>Published</p>
+                                  ) : (
+                                    <p>Not Published</p>
+                                  )}
+                                </div>
+                              )}
                               <div className="actions">
                                 {menuIndex === index ? (
                                   <div
@@ -466,16 +475,30 @@ function LiveWebinar({ school, getSchool }) {
                                       </div>
                                     </Link>
 
-                                    <Link
-                                      to={`livewebinar/stream/${item.streamKey}`}
-                                    >
-                                      {!(today > item.classEndTime) && (
+                                    {item.classEndTime === 0 ? (
+                                      <Link
+                                        to={`livewebinar/stream/${item.streamKey}`}
+                                      >
                                         <div className="action-item">
                                           <i className="fa fa-play"></i>
                                           <p>Start Class</p>
                                         </div>
-                                      )}
-                                    </Link>
+                                      </Link>
+                                    ) : (
+                                      <>
+                                        {!(today > item.classEndTime) && (
+                                          <Link
+                                            to={`livewebinar/stream/${item.streamKey}`}
+                                          >
+                                            <div className="action-item">
+                                              <i className="fa fa-play"></i>
+                                              <p>Start Class</p>
+                                            </div>
+                                          </Link>
+                                        )}
+                                      </>
+                                    )}
+
                                     <div
                                       className="action-item delete-item"
                                       onClick={() => {

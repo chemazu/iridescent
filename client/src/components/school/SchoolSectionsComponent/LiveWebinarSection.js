@@ -324,7 +324,20 @@ function LiveWebinarSection({ schoolname, theme, currency }) {
                               </div>
                             </div>
                             {webinaritem.isLive && (
-                              <p className="live-button">Live</p>
+                              // <p className="live-button">Live</p>
+                              <div className="status">
+                              {webinaritem.endStatus ||
+                              today > webinaritem.classEndTime ||
+                              !webinaritem.classEndTime === 0 ? (
+                                <p></p>
+                              ) : webinaritem.isLive ? (
+                                <p className="live-button"> Live</p>
+                              ) : webinaritem.isPublished ? (
+                                <p></p>
+                              ) : (
+                                <p></p>
+                              )}
+                            </div>
                             )}
                           </div>
                         );

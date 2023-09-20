@@ -488,7 +488,7 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect,audioVisuals]);
+  }, [roomid, waiting, disconnect, audioVisuals]);
 
   const revertHandleAddScreenStream = () => {
     const pop = screenRef.current;
@@ -600,12 +600,11 @@ function WatchStream({ schoolname }) {
   }, [defaultChat, roomid]);
   useEffect(() => {
     socket.on("audiovisuals", (updated) => {
-  
-      if (updated.video){
+      if (updated.video) {
         playerRef.current.dispose(); // Dispose of the videojs player
         playerRef.current = null;
       }
-      setAudioVisuals(updated)
+      setAudioVisuals(updated);
     });
     return () => {
       socket.off("audiovisuals");
@@ -755,8 +754,7 @@ function WatchStream({ schoolname }) {
                 <div
                   className="page-title"
                   style={{
-                    backgroundColor:
-                      theme?.themestyles.secondarybackgroundcolor,
+                    
                     color: theme?.themestyles.navbartextcolor,
                   }}
                 >
@@ -915,8 +913,7 @@ function WatchStream({ schoolname }) {
                         <div
                           className="student-room-info desktop-control"
                           style={{
-                            backgroundColor:
-                              theme?.themestyles.secondarybackgroundcolor,
+                            
                             color: theme?.themestyles.navbartextcolor,
                           }}
                         >
@@ -1116,9 +1113,12 @@ function WatchStream({ schoolname }) {
                                           <span
                                             style={{
                                               color: "#fff",
-                                              background: singleChat.color,
+                                              background: singleChat.color
+                                                ? singleChat.color
+                                                : "#200b72",
                                               borderRadius: "50%",
-
+                                              zIndex: 5,
+                                              marginLeft: "5px",
                                               width: "25px",
                                               height: "25px",
                                               textAlign: "center",
@@ -1148,7 +1148,9 @@ function WatchStream({ schoolname }) {
                                             <span
                                               style={{
                                                 color: "#fff",
-                                                background: singleChat.color,
+                                                background: singleChat.color
+                                                  ? singleChat.color
+                                                  : "#200b72",
                                                 borderRadius: "50%",
 
                                                 width: "25px",
@@ -1463,8 +1465,7 @@ function WatchStream({ schoolname }) {
                         <div
                           className="chat-control"
                           style={{
-                            backgroundColor:
-                              theme?.themestyles.secondarybackgroundcolor,
+                            
                             color: theme?.themestyles.navbartextcolor,
                           }}
                         >

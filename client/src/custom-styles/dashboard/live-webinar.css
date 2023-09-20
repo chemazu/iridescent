@@ -875,6 +875,7 @@
   background: #ffffff;
   border: 0.4px solid #000000;
   border-radius: 2.95257px;
+  background-color: rgb(25, 28, 45);
 }
 .chat-control textarea {
   width: 100%;
@@ -883,6 +884,7 @@
   border: 1px solid #ccc;
   padding: 8px;
   border-radius: 22px;
+  margin-right: 7.5px;
   font-size: 16px; /* Adjust the font size as needed */
   overflow: hidden; /* Enable vertical scroll when content exceeds 4 rows */
 }
@@ -1026,6 +1028,8 @@
   border-radius: 15px;
   display: flex;
   justify-content: space-between;
+  background-color: rgb(25, 28, 45);
+
 }
 .student-room-info span {
   text-align: center;
@@ -1239,11 +1243,12 @@
 .save-resource {
   display: flex;
   align-items: center;
-  padding: 0 29%;
-  justify-content: space-between;
+ 
+  justify-content: center;
 }
 .save-resource p {
   margin-bottom: 0;
+  padding: 0 1rem;
 }
 .watch-webinar-content .page-title {
   display: flex;
@@ -1251,6 +1256,8 @@
   align-items: center;
   margin: 0;
   border-radius: 10px;
+  background-color: rgb(25, 28, 45);
+
 }
 .watch-webinar-content .page-title .page-title__text {
   display: flex;
@@ -1646,6 +1653,9 @@
 .watcher-message span {
   z-index: 5;
   margin-right: 7.5px;
+  display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .share-inactive {
 }
@@ -1684,10 +1694,8 @@
   /* height: 100%; */
 }
 @media screen and (max-width: 812px) {
-  .save-resource {
  
-    padding: 0 10%;
-  }
+  
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
     height: 100vh !important;
@@ -1717,9 +1725,7 @@
     border: none;
     border-radius: 22px;
   }
-  .chat-control button {
-    display: none;
-  }
+ 
   .navbar-display-mobile {
     display: flex;
   }
@@ -1781,6 +1787,7 @@
   }
   .presenter-controls .control-object {
     width: 25%;
+    margin: 0 1px;
   }
   .webinar-container {
     padding: 1rem 1.5rem;
@@ -1869,6 +1876,7 @@
     height: 100%;
     padding-top: 65px;
     position: fixed;
+    max-height: 100vh;
   }
   .desktop-control {
     display: none !important;
@@ -2013,13 +2021,16 @@
   .live-webinar-watch .chat-control {
     background: transparent !important;
     border: 0;
-    flex-direction: row-reverse;
   }
   .chat-control {
-    flex-direction: row-reverse;
   }
   .watcher-chat-box .user-bubble::before {
     background: transparent;
+  }
+  .watcher-chat-box textarea {
+    margin: 0;
+    margin-left: 2%;
+
   }
   .watcher-chat-box .user-bubble::after {
     background: transparent;

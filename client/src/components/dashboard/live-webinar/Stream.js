@@ -126,8 +126,8 @@ export default function Stream() {
           video: !audioVisuals.video,
         };
         setAudioVisuals(updated);
-        socket.emit("audiovisuals", roomid, updated,type);
-        
+        socket.emit("audiovisuals", roomid, updated, type);
+
         break;
       case "mic":
         let newUpdated = {
@@ -135,7 +135,7 @@ export default function Stream() {
           video: audioVisuals.video,
         };
         setAudioVisuals(newUpdated);
-        socket.emit("audiovisuals", roomid, newUpdated,type);
+        socket.emit("audiovisuals", roomid, newUpdated, type);
         break;
 
       default:
@@ -214,8 +214,7 @@ export default function Stream() {
       .then((stream) => {
         stream.getTracks().forEach((track) => track.stop());
       })
-      .catch(() => {
-      });
+      .catch(() => {});
 
     // Destroy the peer connection
     if (peerHolder) {
@@ -443,19 +442,7 @@ export default function Stream() {
     }
 
     let newIndex = newDefaultChat.length;
-    // socket.emit(
-    //   "message",
-    //   {
-    //     title: pollTitle,
-    //     user: presenterDetails.username || 1,
-    //     options: pollOptions,
-    //     type: "poll",
-    //     timeStamp: Date.now(),
-    //     questionControl: newIndex,
-    //     durationInSec,
-    //   },
-    //   roomid
-    // );
+ 
     let timerData = {
       duration: durationInSec,
       roomid,
@@ -684,7 +671,6 @@ export default function Stream() {
     if (event.keyCode === 13) {
       event.preventDefault(); //
       sendMessage();
-   
     }
   };
   const handlePollOptionChange = (index, event) => {
@@ -951,9 +937,7 @@ export default function Stream() {
             user,
             result: studentRes,
           };
-          // let newResult = [...quizResultHolder, newSubmission];
-          // setQuizResultHolder(newResult);
-          // setQuizSubmission(true);
+ 
           const userHasSubmitted = quizResultHolder.some(
             (submission) => submission.user === user
           );
@@ -1154,9 +1138,7 @@ export default function Stream() {
           call.answer(stream);
         });
         setReconnectLoading(false);
-      
       });
- 
   };
   useEffect(() => {
     if (startController) {
@@ -1179,9 +1161,7 @@ export default function Stream() {
       }
     }
     return () => {
-      // if (screenPeerRef.current) {
-      //   screenPeerRef.current.destroy();
-      // }
+ 
     };
   }, [roomid, screenSharing, startController]);
 
@@ -1222,13 +1202,10 @@ export default function Stream() {
     if (screenSharing) {
       setScreenSharing(false);
       handleScreenSharingEnded();
-      // initializeScreenPeer()
-      // screenStreamRef.current = null;
-      // socket.emit("stopScreenSharing", roomid);
+ 
     } else {
       setScreenSharing(true);
       setReconnectLoading(true);
-      // initializeScreenPeer();
     }
   };
 
@@ -1310,27 +1287,7 @@ export default function Stream() {
       // dispatch(stopLoading());
     }
   };
-  function createColorGenerator() {
-    const colors = [
-      "#c65e8e",
-      "#c792ea",
-      "#faa773",
-      "#f37ffe",
-      "#fe0017",
-      "#fee700",
-      "#200b72",
-      "#240638",
-      "#2cff28",
-      "#fff6d5",
-      "#96ffbe",
-    ];
-
-    let colorIndex = attendies;
-    const color = colors[colorIndex];
-    colorIndex = (colorIndex + 1) % colors.length;
-
-    return color;
-  }
+ 
 
   const handleOpenResourceModal = async (type) => {
     dispatch(startLoading());
@@ -1423,7 +1380,7 @@ export default function Stream() {
       setDurationUnit("secs");
     }
   };
- 
+
   const handleDeleteModal = (id) => {
     setDeleteModal(true);
     setResourceId(id);
@@ -1620,7 +1577,6 @@ export default function Stream() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-
                             if (resourceCount?.pollCount >= 3) {
                               setMoreResources({
                                 status: "true",
@@ -2041,9 +1997,7 @@ export default function Stream() {
                         if (
                           pollOptions.every((option) => option === "") &&
                           pollTitle === ""
-                          // &&
-                          // answers.length === totalQuestion &&
-                          // totalQuestion > 0
+                 
                         ) {
                           setTotalQuestion(questionNumber - 1);
                         }
@@ -2138,34 +2092,7 @@ export default function Stream() {
                     </Button>
                   </div>
                 </Modal>
-                {/* <div
-                  className="time-constraints mobile-control mobile-time-constraints"
-                  style={{ display: startController ? "" : "none" }}
-                >
-                  <i
-                    className="fas fa-bars toggler-style mobile-control"
-                    aria-hidden="true"
-                  ></i>
-                  <div className="time-tracker">
-                    <p>Time Remaining</p>
-                    {planname && timeLeft ? (
-                      planname === "free" ? (
-                        !isLoading && "countdown"
-                      ) : (
-                        ""
-                      )
-                    ) : (
-                      <span>00:00:00</span>
-                    )}
-                  </div>
 
-                  <Button
-                    className="page-title_cta-btn"
-                    onClick={handleExitStreamModal}
-                  >
-                    End Class &nbsp; <i className="fa fa-times"></i>
-                  </Button>
-                </div> */}
                 <div
                   className={`page-title ${defaultChat.length >= 1 ? "" : ""}`}
                   style={{ display: "block" }}
@@ -2320,22 +2247,7 @@ export default function Stream() {
                                   toggleAudioVisuals("mic");
                                 }}
                               ></i>
-                              {/* <p
-                                style={
-                                  !audioVisuals.audio
-                                    ? {
-                                        textDecoration: "line-through",
-                                      }
-                                    : null // No additional style for the active state
-                                }
-                              >
-                                {audioDevices.length > 0 &&
-                                  audioDevices[0].label}
-                              </p> */}
-                              {/* {audioDevices.length > 0 &&
-                                audioDevices.map((item) => {
-                                  return <p>{item.label}</p>;
-                                })} */}
+                             
                               <select
                                 style={
                                   !audioVisuals.audio
@@ -2371,7 +2283,6 @@ export default function Stream() {
                             <div
                               className="control-object"
 
-                              // onClick={toggleVideo}
                             >
                               <i
                                 onClick={() => {
@@ -2431,14 +2342,14 @@ export default function Stream() {
                           >
                             {" "}
                             <div className="presenter-controls">
-                              {/* <div
-                              className="control-object more"
-                              onClick={copyText}
-                            >
-                              <i className="fa fa-ellipsis-h"></i>
+                              <div
+                                className="control-object more"
+                                onClick={copyText}
+                              >
+                                <i className="fa fa-ellipsis-h"></i>
 
-                              <p>More</p>
-                            </div> */}
+                                <p>More</p>
+                              </div>
                               <div
                                 className="control-object "
                                 onClick={() => {
@@ -2463,18 +2374,8 @@ export default function Stream() {
                                 className="control-object"
                                 onClick={() => {
                                   toggleAudioVisuals("cam");
-                                  // socket.emit(
-                                  //   "disablevideo",
-                                  //   roomid,
-                                  //   !audioVisuals.video
-                                  // );
-
-                                  // setAudioVisuals({
-                                  //   video: !audioVisuals.video,
-                                  //   audio: audioVisuals.audio,
-                                  // });
+                         
                                 }}
-                                // onClick={toggleVideo}
                               >
                                 <i
                                   className="fas fa-video"
@@ -2490,48 +2391,6 @@ export default function Stream() {
 
                                 <p>Webcam</p>
                               </div>
-                              <div
-                                className="control-object"
-                                onClick={() => {
-                                  if (!timerHolder) {
-                                    handleOpenResourceModal("poll");
-                                  } else {
-                                    alert.show("ASSESSMENT ONGOING");
-                                  }
-                                }}
-                              >
-                                <i className="fas fa-poll poll"></i>
-
-                                <p>Polls</p>
-                              </div>
-                              {/* <div
-                              className="control-object"
-                              onClick={() => {
-                                if (!timerHolder) {
-                                  setPollStatus(true);
-                                } else {
-                                  alert.show("ASSESSMENT ONGOING");
-                                }
-                              }}
-                            >
-                              <i className="fas fa-poll poll"></i>
-
-                              <p>Polls</p>
-                            </div> */}
-                              {/* <div
-                              className="control-object"
-                              onClick={() => {
-                                if (!timerHolder) {
-                                  setQuizStatus(true);
-                                } else {
-                                  alert.show("ASSESSMENT ONGOING");
-                                }
-                              }}
-                            >
-                              <i className="fas fa-book-open"></i>
-
-                              <p>Pop Quiz</p>
-                            </div> */}
                             </div>
                           </Card>
                         )}
@@ -2615,7 +2474,6 @@ export default function Stream() {
                                                   borderRadius: "50%",
                                                   marginLeft: "5px",
                                                   marginRight: "5px",
-
                                                 }}
                                               />
                                             ) : (
@@ -2656,9 +2514,7 @@ export default function Stream() {
                               <div ref={chatInterfaceRef} />
                             </div>
                             <div className="chat-interface-quiz">
-                              {/* {specialChat.map((i) => (
-                              <p>dsd</p>
-                            ))} */}
+                      
                               {specialChat.map((item, index) => {
                                 return item.type === "quiz" ? (
                                   <div className="inchat-poll   inchat-quiz">
@@ -2799,7 +2655,6 @@ export default function Stream() {
                                   </>
                                 );
                               })}
-                              {/* <div ref={chatInterfaceRef} /> */}
                             </div>
                           </div>
 
@@ -2837,14 +2692,7 @@ export default function Stream() {
                             >
                               <img src={smiley} alt="emoji" />
                             </div>
-                            {/* <textarea
-                              value={chatMessage}
-                              onChange={(e) => {
-                                setChatMessage(e.target.value);
-                              }}
-                              onKeyDown={handleKeyDown}
-                              placeholder="Type a message"
-                            /> */}
+                            
                             <CustomTextArea
                               text={chatMessage}
                               setText={setChatMessage}
@@ -2852,18 +2700,11 @@ export default function Stream() {
                               height={height}
                               setHeight={setHeight}
                             />
-                            {/* <textarea
-                              style={{ height }}
-                              value={chatMessage}
-                              onChange={handleTextAreaInput}
-                              placeholder="Type here..."
-                              onKeyDown={handleKeyDown}
-                            /> */}
+                    
 
                             <Button
                               onClick={() => {
                                 sendMessage();
-                                // setChatMessage("");
                               }}
                             >
                               Send
@@ -2896,13 +2737,9 @@ export default function Stream() {
                           </p>
                         </div>
                         {mobileChat ? (
-                          // <div className="mobile-control" onClick={()=>{setMobileChat(true)}}>
-
                           <div
                             className="chat-box mobile-control mobile-chat-box"
-                            // onClick={() => {
-                            //   setMobileChat(true);
-                            // }}
+                       
                           >
                             <div className="chat-interface">
                               <div
@@ -2921,61 +2758,7 @@ export default function Stream() {
                                 ></div>
                               </div>
                               <div className="chat-interface-text">
-                                {/* {defaultChat.map((item, index) => {
-                                  return item.type === "quiz" ? (
-                                    <></>
-                                  ) : (
-                                    <>
-                                      {item.type === "poll" ? (
-                                        <></>
-                                      ) : (
-                                        <div
-                                          style={{
-                                            display: "flex",
-                                            flexDirection: "column",
-                                            alignItems: "flex-end",
-                                          }}
-                                        >
-                                          <div>
-                                            <img
-                                              src={presenterDetails.avatar}
-                                              alt=""
-                                            />
-                                          </div>
-                                          <div>
-                                            <p
-                                              style={{
-                                                fontWeight: 600,
-                                                marginBottom: "0",
-                                                color: item.color
-                                                  ? item.color
-                                                  : "#200b72",
-                                                alignSelf:
-                                                  item.user ===
-                                                  presenterDetails?.username
-                                                    ? ""
-                                                    : "flex-start",
-                                              }}
-                                            >
-                                              {item.user}
-                                            </p>
-                                            <div
-                                              key={index}
-                                              className={`${
-                                                item.user ===
-                                                presenterDetails?.username
-                                                  ? "user-bubble"
-                                                  : "chat-bubble"
-                                              }`}
-                                            >
-                                              {item.msg}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      )}
-                                    </>
-                                  );
-                                })} */}
+                                
                                 {defaultChat.map((item, index) => {
                                   return (
                                     <div
@@ -2990,7 +2773,6 @@ export default function Stream() {
                                           flexDirection: "column",
                                           alignItems: "flex-end",
                                           flex: 5,
-                                          // paddingRight: "5%",
                                         }}
                                       >
                                         <p
@@ -3043,7 +2825,6 @@ export default function Stream() {
                                                     borderRadius: "50%",
                                                     marginLeft: "5px",
                                                     marginRight: "5px",
-                                                    
                                                   }}
                                                 />
                                               ) : (
