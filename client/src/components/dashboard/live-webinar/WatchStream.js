@@ -1125,7 +1125,7 @@ function WatchStream({ schoolname }) {
                                               textAlign: "center",
                                             }}
                                           >
-                                            {watcherUsername.user
+                                            {watcherUsername
                                               .charAt(0)
                                               .toUpperCase()}
                                           </span>

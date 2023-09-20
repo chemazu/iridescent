@@ -1294,7 +1294,7 @@
   max-height: 60vh;
 }
 .live-webinar-watch .video-background .video-js {
-  background-color: transparent;
+  background-color: transparent !important;
 }
 .expand-wrapper {
   display: none;
