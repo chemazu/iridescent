@@ -16,6 +16,8 @@ const setupSocketIO = (app) => {
   const freeTimers = {};
   let pollQuizHolder = {};
   let broadcasterScreen = {};
+  let audioStatus = {};
+
   io.on("connection", (socket) => {
     // broadcaster
     socket.on("broadcaster", async (roomId, peerId) => {
@@ -48,6 +50,9 @@ const setupSocketIO = (app) => {
             broadcasterScreen[roomId].peerId
           );
         }
+        if (audioStatus[roomId]) {
+          socket.broadcast.to(roomId).emit("audiovisuals", audioStatus[roomId]);
+        }
 
         io.to(socket.id).emit(
           "join stream",
@@ -73,7 +78,6 @@ const setupSocketIO = (app) => {
 
     socket.on("startScreenSharing", (roomId, peerId) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
-      console.log(broadcasterScreen);
       io.in(roomId).emit("startScreenSharing", peerId);
     });
 
@@ -81,9 +85,12 @@ const setupSocketIO = (app) => {
       io.in(roomId).emit("stopScreenSharing");
 
       delete broadcasterScreen[roomId];
-      console.log(broadcasterScreen);
     });
+    socket.on("audiovisuals", (roomId, updated, type) => {
+      socket.broadcast.to(roomId).emit("audiovisuals", updated);
 
+      audioStatus[roomId] = updated;
+    });
     socket.on("message", (message, roomId) => {
       socket.broadcast.to(roomId).emit("message", { ...message });
       if (message.type === "quiz" || message.type === "poll") {
@@ -159,7 +166,6 @@ const setupSocketIO = (app) => {
     socket.on("endstream", async (roomid) => {
       // Check if the socket is a broadcaster
       const socketId = socket.id;
-      console.log("endstream");
       let endLiveWebinar = await LiveWebinar.findOne({ streamKey: roomid });
       if (endLiveWebinar) {
         endLiveWebinar.isLive = false;
@@ -181,7 +187,6 @@ const setupSocketIO = (app) => {
                 liveWebinar.timeleft = freeTimers[roomId];
                 // liveWebinar.isLive = false;
                 liveWebinar.endStatus = true;
-                console.log(liveWebinar);
                 await liveWebinar.save();
 
                 clearInterval(timerControl[roomId]);
@@ -205,9 +210,10 @@ const setupSocketIO = (app) => {
         async ([roomId, broadcaster]) => {
           if (broadcaster.socketId === socketId) {
             // The disconnected socket was a broadcaster
+            delete broadcasterHolder[roomId];
+            delete broadcasterScreen[roomId];
             socket.broadcast.to(roomId).emit("broadcaster-disconnected");
             if (freeTimers[roomId]) {
-              console.log(freeTimers[roomId]);
               let liveWebinar = await LiveWebinar.findOne({
                 streamKey: roomId,
               });

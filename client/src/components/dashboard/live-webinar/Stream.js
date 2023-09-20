@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Peer from "peerjs";
 import axios from "axios";
 import socket from "../../../utilities/client-socket-connect";
+
 import {
   Col,
   Container,
@@ -13,6 +14,7 @@ import {
   Progress,
   ModalHeader,
   ModalFooter,
+  Spinner,
 } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import smiley from "../../../images/emojisvg.svg";
@@ -33,18 +35,23 @@ import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import CountdownTimer from "./CountdownTimer";
 import PaymentModal from "./PaymentModal";
+import LiveWebinarMobileNav from "./LiveWebinarMobileNav";
+import CustomTextArea from "./CustomTextArea";
+// import TutorNotificationNavbar from "../tutorly-courses/TutorArea/TutorNotificationNavbar";
 
 export default function Stream() {
   const { roomid } = useParams();
   const dispatch = useDispatch();
   const myVideoRef = useRef();
+  const mySecondVideoRef = useRef();
+
   const myScreenRef = useRef();
   const peerRef = useRef();
   const screenPeerRef = useRef();
-
   const videoStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
-
+  const drawerRef = useRef(null);
+  const [reconnectLoading, setReconnectLoading] = useState(false);
   const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
   const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
@@ -52,7 +59,7 @@ export default function Stream() {
   const [resources, setResources] = useState([]);
   const [freeTimer, setFreeTimer] = useState(null);
   const [freeTimerStatus, disableFreeTimer] = useState(true);
-
+  const [offsetY, setOffsetY] = useState(0);
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
   const alert = useAlert();
@@ -78,12 +85,15 @@ export default function Stream() {
   const [attendies, setAttendies] = useState(1);
   const [loading, setLoading] = useState(true);
   const [resourceModal, setResourceModal] = useState(false);
+  const [unReadCount, setUnReadCount] = useState(0);
+
   const [resourceType, setResourceType] = useState("");
   const [editStat, setEditStat] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
   const [saveResource, setSaveResource] = useState(false);
   const [exitModal, setExitModal] = useState(false);
   const [resourceId, setResourceId] = useState("");
+  const [height, setHeight] = useState("40px"); // Set the initial height to 'auto'
   const [audioVisuals, setAudioVisuals] = useState({
     video: true,
     audio: true,
@@ -116,7 +126,8 @@ export default function Stream() {
           video: !audioVisuals.video,
         };
         setAudioVisuals(updated);
-        socket.emit("audioVisuals", roomid, updated);
+        socket.emit("audiovisuals", roomid, updated,type);
+        
         break;
       case "mic":
         let newUpdated = {
@@ -124,7 +135,7 @@ export default function Stream() {
           video: audioVisuals.video,
         };
         setAudioVisuals(newUpdated);
-        socket.emit("audioVisuals", roomid, newUpdated);
+        socket.emit("audiovisuals", roomid, newUpdated,type);
         break;
 
       default:
@@ -150,9 +161,7 @@ export default function Stream() {
   const handleScreenSharingEnded = () => {
     // Emit a socket event to inform others in the room that screen sharing has ended
     socket.emit("stopScreenSharing", roomid);
-    console.log("first", screenPeerhandler, screenStreamhandler);
     // Stop and release the screen-sharing stream
-    console.log(screenStreamRef.current);
     if (screenStreamhandler) {
       const tracks = screenStreamhandler.getTracks();
       tracks.forEach((track) => track.stop());
@@ -163,7 +172,6 @@ export default function Stream() {
     setScreenSharing(false);
 
     // Optionally, you can do any additional cleanup or actions here
-    console.log("Screen sharing has ended");
   };
   const handleExitStreamModal = () => {
     setExitModal(!exitModal);
@@ -207,7 +215,6 @@ export default function Stream() {
         stream.getTracks().forEach((track) => track.stop());
       })
       .catch(() => {
-        console.log("Error");
       });
 
     // Destroy the peer connection
@@ -230,7 +237,6 @@ export default function Stream() {
   };
   const getResourceCount = async () => {
     let res = await axios.get(`/api/v1/classroomresource/count`);
-    console.log(res, "countsss");
 
     if (res) {
       if (res.data.paymentInfo === "free") {
@@ -391,7 +397,6 @@ export default function Stream() {
           config
         )
         .then((res) => {
-          console.log(res);
           dispatch(stopLoading());
           alert.show("Poll Edited");
           setPollTitle("");
@@ -417,7 +422,6 @@ export default function Stream() {
           config
         )
         .then((res) => {
-          console.log(res);
           dispatch(stopLoading());
           if (saveResource) {
             alert.show("Poll saved to resources");
@@ -494,7 +498,6 @@ export default function Stream() {
         durationInSec,
         persist: saveResource,
       };
-      console.log(saveResource);
       if (localStorage.getItem("token")) {
         setAuthToken(localStorage.getItem("token"));
       }
@@ -512,7 +515,6 @@ export default function Stream() {
             config
           )
           .then((res) => {
-            console.log(res);
             dispatch(stopLoading());
             alert.show("Quiz Edited");
             setAnswers([]);
@@ -657,6 +659,7 @@ export default function Stream() {
           msg: chatMessage,
           timeStamp: Date.now(),
           type: "text",
+          img: presenterDetails.avatar,
         },
         roomid
       );
@@ -671,12 +674,17 @@ export default function Stream() {
         },
       ]);
     }
+    // setHeight("40px");
+
+    setHeight("40px");
     setChatMessage("");
   };
 
   const handleKeyDown = (event) => {
     if (event.keyCode === 13) {
+      event.preventDefault(); //
       sendMessage();
+   
     }
   };
   const handlePollOptionChange = (index, event) => {
@@ -920,7 +928,6 @@ export default function Stream() {
       setTimeLeft(roomTimer);
 
       if (roomTimer === 600) {
-        console.log(roomTimer, "fsd");
         // setTimeOutModal(true);
       }
     });
@@ -956,7 +963,6 @@ export default function Stream() {
             setQuizResultHolder(newResult);
             setQuizSubmission(true);
           } else {
-            console.log("User has already submitted");
           }
         }
       }
@@ -988,7 +994,6 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("timerTick", (remainingTime) => {
-      console.log(remainingTime);
       if (timerHolder) {
         let newTimeHolder = {
           ...timerHolder,
@@ -1049,6 +1054,11 @@ export default function Stream() {
     const index = username.charCodeAt(0) % colors.length;
     return colors[index];
   }
+  const handleUpdateUnReadCount = () => {
+    if (!mobileChat) {
+      setUnReadCount(unReadCount + 1);
+    }
+  };
   useEffect(() => {
     socket.on("message", (message) => {
       const userExists = defaultChat.find((item) => item.user === message.user);
@@ -1062,6 +1072,7 @@ export default function Stream() {
       }
 
       setDefaultChat([...defaultChat, { ...newMessage }]);
+      handleUpdateUnReadCount();
     });
     return () => {
       socket.off("message");
@@ -1086,7 +1097,6 @@ export default function Stream() {
     try {
       let res = await axios.get(`/api/v1/livewebinar/classtimer/${roomid}`);
       if (res) {
-        console.log(res, endTime);
         localStorage.setItem(roomid, res?.data.classEndTime);
         setFreeTimer(res?.data.classEndTime);
       } else {
@@ -1094,7 +1104,6 @@ export default function Stream() {
         setFreeTimer(endTime);
       }
     } catch (error) {
-      console.log(error);
       localStorage.setItem(roomid, endTime);
     }
   };
@@ -1113,12 +1122,13 @@ export default function Stream() {
 
       .then((stream) => {
         addVideoStream(myVideoRef.current, stream);
+        addVideoStream(mySecondVideoRef.current, stream);
+
         videoStreamRef.current = stream;
       })
       .catch((error) => console.error(error));
 
     peerInstance.on("call", (call) => {
-      console.log(videoStreamRef.current);
       call.answer(videoStreamRef.current);
     });
   };
@@ -1134,7 +1144,6 @@ export default function Stream() {
         screenPeerRef.current = screenInstance;
         setScreenPeerhandler(screenInstance);
         setScreenStreamhandler(stream);
-        console.log(screenPeerRef);
         screenInstance.on("open", (peerId) => {
           socket.emit("startScreenSharing", roomid, peerId);
         });
@@ -1143,27 +1152,12 @@ export default function Stream() {
         // screenStreamRef.current = stream;
         // setScreenMedia(stream)
         screenInstance.on("call", (call) => {
-          console.log("dsdsdsdcasl");
           call.answer(stream);
         });
-        //   console.log(screenStreamRef.current);
-        //   console.log(screenMedia);
-        //   console.log("within")
-
-        //   call.answer(screenStreamRef.current);
-        // });}
+        setReconnectLoading(false);
+      
       });
-    // screenInstance.on("call", (call) => {
-    //   // console.log(screenStreamRef.current);
-    //   // console.log(screenMedia);
-
-    //   call.answer(screenStreamRef.current);
-    //   call.answer(screenMedia)
-    // });
-    // screenInstance.on("call", (call) => {
-    //   console.log(stream);
-    //   call.answer(screenStreamRef.current);
-    // });
+ 
   };
   useEffect(() => {
     if (startController) {
@@ -1182,7 +1176,6 @@ export default function Stream() {
       if (screenSharing) {
         initializeScreenPeer();
       } else {
-        console.log("screen stuff");
         // handleScreenSharingEnded();
       }
     }
@@ -1235,6 +1228,7 @@ export default function Stream() {
       // socket.emit("stopScreenSharing", roomid);
     } else {
       setScreenSharing(true);
+      setReconnectLoading(true);
       // initializeScreenPeer();
     }
   };
@@ -1274,7 +1268,6 @@ export default function Stream() {
 
     try {
       const response = await axios.get(`/api/v1/classroomresource/${id}`);
-      console.log(response.data);
       const { title, options, durationInSec } = response?.data;
       setPollTitle(title);
       setPollOptions(options);
@@ -1295,14 +1288,12 @@ export default function Stream() {
 
     try {
       const response = await axios.get(`/api/v1/classroomresource/${id}`);
-      console.log(response.data);
       const {
         durationInSec,
         quizHolder: quizHolderData,
         answers: answersData,
       } = response?.data;
 
-      console.log(durationInSec, quizHolderData);
       // handle duration unit
       setDurationValue(durationInSec);
       setQuizHolder(quizHolderData);
@@ -1343,7 +1334,6 @@ export default function Stream() {
   }
 
   const handleOpenResourceModal = async (type) => {
-    console.log(type);
     dispatch(startLoading());
     try {
       setLoading(true);
@@ -1351,7 +1341,6 @@ export default function Stream() {
       const response = await axios.get(
         `/api/v1/classroomresource/creator-resources/${type}?page=${1}`
       );
-      console.log(response);
       setResourceType(type);
       setResources(response.data.resources);
       dispatch(stopLoading());
@@ -1435,6 +1424,7 @@ export default function Stream() {
       setDurationUnit("secs");
     }
   };
+ 
   const handleDeleteModal = (id) => {
     setDeleteModal(true);
     setResourceId(id);
@@ -1456,13 +1446,25 @@ export default function Stream() {
       dispatch(stopLoading());
     }
   };
+  let parent = {
+    startController,
+    planname,
+    isLoading,
+    roomid,
+    setTimeOutModal,
+    handlePlanTimeOut,
+    freeTimerStatus,
+    handleExitStreamModal,
+  };
   return (
     <div className="dashboard-layout">
       <Container fluid>
         <Row>
           <DashboardNavbar />
+          <LiveWebinarMobileNav parent={parent} />
+
           <Col className="page-actions__col">
-            <div className="live-webinar">
+            <div className="live-webinar live-webinar-stream">
               <div className="stream-webinar-content">
                 <Modal isOpen={exitModal}>
                   <ModalHeader>
@@ -1619,7 +1621,6 @@ export default function Stream() {
                         <div
                           className="single-resource-card empty"
                           onClick={() => {
-                            console.log(resourceCount);
 
                             if (resourceCount?.pollCount >= 3) {
                               setMoreResources({
@@ -2084,7 +2085,6 @@ export default function Stream() {
                     </Button>{" "}
                   </div>
                 </Modal>
-
                 <Modal isOpen={quizConfirmation} className="confirm-poll-modal">
                   <div className="top">
                     <h4
@@ -2139,7 +2139,7 @@ export default function Stream() {
                     </Button>
                   </div>
                 </Modal>
-                <div
+                {/* <div
                   className="time-constraints mobile-control mobile-time-constraints"
                   style={{ display: startController ? "" : "none" }}
                 >
@@ -2166,8 +2166,11 @@ export default function Stream() {
                   >
                     End Class &nbsp; <i className="fa fa-times"></i>
                   </Button>
-                </div>
-                <div className="page-title" style={{ display: "block" }}>
+                </div> */}
+                <div
+                  className={`page-title ${defaultChat.length >= 1 ? "" : ""}`}
+                  style={{ display: "block" }}
+                >
                   <div
                     className="time-constraints desktop-control"
                     style={{ visibility: startController ? "" : "hidden" }}
@@ -2241,7 +2244,12 @@ export default function Stream() {
                       </span>
                     </div>
                   </div>
-                  <div className="live-webinar-interface">
+                  <div
+                    className="live-webinar-interface"
+                    style={{
+                      height: startController ? "100%" : "auto",
+                    }}
+                  >
                     <div
                       className={`video-background ${
                         startController
@@ -2253,7 +2261,7 @@ export default function Stream() {
                     >
                       {startController ? (
                         <>
-                          {!audioVisuals.video && (
+                          {!audioVisuals.video && !screenSharing && (
                             <div className="waiting-image-presenter" style={{}}>
                               <img
                                 style={{ borderRadius: "50%" }}
@@ -2266,8 +2274,23 @@ export default function Stream() {
                               />
                             </div>
                           )}
-                          <video ref={myVideoRef} muted />
-                          <video ref={myScreenRef} muted />
+                          <video
+                            ref={myVideoRef}
+                            muted
+                            style={{
+                              height: screenSharing && "0px",
+                            }}
+                          />
+                          {reconnectLoading && (
+                            <div className="reconnect-screen">
+                              <Spinner />
+                            </div>
+                          )}
+                          <video
+                            ref={myScreenRef}
+                            muted
+                            // className="desktop-control"
+                          />
                         </>
                       ) : (
                         <>
@@ -2402,13 +2425,14 @@ export default function Stream() {
                     </div>
                     {startController ? (
                       <>
-                        <Card
-                          className="presenter-controls-wrapper mobile-control"
-                          style={{ display: startController ? "" : "none" }}
-                        >
-                          {" "}
-                          <div className="presenter-controls">
-                            {/* <div
+                        {!mobileChat && (
+                          <Card
+                            className="presenter-controls-wrapper mobile-control"
+                            style={{ display: startController ? "" : "none" }}
+                          >
+                            {" "}
+                            <div className="presenter-controls">
+                              {/* <div
                               className="control-object more"
                               onClick={copyText}
                             >
@@ -2416,76 +2440,72 @@ export default function Stream() {
 
                               <p>More</p>
                             </div> */}
-                            <div
-                              className="control-object "
-                              onClick={() => {
-                                toggleAudioVisuals("mic");
-                              }}
-                            >
-                              <i
-                                className="fas fa-microphone"
-                                style={
-                                  !audioVisuals.audio
-                                    ? {
-                                        background: "#cecece",
-                                        color: "#888",
-                                      }
-                                    : null // No additional style for the active state
-                                }
-                              ></i>
-
-                              <p>Mic</p>
-                            </div>
-                            <div
-                              className="control-object"
-                              onClick={() => {
-                                console.log("dsd");
-                                toggleAudioVisuals("cam");
-                                // socket.emit(
-                                //   "disablevideo",
-                                //   roomid,
-                                //   !audioVisuals.video
-                                // );
-
-                                // setAudioVisuals({
-                                //   video: !audioVisuals.video,
-                                //   audio: audioVisuals.audio,
-                                // });
-                              }}
-                              // onClick={toggleVideo}
-                            >
-                              <i
-                                className="fas fa-video"
-                                style={
-                                  !audioVisuals.video
-                                    ? {
-                                        background: "#cecece",
-                                        color: "#888",
-                                      }
-                                    : null // No additional style for the active state
-                                }
-                              ></i>
-
-                              <p>Webcam</p>
-                            </div>
-                            {screenSharing ? (
                               <div
-                                className="control-object more share"
-                                onClick={toggleScreenSharing}
+                                className="control-object "
+                                onClick={() => {
+                                  toggleAudioVisuals("mic");
+                                }}
                               >
-                                <i className="fa fa-desktop"></i>
-                                <p>Stop Screen Share</p>
+                                <i
+                                  className="fas fa-microphone"
+                                  style={
+                                    !audioVisuals.audio
+                                      ? {
+                                          background: "#cecece",
+                                          color: "#888",
+                                        }
+                                      : null // No additional style for the active state
+                                  }
+                                ></i>
+
+                                <p>Mic</p>
                               </div>
-                            ) : (
                               <div
-                                className="control-object more share"
-                                onClick={toggleScreenSharing}
+                                className="control-object"
+                                onClick={() => {
+                                  toggleAudioVisuals("cam");
+                                  // socket.emit(
+                                  //   "disablevideo",
+                                  //   roomid,
+                                  //   !audioVisuals.video
+                                  // );
+
+                                  // setAudioVisuals({
+                                  //   video: !audioVisuals.video,
+                                  //   audio: audioVisuals.audio,
+                                  // });
+                                }}
+                                // onClick={toggleVideo}
                               >
-                                <i className="fa fa-desktop"></i>
-                                <p>Share screen</p>
+                                <i
+                                  className="fas fa-video"
+                                  style={
+                                    !audioVisuals.video
+                                      ? {
+                                          background: "#cecece",
+                                          color: "#888",
+                                        }
+                                      : null // No additional style for the active state
+                                  }
+                                ></i>
+
+                                <p>Webcam</p>
                               </div>
-                            )}
-                            {/* <div
+                              <div
+                                className="control-object"
+                                onClick={() => {
+                                  if (!timerHolder) {
+                                    handleOpenResourceModal("poll");
+                                  } else {
+                                    alert.show("ASSESSMENT ONGOING");
+                                  }
+                                }}
+                              >
+                                <i className="fas fa-poll poll"></i>
+
+                                <p>Polls</p>
+                              </div>
+                              {/* <div
                               className="control-object"
                               onClick={() => {
                                 if (!timerHolder) {
@@ -2499,7 +2519,7 @@ export default function Stream() {
 
                               <p>Polls</p>
                             </div> */}
-                            {/* <div
+                              {/* <div
                               className="control-object"
                               onClick={() => {
                                 if (!timerHolder) {
@@ -2513,10 +2533,20 @@ export default function Stream() {
 
                               <p>Pop Quiz</p>
                             </div> */}
-                          </div>
-                        </Card>
-
+                            </div>
+                          </Card>
+                        )}
                         <div className="chat-box desktop-control">
+                          <video
+                            ref={mySecondVideoRef}
+                            muted
+                            style={{
+                              height: screenSharing ? "150px" : "0px",
+                              background: "#000",
+                              borderRadius: "20px",
+                              padding: screenSharing && "5px",
+                            }}
+                          />
                           <div className="chat-interface">
                             <div className="chat-interface-text">
                               {defaultChat.map((item, index) => {
@@ -2554,27 +2584,73 @@ export default function Stream() {
                                         {item.user}
                                       </p>
                                       <div
-                                        key={index}
-                                        className={`${
-                                          item.user ===
-                                          presenterDetails?.username
-                                            ? "user-bubble"
-                                            : "chat-bubble"
+                                        className={`in-chat-message ${
+                                          item.user !==
+                                            presenterDetails?.username &&
+                                          "watcher-message"
                                         }`}
                                       >
-                                        {item.msg}
+                                        {item.user ===
+                                        presenterDetails?.username ? (
+                                          <img
+                                            src={presenterDetails.avatar}
+                                            alt="user"
+                                            style={{
+                                              width: "25px",
+                                              height: "auto",
+
+                                              borderRadius: "50%",
+                                              marginLeft: "5px",
+                                            }}
+                                          />
+                                        ) : (
+                                          <>
+                                            {item.img ? (
+                                              <img
+                                                src={item.img}
+                                                alt="user"
+                                                style={{
+                                                  width: "25px",
+                                                  height: "auto",
+
+                                                  borderRadius: "50%",
+                                                  marginLeft: "5px",
+                                                  marginRight: "5px",
+
+                                                }}
+                                              />
+                                            ) : (
+                                              <span
+                                                style={{
+                                                  color: "#fff",
+                                                  background: item.color,
+                                                  borderRadius: "50%",
+
+                                                  width: "25px",
+                                                  height: "25px",
+                                                  textAlign: "center",
+                                                }}
+                                              >
+                                                {item.user
+                                                  .charAt(0)
+                                                  .toUpperCase()}
+                                              </span>
+                                            )}
+                                          </>
+                                        )}
+                                        <div
+                                          key={index}
+                                          className={`${
+                                            item.user ===
+                                            presenterDetails?.username
+                                              ? "user-bubble"
+                                              : "chat-bubble"
+                                          }`}
+                                        >
+                                          {item.msg}
+                                        </div>
                                       </div>
                                     </div>
-                                    {/* <img
-                                      src={presenterDetails.avatar}
-                                      alt="user"
-                                      style={{
-                                        flex: 1,
-                                        width: "25px",
-                         
-                                        borderRadius: "50%",
-                                      }}
-                                    /> */}
                                   </div>
                                 );
                               })}
@@ -2762,14 +2838,29 @@ export default function Stream() {
                             >
                               <img src={smiley} alt="emoji" />
                             </div>
-                            <textarea
+                            {/* <textarea
                               value={chatMessage}
                               onChange={(e) => {
                                 setChatMessage(e.target.value);
                               }}
                               onKeyDown={handleKeyDown}
                               placeholder="Type a message"
+                            /> */}
+                            <CustomTextArea
+                              text={chatMessage}
+                              setText={setChatMessage}
+                              keyDown={handleKeyDown}
+                              height={height}
+                              setHeight={setHeight}
                             />
+                            {/* <textarea
+                              style={{ height }}
+                              value={chatMessage}
+                              onChange={handleTextAreaInput}
+                              placeholder="Type here..."
+                              onKeyDown={handleKeyDown}
+                            /> */}
+
                             <Button
                               onClick={() => {
                                 sendMessage();
@@ -2791,9 +2882,7 @@ export default function Stream() {
                                 marginLeft: "2px",
                                 lineHeight: "normal",
                               }}
-                              onClick={() => {
-                                setMobileChat(!mobileChat);
-                              }}
+                              onClick={() => {}}
                             >
                               <strong> Gift</strong>
                             </p>
@@ -2812,13 +2901,28 @@ export default function Stream() {
 
                           <div
                             className="chat-box mobile-control mobile-chat-box"
-                            onClick={() => {
-                              setMobileChat(true);
-                            }}
+                            // onClick={() => {
+                            //   setMobileChat(true);
+                            // }}
                           >
                             <div className="chat-interface">
+                              <div
+                                className="more-message-parent"
+                                onClick={() => {
+                                  setMobileChat(!mobileChat);
+                                  setUnReadCount(0);
+                                }}
+                              >
+                                <div
+                                  className="more-message-action"
+                                  onClick={() => {
+                                    setMobileChat(!mobileChat);
+                                    setUnReadCount(0);
+                                  }}
+                                ></div>
+                              </div>
                               <div className="chat-interface-text">
-                                {defaultChat.map((item, index) => {
+                                {/* {defaultChat.map((item, index) => {
                                   return item.type === "quiz" ? (
                                     <></>
                                   ) : (
@@ -2833,22 +2937,135 @@ export default function Stream() {
                                             alignItems: "flex-end",
                                           }}
                                         >
-                                          <p
-                                            style={{
-                                              fontWeight: 600,
-                                              marginBottom: "0",
-                                              color: item.color
-                                                ? item.color
-                                                : "#200b72",
-                                              alignSelf:
+                                          <div>
+                                            <img
+                                              src={presenterDetails.avatar}
+                                              alt=""
+                                            />
+                                          </div>
+                                          <div>
+                                            <p
+                                              style={{
+                                                fontWeight: 600,
+                                                marginBottom: "0",
+                                                color: item.color
+                                                  ? item.color
+                                                  : "#200b72",
+                                                alignSelf:
+                                                  item.user ===
+                                                  presenterDetails?.username
+                                                    ? ""
+                                                    : "flex-start",
+                                              }}
+                                            >
+                                              {item.user}
+                                            </p>
+                                            <div
+                                              key={index}
+                                              className={`${
                                                 item.user ===
                                                 presenterDetails?.username
-                                                  ? ""
-                                                  : "flex-start",
-                                            }}
-                                          >
-                                            {item.user}
-                                          </p>
+                                                  ? "user-bubble"
+                                                  : "chat-bubble"
+                                              }`}
+                                            >
+                                              {item.msg}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </>
+                                  );
+                                })} */}
+                                {defaultChat.map((item, index) => {
+                                  return (
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          alignItems: "flex-end",
+                                          flex: 5,
+                                          // paddingRight: "5%",
+                                        }}
+                                      >
+                                        <p
+                                          style={{
+                                            fontWeight: 600,
+
+                                            marginBottom: "0",
+                                            color: item.color
+                                              ? item.color
+                                              : "#200b72",
+                                            alignSelf:
+                                              item.user ===
+                                              presenterDetails?.username
+                                                ? ""
+                                                : "flex-start",
+                                          }}
+                                        >
+                                          {item.user}
+                                        </p>
+                                        <div
+                                          className={`in-chat-message ${
+                                            item.user !==
+                                              presenterDetails?.username &&
+                                            "watcher-message"
+                                          }`}
+                                        >
+                                          {item.user ===
+                                          presenterDetails?.username ? (
+                                            <img
+                                              src={presenterDetails.avatar}
+                                              alt="user"
+                                              style={{
+                                                width: "25px",
+                                                height: "auto",
+
+                                                borderRadius: "50%",
+                                                marginLeft: "5px",
+                                              }}
+                                            />
+                                          ) : (
+                                            <>
+                                              {item.img ? (
+                                                <img
+                                                  src={item.img}
+                                                  alt="user"
+                                                  style={{
+                                                    width: "25px",
+                                                    height: "auto",
+
+                                                    borderRadius: "50%",
+                                                    marginLeft: "5px",
+                                                    marginRight: "5px",
+                                                    
+                                                  }}
+                                                />
+                                              ) : (
+                                                <span
+                                                  style={{
+                                                    color: "#fff",
+                                                    background: item.color,
+                                                    borderRadius: "50%",
+
+                                                    width: "25px",
+                                                    height: "25px",
+                                                    textAlign: "center",
+                                                  }}
+                                                >
+                                                  {item.user
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                                </span>
+                                              )}
+                                            </>
+                                          )}
                                           <div
                                             key={index}
                                             className={`${
@@ -2861,8 +3078,8 @@ export default function Stream() {
                                             {item.msg}
                                           </div>
                                         </div>
-                                      )}
-                                    </>
+                                      </div>
+                                    </div>
                                   );
                                 })}
                                 <div ref={chatInterfaceRef} />
@@ -3048,13 +3265,12 @@ export default function Stream() {
                               >
                                 <img src={smiley} alt="emoji" />
                               </div>
-                              <textarea
-                                value={chatMessage}
-                                onChange={(e) => {
-                                  setChatMessage(e.target.value);
-                                }}
-                                onKeyDown={handleKeyDown}
-                                placeholder="Type a message"
+                              <CustomTextArea
+                                text={chatMessage}
+                                setText={setChatMessage}
+                                keyDown={handleKeyDown}
+                                height={height}
+                                setHeight={setHeight}
                               />
                               <Button
                                 onClick={() => {
@@ -3069,14 +3285,23 @@ export default function Stream() {
                         ) : (
                           <div
                             className="mobile-control mobile-message"
-                            onClick={() => {
-                              setMobileChat(true);
-                            }}
+                            // onClick={(e) => {
+                            //   setMobileChat(true);
+                            //   handleMouseDown(e);
+                            // }}
+                            // onMouseDown={handleMouseDown}
                           >
-                            <div className="message-bubble">
+                            <div
+                              className="message-bubble"
+                              // className="draggable-div"
+                              // style={{ transform: `translateY(${offsetY}px)` }}
+                              onClick={() => {
+                                setMobileChat(!mobileChat);
+                              }}
+                            >
                               <i class="fa fa-envelope" aria-hidden="true"></i>
                               <h4>New Message</h4>
-                              <p>0</p>
+                              <p>{unReadCount}</p>
                             </div>
                           </div>
                         )}

@@ -83,7 +83,9 @@ const PresenterValidation = ({ school }) => {
   }
 
   if (!isValid) {
-    return <InvalidStream />;
+    // return <InvalidStream />;
+  return <Stream />;
+
   }
 
   return <Stream />;

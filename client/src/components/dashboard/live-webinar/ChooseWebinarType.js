@@ -108,7 +108,8 @@ function ChooseWebinarType({ school }) {
         .post("/api/v1/livewebinar", body, config)
         .then((res) => {
           history.push(`/dashboard/livewebinar/stream/${res?.data.streamKey}`);
-          copyText(res?.data.streamKey);
+          copyText(res?.data);
+         
           dispatch(stopLoading());
         })
         .catch((error) => {

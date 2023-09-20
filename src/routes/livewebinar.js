@@ -111,7 +111,7 @@ router.post(
       res.json({
         message: "Stream created successfully",
         streamKey: savedStream.streamKey,
-
+        fee: savedStream.fee,
         id: savedStream._id,
       });
     } catch (error) {
@@ -381,11 +381,10 @@ router.get("/validate/:streamKey", auth, async (req, res) => {
         classEndTime: livestream.classEndTime,
         endStatus: livestream.endStatus,
         firstname: livestream.creator.firstname,
-          lastname: livestream.creator.lastname,
-          school: livestream.school.name,
-          avatar: livestream.creator.avatar,
-          title: livestream.title,
-
+        lastname: livestream.creator.lastname,
+        school: livestream.school.name,
+        avatar: livestream.creator.avatar,
+        title: livestream.title,
       });
     } else {
       res.status(400).json({ error: "Stream not found" });
@@ -627,7 +626,7 @@ router.get("/streamdetails/:streamId", async (req, res) => {
 router.get("/studentdetails", studentAuth, async (req, res) => {
   let user = await Student.findOne({ _id: req.student.id });
 
-  res.json({ username: user.username });
+  res.json({ username: user.username, avatar: user.avatar });
 });
 
 // get user payment details

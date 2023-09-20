@@ -2,7 +2,9 @@
   border: 0;
   border-radius: 2rem;
 }
-
+.navbar-display-mobile {
+  display: none;
+}
 .modal-button {
   background-color: var(--site-cta-color) !important;
   color: var(--site-white-color) !important;
@@ -804,6 +806,7 @@
   height: 20px;
   width: 20px;
   background-color: #000;
+
   border-bottom-right-radius: 15px;
 }
 .chat-bubble::after {
@@ -819,7 +822,10 @@
 }
 .user-bubble {
   display: inline-block;
-  background-color: rgba(71, 110, 250);
+  /* background-color: rgba(71, 110, 250, 0.51); */
+  background-color: rgb(121, 163, 253);
+  /* background-color: rgba(71, 110, 250, 0.51); */
+
   display: flex;
   align-self: flex-end;
   color: black;
@@ -843,7 +849,10 @@
   right: -7px;
   height: 20px;
   width: 20px;
-  background-color: rgba(71, 110, 250);
+  /* background-color: rgba(71, 110, 250, 0.51); */
+  background-color: rgb(121, 163, 253);
+
+  /* background-color: rgb(121, 163, 253); */
   border-bottom-left-radius: 15px;
   overflow: hidden;
 }
@@ -866,6 +875,16 @@
   background: #ffffff;
   border: 0.4px solid #000000;
   border-radius: 2.95257px;
+}
+.chat-control textarea {
+  width: 100%;
+  min-height: 40px; /* Set your desired minimum height */
+  resize: none;
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 22px;
+  font-size: 16px; /* Adjust the font size as needed */
+  overflow: hidden; /* Enable vertical scroll when content exceeds 4 rows */
 }
 .action-wrapper {
   width: 20%;
@@ -1038,6 +1057,7 @@
   max-height: 65vh;
   height: 100%;
   border-radius: 10px;
+  overflow: hidden;
 }
 .video-background video {
   height: 65vh;
@@ -1055,6 +1075,18 @@
   position: relative;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
+}
+.more-message-parent {
+  border: 7.5px solid #969696;
+  background-color: #969696;
+  display: flex;
+  justify-content: center;
+}
+.more-message-action {
+  width: 20%;
+  border: 1px solid #476efa;
+  background-color: #969696;
+  color: transparent;
 }
 .live-webinar-interface .chat-box .chat-interface .chat-interface-text {
   flex-grow: 1;
@@ -1261,11 +1293,13 @@
   height: auto;
   max-height: 60vh;
 }
+.live-webinar-watch .video-background .video-js {
+  background-color: transparent;
+}
 .expand-wrapper {
   display: none;
 }
-.filled-video {
-}
+
 .filled-video .vjs-tech {
   object-fit: cover !important;
   height: 100vh !important;
@@ -1579,7 +1613,119 @@
   width: 60%;
   text-transform: none;
 }
+.reconnect-screen {
+  width: 100%;
+  background: #000;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.empty .video-js {
+  height: 100%;
+}
+.in-chat-message {
+  display: flex;
+  width: 80%;
+  flex-direction: row-reverse;
+  align-items: center;
+}
+.in-chat-message img {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  margin-left: 5px;
+  z-index: 5;
+}
+.watcher-message {
+  width: 100%;
+  justify-content: flex-start;
+  flex-direction: row;
+}
+.watcher-message span {
+  z-index: 5;
+  margin-right: 7.5px;
+}
+.share-inactive {
+}
+.share-inactive .video-js .vjs-tech {
+  height: 0px !important;
+}
+.share-inactive .video-js {
+  height: 0px !important;
+}
+.share-active .video-js .vjs-tech {
+  height: 150px !important;
+  background-color: #000;
+  border-radius: 20px;
+}
+
+.share-active .video-js {
+  background: transparent;
+}
+.active-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: 100%;
+  height: 100%;
+}
+.active-screen-ref {
+  height: 0px !important;
+}
+.webcam-off {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 50;
+  width: 100%;
+  /* height: 100%; */
+}
 @media screen and (max-width: 812px) {
+  .save-resource {
+ 
+    padding: 0 10%;
+  }
+  .videoRef .video-js .vjs-tech {
+    object-fit: cover !important;
+    height: 100vh !important;
+  }
+  .share-active {
+    display: none;
+  }
+  .active-screen-ref {
+    display: none;
+  }
+  nav .time-constraints {
+    padding-top: 0;
+    flex-wrap: nowrap;
+    width: 70%;
+    justify-content: space-between;
+  }
+  nav .time-constraints .time-tracker {
+    padding: 0;
+  }
+  nav .time-constraints .time-tracker p {
+    font-size: 0.75rem;
+  }
+  nav .time-constraints .page-title_cta-btn {
+    padding: 0.5rem 1.25rem;
+    background-color: var(--site-cta-color) !important;
+    color: var(--site-white-color) !important;
+    border: none;
+    border-radius: 22px;
+  }
+  .chat-control button {
+    display: none;
+  }
+  .navbar-display-mobile {
+    display: flex;
+  }
+  .addPadding {
+    padding-top: 80px !important;
+  }
   .action-drop-down {
     left: -100px;
     padding: 20%;
@@ -1600,10 +1746,14 @@
   }
   .expand-wrapper {
     display: block;
+    padding: 0 2%;
+    color: #ccc;
   }
   .live-webinar-interface {
     flex-direction: column;
     position: relative;
+    height: 100%;
+    justify-content: unset;
   }
 
   .live-webinar-interface .video-background {
@@ -1675,6 +1825,9 @@
     flex-direction: column;
     align-items: flex-start;
   }
+  .waiting-controls .control-object {
+    padding: 10px 0;
+  }
   .waiting-controls .control-object p {
     display: none;
   }
@@ -1701,24 +1854,30 @@
     width: 100%;
     height: 100%;
     padding-top: 0px;
+    overflow: hidden;
   }
   .live-webinar {
     padding-top: 0;
     height: 100%;
   }
+  .live-webinar-stream {
+    max-height: 100vh !important;
+    overflow: hidden !important;
+  }
   .stream-webinar-content .page-title {
-    padding: 0 17px;
     margin: 0;
     height: 100%;
+    padding-top: 65px;
+    position: fixed;
   }
   .desktop-control {
-    display: none;
+    display: none !important;
   }
   .mobile-control {
     display: flex;
   }
   .no-start p {
-    padding: 0 10%;
+    padding: 0 5%;
     padding-top: 5%;
   }
   .page-title .time-constraints {
@@ -1735,28 +1894,33 @@
     /* padding-top: 50%; */
   }
   .live-webinar-interface .video-background-active {
-    height: 80vh;
-    padding-top: 50%;
+    height: 80%;
   }
   .live-webinar-interface .video-background video {
     height: auto;
     width: 100%;
     /* max-width: 85vw; */
     border-radius: 0;
+    object-fit: cover;
+    height: 100%;
   }
   .live-webinar-interface .video-background-inactive {
     height: 30vh;
     padding-top: 5%;
     background-color: transparent;
+    padding: 0 50px;
   }
   .live-webinar-interface .video-background-inactive video {
     width: 100%;
-    height: 20vh;
+    /* height: 20vh; */
+    height: 100%;
     max-width: none;
     background-color: transparent;
+    object-fit: cover;
+    border-radius: 10px;
   }
   .live-webinar-interface .mobile-chat-box {
-    height: 55vh !important;
+    height: 51vh !important;
   }
   .presenter-room-info {
     display: flex;
@@ -1771,7 +1935,6 @@
   .mobile-message {
     display: flex;
     justify-content: center;
-    padding-bottom: 10%;
   }
   .message-bubble {
     display: flex;
@@ -1842,7 +2005,6 @@
   }
   .live-webinar-watch .user-bubble {
     background: transparent;
-    color: var(--site-white-color);
   }
   .live-webinar-watch .watcher-username {
     color: var(--site-white-color);
@@ -1851,6 +2013,10 @@
   .live-webinar-watch .chat-control {
     background: transparent !important;
     border: 0;
+    flex-direction: row-reverse;
+  }
+  .chat-control {
+    flex-direction: row-reverse;
   }
   .watcher-chat-box .user-bubble::before {
     background: transparent;
@@ -1861,6 +2027,7 @@
   .watcher-chat-box .chat-bubble {
     background: transparent;
     padding: 0;
+    color: #000;
   }
   .watcher-chat-box .chat-bubble::before {
     background: transparent;
@@ -1874,7 +2041,7 @@
   .live-webinar-watch .watcher-chat-box {
     width: 100%;
     bottom: 0;
-    height: 50%;
+    height: 55%;
     /* position: revert; */
   }
   .watch-left .presenter-controls {
@@ -1899,7 +2066,6 @@
     line-height: normal;
     margin: 0;
     font-weight: bold;
-    color: var(--site-white-color);
   }
   .room-info {
     display: flex;
