@@ -860,7 +860,7 @@ function WatchStream({ schoolname }) {
                                 ></div>
                                 {!screenSharing && (
                                   <>
-                                    {!audioVisuals.video && (
+                                    {!audioVisuals?.video && (
                                       <div className="broadcaster-disconnected reconnect-loading webcam-off">
                                         <img
                                           src={presenterAvatar}
