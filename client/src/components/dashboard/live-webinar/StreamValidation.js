@@ -27,12 +27,10 @@ const StreamValidation = ({ schoolname, user, getLoggedInUser }) => {
 
     try {
       let res = await axios.get(`/api/v1/livewebinar/watch/${roomid}`);
-      console.log(res, "fere",schoolname);
 
       if (res) {
         if (res.data.school === schoolname && res.data.timeLeft > 0) {
           // if (res.data.school === schoolname) {
-            console.log(res, "fere",schoolname);
 
           setIsValid(true);
           setIsLoading(false);

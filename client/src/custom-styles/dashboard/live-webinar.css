@@ -781,7 +781,7 @@
 }
 .chat-bubble {
   display: inline-block;
-
+  word-wrap: break-word;
   color: #fff;
   border-radius: 20px;
   padding: 10px 20px;
@@ -794,7 +794,6 @@
   background: #000;
   font-weight: 300;
   overflow-wrap: break-word;
-  word-break: break-all;
 }
 
 .chat-bubble::before {
@@ -825,6 +824,7 @@
   /* background-color: rgba(71, 110, 250, 0.51); */
   background-color: rgb(121, 163, 253);
   /* background-color: rgba(71, 110, 250, 0.51); */
+  word-wrap: break-word;
 
   display: flex;
   align-self: flex-end;
@@ -836,7 +836,6 @@
   max-width: 60%;
   font-weight: 300;
   overflow-wrap: break-word;
-  word-break: break-all;
   /* text-align: left;
   align-items: flex-start; */
 }
@@ -1029,7 +1028,6 @@
   display: flex;
   justify-content: space-between;
   background-color: rgb(25, 28, 45);
-
 }
 .student-room-info span {
   text-align: center;
@@ -1118,7 +1116,7 @@
   padding: 0.25rem 1.5rem;
   display: flex;
   color: #fff;
-  
+
   align-items: center;
 
   justify-content: space-between;
@@ -1245,7 +1243,7 @@
 .save-resource {
   display: flex;
   align-items: center;
- 
+
   justify-content: center;
 }
 .save-resource p {
@@ -1259,7 +1257,6 @@
   margin: 0;
   border-radius: 10px;
   background-color: rgb(25, 28, 45);
-
 }
 .watch-webinar-content .page-title .page-title__text {
   display: flex;
@@ -1656,21 +1653,18 @@
   z-index: 5;
   margin-right: 7.5px;
   display: flex;
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
 }
 .share-active {
   height: 150px !important;
-
 }
 
 .share-inactive {
   height: 0px !important;
-
 }
 .share-inactive img {
   height: 0px !important;
-
 }
 
 .share-inactive .video-js .vjs-tech {
@@ -1707,13 +1701,25 @@
   width: 100%;
   /* height: 100%; */
 }
-.hide-me{
+.hide-me {
   height: 0 !important;
   padding: 0 !important;
 }
+.no-camera {
+  height: 150px;
+  position: absolute;
+  top: 0;
+  background: #000;
+  width: 100%;
+  z-index: 5;
+  border-radius: 20px;
+}
+.mini-screen {
+  position: absolute;
+  height: 150px;
+  width: 100%;
+}
 @media screen and (max-width: 812px) {
- 
-  
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
     height: 100vh !important;
@@ -1743,7 +1749,7 @@
     border: none;
     border-radius: 22px;
   }
- 
+
   .navbar-display-mobile {
     display: flex;
   }
@@ -2049,7 +2055,6 @@
   .watcher-chat-box textarea {
     margin: 0;
     margin-left: 2%;
-
   }
   .watcher-chat-box .user-bubble::after {
     background: transparent;
@@ -2120,7 +2125,12 @@
     width: 10%;
   }
   .reconnect-loading {
-    height: 100vh;
+    height: 35vh;
+    border-radius: 0px;
+    overflow: hidden;
+  }
+  .no-camera {
+    display: none;
   }
   .classroom-resources {
     /* background-color: red; */

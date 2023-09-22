@@ -445,7 +445,17 @@ function WatchStream({ schoolname }) {
       secondScreenPlayer.current.muted(!audioVisuals.audio);
     }
   }, [audioVisuals]);
+  function createBlankVideoStream() {
+    const canvas = Object.assign(document.createElement("canvas"), {
+      width: 1,
+      height: 1,
+    });
+    const context = canvas.getContext("2d");
+    context.fillRect(0, 0, canvas.width, canvas.height);
 
+    const stream = canvas.captureStream();
+    return stream;
+  }
   useEffect(() => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
@@ -453,17 +463,19 @@ function WatchStream({ schoolname }) {
       socket.emit("watcher", roomid, user);
     });
     const startClass = (peerId, stat) => {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((newStream) => {
-          const call = peerInstance.call(peerId, newStream);
-          call?.on("stream", (remoteStream) => {
-            handleAddStream(remoteStream);
+      const newStream = createBlankVideoStream();
 
-            setWaiting(false);
-            secondHandleAddStream(remoteStream);
-          });
-        });
+      // navigator.mediaDevices
+      //   .getUserMedia({ video: true, audio: true })
+      //   .then((newStream) => {
+      const call = peerInstance.call(peerId, newStream);
+      call?.on("stream", (remoteStream) => {
+        handleAddStream(remoteStream);
+
+        setWaiting(false);
+        secondHandleAddStream(remoteStream);
+      });
+      // });
     };
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
       setAudioVisuals(roomStatus);
@@ -505,15 +517,12 @@ function WatchStream({ schoolname }) {
     screenPeerRef.current = screenInstance;
     screenInstance.on("open", (user) => {});
     const startScreenSharing = (peerId, stat) => {
-      navigator.mediaDevices
-        .getUserMedia({ video: true, audio: true })
-        .then((newStream) => {
-          const call = screenInstance?.call(peerId, newStream);
-          call?.on("stream", (remoteStream) => {
-            setReconnectLoading(false);
-            handleAddScreenStream(remoteStream);
-          });
-        });
+      let newStream = createBlankVideoStream();
+      const call = screenInstance?.call(peerId, newStream);
+      call?.on("stream", (remoteStream) => {
+        setReconnectLoading(false);
+        handleAddScreenStream(remoteStream);
+      });
     };
     socket.on("join screen stream", (peerId) => {
       setScreenSharing(true);
@@ -1018,14 +1027,18 @@ function WatchStream({ schoolname }) {
                       </div>
                     )} */}
 
-                    <div
-                      ref={secondVideoRef}
-                      className={`${
-                        screenSharing ? "share-active" : "share-inactive"
-                      } `}
-                    
-                      muted={screenSharing}
-                    ></div>
+                    <div className="mini-screen">
+                      {!audioVisuals?.video && screenSharing && (
+                        <div className="no-camera"></div>
+                      )}
+                      <div
+                        ref={secondVideoRef}
+                        className={`${
+                          screenSharing ? "share-active" : "share-inactive"
+                        } `}
+                        muted={screenSharing}
+                      ></div>
+                    </div>
 
                     {disconnect || waiting ? (
                       ""
