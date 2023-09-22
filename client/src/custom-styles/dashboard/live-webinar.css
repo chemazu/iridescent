@@ -1118,6 +1118,8 @@
   padding: 0.25rem 1.5rem;
   display: flex;
   color: #fff;
+  
+  align-items: center;
 
   justify-content: space-between;
 }
@@ -1657,8 +1659,20 @@
     align-items: center;
     justify-content: center;
 }
-.share-inactive {
+.share-active {
+  height: 150px !important;
+
 }
+
+.share-inactive {
+  height: 0px !important;
+
+}
+.share-inactive img {
+  height: 0px !important;
+
+}
+
 .share-inactive .video-js .vjs-tech {
   height: 0px !important;
 }
@@ -1692,6 +1706,10 @@
   z-index: 50;
   width: 100%;
   /* height: 100%; */
+}
+.hide-me{
+  height: 0 !important;
+  padding: 0 !important;
 }
 @media screen and (max-width: 812px) {
  
@@ -1777,6 +1795,7 @@
   }
   .watch-left .video-js {
     background-color: transparent;
+    height: auto;
   }
   .presenter-controls {
     flex-wrap: wrap;

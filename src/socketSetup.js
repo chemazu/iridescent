@@ -57,8 +57,10 @@ const setupSocketIO = (app) => {
         io.to(socket.id).emit(
           "join stream",
           roomSize,
-          broadcasterHolder[roomId].peerId
+          broadcasterHolder[roomId].peerId,
+          audioStatus[roomId]
         );
+
 
         io.in(roomId).emit("watcher", socket.id, roomSize);
         let roomTimer = null;
@@ -86,6 +88,10 @@ const setupSocketIO = (app) => {
 
       delete broadcasterScreen[roomId];
     });
+    socket.on("audiovisualstatus",(roomId,item)=>{
+      audioStatus[roomId] = item;
+
+    })
     socket.on("audiovisuals", (roomId, updated, type) => {
       socket.broadcast.to(roomId).emit("audiovisuals", updated);
 

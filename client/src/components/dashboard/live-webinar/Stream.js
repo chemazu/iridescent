@@ -86,6 +86,8 @@ export default function Stream() {
   const [loading, setLoading] = useState(true);
   const [resourceModal, setResourceModal] = useState(false);
   const [unReadCount, setUnReadCount] = useState(0);
+  const [minimizedPoll, setMinimizedPoll] = useState(false);
+  const [minimizedQuiz, setMinimizedQuiz] = useState(false);
 
   const [resourceType, setResourceType] = useState("");
   const [editStat, setEditStat] = useState(false);
@@ -442,7 +444,7 @@ export default function Stream() {
     }
 
     let newIndex = newDefaultChat.length;
- 
+
     let timerData = {
       duration: durationInSec,
       roomid,
@@ -878,7 +880,7 @@ export default function Stream() {
     return () => {
       socket.off("watcher-exit");
     };
-  }, [roomid, attendies]);
+  }, [roomid]);
 
   useEffect(() => {
     socket.on("roomTimerStarted", (roomTimer) => {
@@ -937,7 +939,7 @@ export default function Stream() {
             user,
             result: studentRes,
           };
- 
+
           const userHasSubmitted = quizResultHolder.some(
             (submission) => submission.user === user
           );
@@ -1099,7 +1101,7 @@ export default function Stream() {
       socket.emit("broadcaster", roomid, peerId);
     });
     handleFreeTimer();
-
+    socket.emit("audiovisualstatus", roomid, audioVisuals);
     navigator.mediaDevices
       .getUserMedia(audioVisuals)
 
@@ -1150,7 +1152,7 @@ export default function Stream() {
         peerRef.current.destroy();
       }
     };
-  }, [roomid, startController, audioVisuals]);
+  }, [roomid, startController]);
 
   useEffect(() => {
     if (startController) {
@@ -1160,9 +1162,7 @@ export default function Stream() {
         // handleScreenSharingEnded();
       }
     }
-    return () => {
- 
-    };
+    return () => {};
   }, [roomid, screenSharing, startController]);
 
   useEffect(() => {
@@ -1202,7 +1202,6 @@ export default function Stream() {
     if (screenSharing) {
       setScreenSharing(false);
       handleScreenSharingEnded();
- 
     } else {
       setScreenSharing(true);
       setReconnectLoading(true);
@@ -1287,7 +1286,6 @@ export default function Stream() {
       // dispatch(stopLoading());
     }
   };
- 
 
   const handleOpenResourceModal = async (type) => {
     dispatch(startLoading());
@@ -1997,7 +1995,6 @@ export default function Stream() {
                         if (
                           pollOptions.every((option) => option === "") &&
                           pollTitle === ""
-                 
                         ) {
                           setTotalQuestion(questionNumber - 1);
                         }
@@ -2247,7 +2244,7 @@ export default function Stream() {
                                   toggleAudioVisuals("mic");
                                 }}
                               ></i>
-                             
+
                               <select
                                 style={
                                   !audioVisuals.audio
@@ -2280,10 +2277,7 @@ export default function Stream() {
                                 ))}
                               </select>
                             </div>
-                            <div
-                              className="control-object"
-
-                            >
+                            <div className="control-object">
                               <i
                                 onClick={() => {
                                   toggleAudioVisuals("cam");
@@ -2374,7 +2368,6 @@ export default function Stream() {
                                 className="control-object"
                                 onClick={() => {
                                   toggleAudioVisuals("cam");
-                         
                                 }}
                               >
                                 <i
@@ -2395,16 +2388,53 @@ export default function Stream() {
                           </Card>
                         )}
                         <div className="chat-box desktop-control">
-                          <video
-                            ref={mySecondVideoRef}
-                            muted
+                          <div
                             style={{
                               height: screenSharing ? "150px" : "0px",
-                              background: "#000",
-                              borderRadius: "20px",
-                              padding: screenSharing && "5px",
+                              position: "relative",
                             }}
-                          />
+                          >
+                            <video
+                              ref={mySecondVideoRef}
+                              muted
+                              className={`${!audioVisuals.video && "hide-me"}`}
+                              style={{
+                                height: screenSharing ? "150px" : "0px",
+                                background: "#000",
+                                borderRadius: "20px",
+                                padding: screenSharing && "5px",
+                                width: "100%",
+                              }}
+                            />
+                            {!audioVisuals.video && (
+                              <div
+                                style={{
+                                  height: "150px",
+                                  background: "#000",
+                                  borderRadius: "20px",
+                                  width: "100%",
+                                  position: "absolute",
+                                  top: 0,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                <img
+                                  src={presenterDetails.avatar}
+                                  alt="user"
+                                  style={{
+                                    width: "25px",
+                                    height: "auto",
+
+                                    borderRadius: "50%",
+                                    marginLeft: "5px",
+                                  }}
+                                />
+                              </div>
+                            )}
+                          </div>
+
                           <div className="chat-interface">
                             <div className="chat-interface-text">
                               {defaultChat.map((item, index) => {
@@ -2514,7 +2544,6 @@ export default function Stream() {
                               <div ref={chatInterfaceRef} />
                             </div>
                             <div className="chat-interface-quiz">
-                      
                               {specialChat.map((item, index) => {
                                 return item.type === "quiz" ? (
                                   <div className="inchat-poll   inchat-quiz">
@@ -2523,76 +2552,100 @@ export default function Stream() {
                                         Pop Quiz{" "}
                                         <i className="fas fa-book-open poll"></i>
                                       </span>
-                                      <i
-                                        className="fa fa-times"
-                                        onClick={() => {
-                                          removePollQuizFromChat(index);
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          justifyContent: "space-between",
                                         }}
-                                      ></i>
-                                    </div>
-                                    <div className="bottom">
-                                      <div className="quiz-progress">
-                                        {quizSubmission ||
-                                        item.submissionStatus ? (
-                                          <p className="resource-question">
-                                            Quiz Over
-                                          </p>
+                                      >
+                                        {minimizedQuiz ? (
+                                          <i
+                                            className="fa fa-expand"
+                                            onClick={() => {
+                                              setMinimizedQuiz(false);
+                                            }}
+                                          ></i>
                                         ) : (
-                                          <p className="resource-question">
-                                            Quiz in Progress
-                                          </p>
+                                          <i
+                                            className="fa fa-minus"
+                                            onClick={() => {
+                                              setMinimizedQuiz(true);
+                                            }}
+                                          ></i>
                                         )}
-                                        <p>...</p>
-                                      </div>{" "}
-                                      {quizSubmission && (
-                                        <div className="quiz-submission">
-                                          <p className="resource-question">
-                                            ({quizResultHolder.length}
-                                            )Submitted
-                                          </p>
-                                          <p className="resource-question">
-                                            View Results
-                                          </p>
-                                        </div>
-                                      )}{" "}
-                                      {quizSubmission && (
-                                        <div className="quiz-submitted">
-                                          <p className="resource-question">
-                                            ({quizResultHolder?.length}
-                                            )Submitted
-                                          </p>
-                                          <div className="quiz-result-wrapper">
-                                            <div className="quiz-result">
-                                              {quizResultHolder.map(
-                                                (item, index) => {
-                                                  return (
-                                                    <div
-                                                      className="single-quiz-result"
-                                                      key={index}
-                                                    >
-                                                      <p className="resource-question">
-                                                        {index + 1}.
-                                                      </p>
-                                                      <p
-                                                        className="resource-question"
-                                                        style={{
-                                                          width: "55%",
-                                                          wordWrap:
-                                                            "break-word",
-                                                        }}
+                                        <i
+                                          className="fa fa-times"
+                                          onClick={() => {
+                                            removePollQuizFromChat(index);
+                                          }}
+                                        ></i>
+                                      </div>
+                                    </div>
+                                    {!minimizedQuiz && (
+                                      <div className="bottom">
+                                        <div className="quiz-progress">
+                                          {quizSubmission ||
+                                          item.submissionStatus ? (
+                                            <p className="resource-question">
+                                              Quiz Over
+                                            </p>
+                                          ) : (
+                                            <p className="resource-question">
+                                              Quiz in Progress
+                                            </p>
+                                          )}
+                                          <p>...</p>
+                                        </div>{" "}
+                                        {quizSubmission && (
+                                          <div className="quiz-submission">
+                                            <p className="resource-question">
+                                              ({quizResultHolder.length}
+                                              )Submitted
+                                            </p>
+                                            <p className="resource-question">
+                                              View Results
+                                            </p>
+                                          </div>
+                                        )}{" "}
+                                        {quizSubmission && (
+                                          <div className="quiz-submitted">
+                                            <p className="resource-question">
+                                              ({quizResultHolder?.length}
+                                              )Submitted
+                                            </p>
+                                            <div className="quiz-result-wrapper">
+                                              <div className="quiz-result">
+                                                {quizResultHolder.map(
+                                                  (item, index) => {
+                                                    return (
+                                                      <div
+                                                        className="single-quiz-result"
+                                                        key={index}
                                                       >
-                                                        {item.user}
-                                                      </p>
-                                                      <p>{`${item.result[0]}/${item.result[1]}`}</p>
-                                                    </div>
-                                                  );
-                                                }
-                                              )}
+                                                        <p className="resource-question">
+                                                          {index + 1}.
+                                                        </p>
+                                                        <p
+                                                          className="resource-question"
+                                                          style={{
+                                                            width: "55%",
+                                                            wordWrap:
+                                                              "break-word",
+                                                          }}
+                                                        >
+                                                          {item.user}
+                                                        </p>
+                                                        <p>{`${item.result[0]}/${item.result[1]}`}</p>
+                                                      </div>
+                                                    );
+                                                  }
+                                                )}
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      )}
-                                    </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 ) : (
                                   <>
@@ -2609,45 +2662,69 @@ export default function Stream() {
                                               }}
                                             ></i>
                                           </span>
-                                          <i
-                                            className="fa fa-times"
-                                            onClick={() => {
-                                              removePollQuizFromChat(index);
+                                          <div
+                                            style={{
+                                              display: "flex",
+                                              justifyContent: "space-between",
                                             }}
-                                          ></i>
-                                        </div>
-                                        <div className="bottom">
-                                          <p className="resource-question">
-                                            {item.title}
-                                          </p>
-
-                                          <div className="poll-options">
-                                            {item.submissionStatus ? (
-                                              <p className="resource-question">
-                                                Poll Over !!!
-                                              </p>
+                                          >
+                                            {minimizedPoll ? (
+                                              <i
+                                                className="fa fa-expand"
+                                                onClick={() => {
+                                                  setMinimizedPoll(false);
+                                                }}
+                                              ></i>
                                             ) : (
-                                              <Progress
-                                                max={`${item.durationInSec}`}
-                                                value={
-                                                  Number(
-                                                    timerHolder?.remainingTime
-                                                  )
-                                                    ? Number(
-                                                        timerHolder?.remainingTime
-                                                      )
-                                                    : 0
-                                                }
-                                              />
+                                              <i
+                                                className="fa fa-minus"
+                                                onClick={() => {
+                                                  setMinimizedPoll(true);
+                                                }}
+                                              ></i>
                                             )}
-                                            <Poll
-                                              pollOptions={item.options}
-                                              pollResult={
-                                                pollResultHolder[index]
-                                              }
-                                            />
+                                            <i
+                                              className="fa fa-times"
+                                              onClick={() => {
+                                                removePollQuizFromChat(index);
+                                              }}
+                                            ></i>
                                           </div>
                                         </div>
+                                        {!minimizedPoll && (
+                                          <div className="bottom">
+                                            <p className="resource-question">
+                                              {item.title}
+                                            </p>
+
+                                            <div className="poll-options">
+                                              {item.submissionStatus ? (
+                                                <p className="resource-question">
+                                                  Poll Over !!!
+                                                </p>
+                                              ) : (
+                                                <Progress
+                                                  max={`${item.durationInSec}`}
+                                                  value={
+                                                    Number(
+                                                      timerHolder?.remainingTime
+                                                    )
+                                                      ? Number(
+                                                          timerHolder?.remainingTime
+                                                        )
+                                                      : 0
+                                                  }
+                                                />
+                                              )}
+                                              <Poll
+                                                pollOptions={item.options}
+                                                pollResult={
+                                                  pollResultHolder[index]
+                                                }
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     ) : (
                                       <></>
@@ -2692,7 +2769,7 @@ export default function Stream() {
                             >
                               <img src={smiley} alt="emoji" />
                             </div>
-                            
+
                             <CustomTextArea
                               text={chatMessage}
                               setText={setChatMessage}
@@ -2700,7 +2777,6 @@ export default function Stream() {
                               height={height}
                               setHeight={setHeight}
                             />
-                    
 
                             <Button
                               onClick={() => {
@@ -2737,10 +2813,7 @@ export default function Stream() {
                           </p>
                         </div>
                         {mobileChat ? (
-                          <div
-                            className="chat-box mobile-control mobile-chat-box"
-                       
-                          >
+                          <div className="chat-box mobile-control mobile-chat-box">
                             <div className="chat-interface">
                               <div
                                 className="more-message-parent"
@@ -2758,7 +2831,6 @@ export default function Stream() {
                                 ></div>
                               </div>
                               <div className="chat-interface-text">
-                                
                                 {defaultChat.map((item, index) => {
                                   return (
                                     <div
