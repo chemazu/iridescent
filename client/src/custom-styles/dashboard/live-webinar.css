@@ -1693,6 +1693,9 @@
 .active-screen-ref {
   height: 0px !important;
 }
+.active-screen-ref video {
+  height: 0px !important;
+}
 .webcam-off {
   position: absolute;
   top: 0;
@@ -1720,6 +1723,9 @@
   width: 100%;
 }
 @media screen and (max-width: 812px) {
+  .page-actions__col{
+    height: calc(100vh - 30px);
+  }
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
     height: 100vh !important;

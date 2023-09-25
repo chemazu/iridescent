@@ -52,6 +52,8 @@ function WatchStream({ schoolname }) {
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
+  const [reRun, setReRun] = useState(true);
+
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -463,29 +465,48 @@ function WatchStream({ schoolname }) {
       socket.emit("watcher", roomid, user);
     });
     const startClass = (peerId, stat) => {
-      const newStream = createBlankVideoStream();
+      console.log(stat);
+      const dummyStream = new MediaStream();
 
+      // Create a call with the dummy stream
+      let call = peerInstance.call(peerId, dummyStream, {
+        constraints: {
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        },
+      });
       // navigator.mediaDevices
       //   .getUserMedia({ video: true, audio: true })
       //   .then((newStream) => {
-      const call = peerInstance.call(peerId, newStream);
+      // let call = peerInstance.call(peerId, fast);
+
+      // const call = peerInstance.call(peerId, fast);
       call?.on("stream", (remoteStream) => {
         handleAddStream(remoteStream);
 
         setWaiting(false);
         secondHandleAddStream(remoteStream);
       });
+      call?.on("error", (error) => {
+        console.error("Call error:", error);
+      });
       // });
     };
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
-      setAudioVisuals(roomStatus);
+      // setAudioVisuals(roomStatus);
       startClass(peerId, "join");
       setWaiting(false);
+      setDisconnect(false);
+      setReRun("broadcaster");
+      if(reRun!=="broadcaster"){
+        console.log("fish")
+      }
     });
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
       setWaiting(false);
       setDisconnect(false);
+      setReRun("broadcaster");
     });
 
     return () => {
@@ -786,13 +807,8 @@ function WatchStream({ schoolname }) {
                 </div>
                 <div className="live-webinar-watch">
                   <div className="watch-left">
-                    {/* <div className="reconnect-loading">
-                      <p>Tutor reconnecting</p>
-                      <Spinner />
-                    </div> */}
-
                     <>
-                      <div className="video-background-parent" style={{}}>
+                      <div className="video-background-parent">
                         {disconnect || waiting ? (
                           <div
                             className="video-background"
@@ -858,9 +874,7 @@ function WatchStream({ schoolname }) {
                               <div>
                                 <div
                                   ref={videoRef}
-                                  // style={{
-                                  //   height: screenSharing && "0px",
-                                  // }}
+                           
                                   // style={{ height: screenSharing && "0px" }}
 
                                   className={`${videoFill && "videoRef"} ${

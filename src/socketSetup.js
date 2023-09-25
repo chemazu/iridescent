@@ -53,6 +53,7 @@ const setupSocketIO = (app) => {
         if (audioStatus[roomId]) {
           socket.broadcast.to(socket.id).emit("audiovisuals", audioStatus[roomId]);
         }
+        
 
         io.to(socket.id).emit(
           "join stream",

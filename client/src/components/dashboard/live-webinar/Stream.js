@@ -2667,6 +2667,8 @@ export default function Stream() {
                                             style={{
                                               display: "flex",
                                               justifyContent: "space-between",
+                                          width:"12.5%"
+
                                             }}
                                           >
                                             {minimizedPoll ? (
