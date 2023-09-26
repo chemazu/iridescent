@@ -53,7 +53,7 @@ function WatchStream({ schoolname }) {
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
-  const [attendance, setAttendance] = useState([]);
+  const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -495,7 +495,6 @@ function WatchStream({ schoolname }) {
       startClass(peerId, "join");
       setWaiting(false);
       setDisconnect(false);
-      console.log(roomSize);
     });
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
@@ -511,7 +510,7 @@ function WatchStream({ schoolname }) {
   }, [roomid, waiting, disconnect]);
 
   const attendanceCount = Math.max(attendance, 1);
-
+ 
   const revertHandleAddScreenStream = () => {
     const pop = screenRef.current;
 

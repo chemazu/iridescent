@@ -41,13 +41,11 @@ const setupSocketIO = (app) => {
         // Count the number of people in the room after the user exits
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
     
-        console.log(`User with attendanceId ${attendanceId} exited room ${roomId}`);
-        console.log(`Number of people in room ${roomId} after exit: ${numberOfPeopleInRoom}`);
+      
       }
     });
 
     socket.on("watcher", async (roomId, userId, attendanceId) => {
-      console.log(attendanceId);
       socket.join(roomId);
       let numberOfPeopleInRoom;
       if (!roomsHolder[roomId]) {
@@ -60,9 +58,7 @@ const setupSocketIO = (app) => {
         // Count the number of people in the room
         numberOfPeopleInRoom = roomsHolder[roomId].size;
         io.in(roomId).emit("updateAttendance", socket.id, numberOfPeopleInRoom);
-        console.log(
-          `Number of people in room ${roomId}: ${numberOfPeopleInRoom}`
-        );
+  
       }
       const room = io.sockets.adapter.rooms.get(roomId);
       let roomSize = room ? room.size : 1;
@@ -245,8 +241,7 @@ const setupSocketIO = (app) => {
           // Count the number of people in the room after the user disconnects
           const numberOfPeopleInRoom = roomsHolder[roomId].size;
     
-          console.log(`User with attendanceId ${socket.attendanceId} disconnected from room ${roomId}`);
-          console.log(`Number of people in room ${roomId} after disconnect: ${numberOfPeopleInRoom}`);
+         
         }
       }
 

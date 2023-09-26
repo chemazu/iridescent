@@ -65,7 +65,7 @@ export default function Stream() {
 
   const alert = useAlert();
   const [title, setTitle] = useState("");
-  const [attendance, setAttendance] = useState([]);
+  const [attendance, setAttendance] = useState(1);
   const [quizStatus, setQuizStatus] = useState(false);
   const [startController, setStartController] = useState(false);
   const [quizHolder, setQuizHolder] = useState([]);
@@ -147,6 +147,8 @@ export default function Stream() {
     }
   };
   const attendanceCount = Math.max(attendance, 1);
+ 
+
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
   };
@@ -257,7 +259,7 @@ export default function Stream() {
 
     socket.on("updateAttendance", (users) => {
       setAttendance(users);
-      console.log(users);
+ 
     });
 
     // Clean up the event listener and heartbeat interval when the component unmounts
