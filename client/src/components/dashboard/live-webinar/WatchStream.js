@@ -271,7 +271,7 @@ function WatchStream({ schoolname }) {
     // Perform any necessary actions before exiting the stream
     // For example, stop the video stream, disconnect from the peer, etc.
     // check if they are video streams avalilbe
-    socket.emit("watcher-exit", roomid,getUserId(roomid));
+    socket.emit("watcher-exit", roomid, getUserId(roomid));
 
     if (myVideoRef.current) {
       let videoTracks = myVideoRef.current.srcObject.getVideoTracks();
@@ -510,7 +510,7 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid, waiting, disconnect]);
 
-  const attendanceCount = Math.max(attendance.length - 1, 1);
+  const attendanceCount = Math.max(attendance, 1);
 
   const revertHandleAddScreenStream = () => {
     const pop = screenRef.current;

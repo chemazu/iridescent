@@ -146,7 +146,7 @@ export default function Stream() {
         break;
     }
   };
-  const attendanceCount = Math.max(attendance.length - 1, 1);
+  const attendanceCount = Math.max(attendance, 1);
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
   };
