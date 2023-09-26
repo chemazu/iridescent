@@ -17,7 +17,19 @@ const setupSocketIO = (app) => {
   let pollQuizHolder = {};
   let broadcasterScreen = {};
   let audioStatus = {};
+  const connectedUsers = new Set(); // Store connected users
+  const userHeartbeats = new Map(); // Store user heartbeats
+  const HEARTBEAT_INTERVAL = 5000;
+  const roomsHolder = new Map();
 
+  function getUserIdBySocketId(socketId) {
+    for (const [userId, socket] of io.sockets.sockets) {
+      if (socket.id === socketId) {
+        return userId;
+      }
+    }
+    return null;
+  }
   io.on("connection", (socket) => {
     // broadcaster
     socket.on("broadcaster", async (roomId, peerId) => {
@@ -36,12 +48,42 @@ const setupSocketIO = (app) => {
       let roomSize = room ? room.size : 1;
       io.in(roomId).emit("watcher-exit", roomSize);
     });
+    socket.on('heartbeat', () => {
+      const room = roomsHolder.get(socket.roomId);
+      if (room) {
+        room.add(socket.userId); // Update user's presence in the room
+      }
+    });
 
     socket.on("watcher", async (roomId, userId) => {
       socket.join(roomId);
       const room = io.sockets.adapter.rooms.get(roomId);
       let roomSize = room ? room.size : 1;
+
       // check screensharing
+      if (!roomsHolder.has(roomId)) {
+        roomsHolder.set(roomId, new Set());
+      }
+
+      const singleRoom = roomsHolder.get(roomId);
+
+      // Add the user to the room
+      singleRoom.add(userId);
+
+      // Initialize user heartbeat timestamp
+      socket.join(roomId);
+      socket.userId = userId;
+      socket.roomId = roomId;
+      socket.emit("updateAttendance", Array.from(singleRoom));
+
+      // Handle user disconnects
+      socket.on("disconnect", () => {
+        const singleRoom = roomsHolder.get(socket.roomId);
+        if (singleRoom) {
+          singleRoom.delete(socket.userId);
+          io.to(socket.roomId).emit("updateAttendance", Array.from(singleRoom));
+        }
+      });
 
       if (broadcasterHolder[roomId]) {
         if (broadcasterScreen[roomId]) {
@@ -51,9 +93,10 @@ const setupSocketIO = (app) => {
           );
         }
         if (audioStatus[roomId]) {
-          socket.broadcast.to(socket.id).emit("audiovisuals", audioStatus[roomId]);
+          socket.broadcast
+            .to(socket.id)
+            .emit("audiovisuals", audioStatus[roomId]);
         }
-        
 
         io.to(socket.id).emit(
           "join stream",
@@ -61,7 +104,6 @@ const setupSocketIO = (app) => {
           broadcasterHolder[roomId].peerId,
           audioStatus[roomId]
         );
-
 
         io.in(roomId).emit("watcher", socket.id, roomSize);
         let roomTimer = null;
@@ -79,6 +121,29 @@ const setupSocketIO = (app) => {
       }
     });
 
+    setInterval(() => {
+      const now = Date.now();
+      for (const [roomId, room] of roomsHolder.entries()) {
+        for (const userId of room) {
+          const socket = findSocket(roomId, userId);
+          if (!socket || now - socket.lastHeartbeat > HEARTBEAT_INTERVAL * 2) {
+            // User is considered disconnected after missing two heartbeats
+            room.delete(userId);
+          }
+        }
+        io.to(roomId).emit('updateAttendance', Array.from(room));
+      }
+    }, HEARTBEAT_INTERVAL);
+
+
+    function findSocket(roomId, userId) {
+      const socketsInRoom = Array.from(io.sockets.adapter.rooms.get(roomId));
+      return socketsInRoom.find((socketId) => {
+        const socket = io.sockets.sockets.get(socketId);
+        return socket && socket.userId === userId;
+      });
+    }
+
     socket.on("startScreenSharing", (roomId, peerId) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
       io.in(roomId).emit("startScreenSharing", peerId);
@@ -89,15 +154,26 @@ const setupSocketIO = (app) => {
 
       delete broadcasterScreen[roomId];
     });
-    socket.on("audiovisualstatus",(roomId,item)=>{
+    socket.on("audiovisualstatus", (roomId, item) => {
       audioStatus[roomId] = item;
-
-    })
+    });
     socket.on("audiovisuals", (roomId, updated, type) => {
       socket.broadcast.to(roomId).emit("audiovisuals", updated);
 
       audioStatus[roomId] = updated;
     });
+    // Periodic heartbeat check to remove inactive users
+    setInterval(() => {
+      const now = Date.now();
+      for (const [userId, lastHeartbeat] of userHeartbeats.entries()) {
+        if (now - lastHeartbeat > HEARTBEAT_INTERVAL * 2) {
+          // User is considered disconnected after missing two heartbeats
+          connectedUsers.delete(userId);
+          userHeartbeats.delete(userId);
+          io.emit("updateAttendance", Array.from(connectedUsers));
+        }
+      }
+    }, HEARTBEAT_INTERVAL);
     socket.on("message", (message, roomId) => {
       socket.broadcast.to(roomId).emit("message", { ...message });
       if (message.type === "quiz" || message.type === "poll") {
@@ -209,10 +285,16 @@ const setupSocketIO = (app) => {
         }
       );
     });
+
     socket.on("disconnect", async () => {
       // Check if the socket is a broadcaster
       const socketId = socket.id;
-
+      const userId = getUserIdBySocketId(socket.id);
+      if (userId) {
+        connectedUsers.delete(userId);
+        userHeartbeats.delete(userId);
+        io.emit("updateAttendance", Array.from(connectedUsers));
+      }
       Object.entries(broadcasterHolder).forEach(
         async ([roomId, broadcaster]) => {
           if (broadcaster.socketId === socketId) {

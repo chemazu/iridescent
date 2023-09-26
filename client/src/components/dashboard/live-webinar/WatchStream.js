@@ -52,8 +52,8 @@ function WatchStream({ schoolname }) {
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
-  const [reRun, setReRun] = useState(true);
-
+ 
+  const [attendance, setAttendance] = useState([]);
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -464,49 +464,36 @@ function WatchStream({ schoolname }) {
     peerInstance.on("open", (user) => {
       socket.emit("watcher", roomid, user);
     });
-    const startClass = (peerId, stat) => {
-      console.log(stat);
-      const dummyStream = new MediaStream();
+    const startClass = (peerId, stat) => { 
+      navigator.mediaDevices
+        .getUserMedia({ video: true, audio: true })
+        .then((newStream) => {
+          let call = peerInstance.call(peerId, newStream);
+          // const call = peerInstance.call(peerId, fast);
+          call?.on("stream", (remoteStream) => {
+            handleAddStream(remoteStream);
 
-      // Create a call with the dummy stream
-      let call = peerInstance.call(peerId, dummyStream, {
-        constraints: {
-          offerToReceiveAudio: true,
-          offerToReceiveVideo: true,
-        },
-      });
-      // navigator.mediaDevices
-      //   .getUserMedia({ video: true, audio: true })
-      //   .then((newStream) => {
-      // let call = peerInstance.call(peerId, fast);
-
-      // const call = peerInstance.call(peerId, fast);
-      call?.on("stream", (remoteStream) => {
-        handleAddStream(remoteStream);
-
-        setWaiting(false);
-        secondHandleAddStream(remoteStream);
-      });
-      call?.on("error", (error) => {
-        console.error("Call error:", error);
-      });
-      // });
+            setWaiting(false);
+            secondHandleAddStream(remoteStream);
+          });
+          call?.on("error", (error) => {
+            console.error("Call error:", error);
+          });
+          // });
+        });
     };
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
       // setAudioVisuals(roomStatus);
       startClass(peerId, "join");
       setWaiting(false);
       setDisconnect(false);
-      setReRun("broadcaster");
-      if(reRun!=="broadcaster"){
-        console.log("fish")
-      }
+  
+ 
     });
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
       setWaiting(false);
       setDisconnect(false);
-      setReRun("broadcaster");
     });
 
     return () => {
@@ -515,6 +502,8 @@ function WatchStream({ schoolname }) {
       socket.off("broadcaster");
     };
   }, [roomid, waiting, disconnect]);
+  
+  const attendanceCount = Math.max(attendance.length - 1, 1);
 
   const revertHandleAddScreenStream = () => {
     const pop = screenRef.current;
@@ -533,6 +522,23 @@ function WatchStream({ schoolname }) {
       console.error("screenRef is not available");
     }
   };
+  useEffect(() => {
+    // Send a heartbeat to the server periodically
+    const heartbeatInterval = setInterval(() => {
+      socket.emit('heartbeat', 'yourUserId',roomid); // Replace 'yourUserId' with the actual user identifier
+    }, 5000); // Send a heartbeat every 5 seconds (adjust as needed)
+
+    socket.on('updateAttendance', (users) => {
+      setAttendance(users);
+      console.log(users)
+    });
+
+    // Clean up the event listener and heartbeat interval when the component unmounts
+    return () => {
+      socket.off('updateAttendance');
+      clearInterval(heartbeatInterval);
+    };
+  }, [roomid]);
   useEffect(() => {
     const screenInstance = new Peer();
     screenPeerRef.current = screenInstance;
@@ -874,7 +880,6 @@ function WatchStream({ schoolname }) {
                               <div>
                                 <div
                                   ref={videoRef}
-                           
                                   // style={{ height: screenSharing && "0px" }}
 
                                   className={`${videoFill && "videoRef"} ${

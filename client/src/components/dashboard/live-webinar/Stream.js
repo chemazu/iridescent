@@ -62,8 +62,10 @@ export default function Stream() {
   const [offsetY, setOffsetY] = useState(0);
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
+
   const alert = useAlert();
   const [title, setTitle] = useState("");
+  const [attendance, setAttendance] = useState([]);
   const [quizStatus, setQuizStatus] = useState(false);
   const [startController, setStartController] = useState(false);
   const [quizHolder, setQuizHolder] = useState([]);
@@ -144,7 +146,7 @@ export default function Stream() {
         break;
     }
   };
-
+  const attendanceCount = Math.max(attendance.length - 1, 1);
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
   };
@@ -247,6 +249,23 @@ export default function Stream() {
       }
     }
   };
+  useEffect(() => {
+    // Send a heartbeat to the server periodically
+    const heartbeatInterval = setInterval(() => {
+      socket.emit("heartbeat", "yourUserId", roomid); // Replace 'yourUserId' with the actual user identifier
+    }, 5000); // Send a heartbeat every 5 seconds (adjust as needed)
+
+    socket.on("updateAttendance", (users) => {
+      setAttendance(users);
+      console.log(users);
+    });
+
+    // Clean up the event listener and heartbeat interval when the component unmounts
+    return () => {
+      socket.off("updateAttendance");
+      clearInterval(heartbeatInterval);
+    };
+  }, [roomid]);
   useEffect(() => {
     getResourceCount();
   }, [roomid]);
@@ -2161,7 +2180,7 @@ export default function Stream() {
                         Attendies{" "}
                         <strong>
                           {"("}
-                          {attendies - 1}
+                          {attendanceCount}
                           {")"}
                         </strong>
                       </span>
@@ -2556,7 +2575,7 @@ export default function Stream() {
                                         style={{
                                           display: "flex",
                                           justifyContent: "space-between",
-                                          width:"12.5%"
+                                          width: "12.5%",
                                         }}
                                       >
                                         {minimizedQuiz ? (
@@ -2667,8 +2686,7 @@ export default function Stream() {
                                             style={{
                                               display: "flex",
                                               justifyContent: "space-between",
-                                          width:"12.5%"
-
+                                              width: "12.5%",
                                             }}
                                           >
                                             {minimizedPoll ? (
@@ -2810,7 +2828,7 @@ export default function Stream() {
                             Attendies{" "}
                             <strong>
                               {"("}
-                              {attendies - 1}
+                              {attendanceCount}
                               {")"}
                             </strong>
                           </p>
