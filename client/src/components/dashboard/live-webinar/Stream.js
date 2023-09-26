@@ -146,7 +146,7 @@ export default function Stream() {
         break;
     }
   };
-  const attendanceCount = Math.max(attendance, 1);
+  const attendanceCount = attendance||1;
  
 
   const handleDurationValueChange = (event) => {

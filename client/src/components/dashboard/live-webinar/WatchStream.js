@@ -509,7 +509,8 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid, waiting, disconnect]);
 
-  const attendanceCount = Math.max(attendance, 1);
+  const attendanceCount = attendance||1;
+
  
   const revertHandleAddScreenStream = () => {
     const pop = screenRef.current;

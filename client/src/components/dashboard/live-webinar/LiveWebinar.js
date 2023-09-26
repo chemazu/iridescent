@@ -394,7 +394,7 @@ function LiveWebinar({ school, getSchool }) {
                       // userStreams.map((item, index) => {
                       // handleStreamFilter(filterState).map((item, index) => {
                       userStreams?.map((item, index) => {
-                        console.log(item, today);
+        
                         return (
                           <>
                             <div

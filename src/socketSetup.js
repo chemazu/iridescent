@@ -57,7 +57,7 @@ const setupSocketIO = (app) => {
 
         // Count the number of people in the room
         numberOfPeopleInRoom = roomsHolder[roomId].size;
-        io.in(roomId).emit("updateAttendance", socket.id, numberOfPeopleInRoom);
+        io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
   
       }
       const room = io.sockets.adapter.rooms.get(roomId);
