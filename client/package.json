@@ -48,6 +48,7 @@
     "react-star-ratings": "^2.3.0",
     "react-toastify": "^7.0.4",
     "react-transition-group": "^4.4.5",
+    "react-uuid": "^2.0.0",
     "react-webcam": "^7.1.0",
     "reactstrap": "^8.9.0",
     "redux": "^4.1.0",

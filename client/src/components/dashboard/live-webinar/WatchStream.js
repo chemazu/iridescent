@@ -23,7 +23,7 @@ import setDocumentTitle from "../../../utilities/setDocumentTitle";
 import smiley from "../../../images/emojisvg.svg";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-
+import uuid from "react-uuid";
 import setAuthToken from "../../../utilities/setAuthToken";
 import Poll from "./Poll";
 import { useStore } from "react-redux";
@@ -52,7 +52,7 @@ function WatchStream({ schoolname }) {
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
- 
+
   const [attendance, setAttendance] = useState([]);
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -92,6 +92,14 @@ function WatchStream({ schoolname }) {
   const playerRef = React.useRef(null);
   const screenPlayerRef = React.useRef(null);
 
+  const getUserId = (roomid) => {
+    let userId = localStorage.getItem(roomid);
+    if (!userId) {
+      userId = uuid();
+      localStorage.setItem(roomid, userId);
+    }
+    return userId;
+  };
   const handleAddStream = (stream) => {
     const pop = videoRef.current;
 
@@ -263,7 +271,7 @@ function WatchStream({ schoolname }) {
     // Perform any necessary actions before exiting the stream
     // For example, stop the video stream, disconnect from the peer, etc.
     // check if they are video streams avalilbe
-    socket.emit("watcher-exit", roomid);
+    socket.emit("watcher-exit", roomid,getUserId(roomid));
 
     if (myVideoRef.current) {
       let videoTracks = myVideoRef.current.srcObject.getVideoTracks();
@@ -291,7 +299,7 @@ function WatchStream({ schoolname }) {
     if (peerRef) {
       peerRef.current.destroy();
     }
-
+    localStorage.removeItem(roomid);
     history.push("/");
   };
   const removeStream = () => {
@@ -462,9 +470,9 @@ function WatchStream({ schoolname }) {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
     peerInstance.on("open", (user) => {
-      socket.emit("watcher", roomid, user);
+      socket.emit("watcher", roomid, user, getUserId(roomid));
     });
-    const startClass = (peerId, stat) => { 
+    const startClass = (peerId, stat) => {
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
@@ -487,8 +495,7 @@ function WatchStream({ schoolname }) {
       startClass(peerId, "join");
       setWaiting(false);
       setDisconnect(false);
-  
- 
+      console.log(roomSize);
     });
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
@@ -502,7 +509,7 @@ function WatchStream({ schoolname }) {
       socket.off("broadcaster");
     };
   }, [roomid, waiting, disconnect]);
-  
+
   const attendanceCount = Math.max(attendance.length - 1, 1);
 
   const revertHandleAddScreenStream = () => {
@@ -525,17 +532,17 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     // Send a heartbeat to the server periodically
     const heartbeatInterval = setInterval(() => {
-      socket.emit('heartbeat', 'yourUserId',roomid); // Replace 'yourUserId' with the actual user identifier
+      socket.emit("heartbeat", "yourUserId", roomid); // Replace 'yourUserId' with the actual user identifier
     }, 5000); // Send a heartbeat every 5 seconds (adjust as needed)
 
-    socket.on('updateAttendance', (users) => {
+    socket.on("updateAttendance", (users) => {
       setAttendance(users);
-      console.log(users)
+      console.log(users);
     });
 
     // Clean up the event listener and heartbeat interval when the component unmounts
     return () => {
-      socket.off('updateAttendance');
+      socket.off("updateAttendance");
       clearInterval(heartbeatInterval);
     };
   }, [roomid]);
@@ -856,7 +863,7 @@ function WatchStream({ schoolname }) {
                               <div className="room-info">
                                 <div>
                                   <i className="fa fa-eye" />
-                                  {attendees}
+                                  {attendanceCount}
                                 </div>
                                 <i
                                   onClick={() => {
@@ -938,7 +945,7 @@ function WatchStream({ schoolname }) {
                         >
                           <span className="date-span">{formattedDate}</span>
                           <span className="divider-span"></span>
-                          <span>Attendees ({attendees - 1 || 1})</span>
+                          <span>Attendees ({attendanceCount})</span>
                         </div>
                       )}
                     </>
