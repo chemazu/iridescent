@@ -509,9 +509,8 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid, waiting, disconnect]);
 
-  const attendanceCount = attendance||1;
+  const attendanceCount = attendance || 1;
 
- 
   const revertHandleAddScreenStream = () => {
     const pop = screenRef.current;
 
@@ -532,7 +531,7 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     // Send a heartbeat to the server periodically
     const heartbeatInterval = setInterval(() => {
-      socket.emit("heartbeat", "yourUserId", roomid); // Replace 'yourUserId' with the actual user identifier
+      socket.emit("heartbeat", getUserId(roomid), roomid); // Replace 'yourUserId' with the actual user identifier
     }, 5000); // Send a heartbeat every 5 seconds (adjust as needed)
 
     socket.on("updateAttendance", (users) => {

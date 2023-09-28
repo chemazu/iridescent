@@ -18,6 +18,9 @@ const setupSocketIO = (app) => {
   let broadcasterScreen = {};
   let audioStatus = {};
   const roomsHolder = {};
+  const userHeartbeats = {}; // Initialize an object to track heartbeats
+  const userRooms = {}; // Initialize an object to track which room each user is in
+  const heartbeatTimeout = 10000;
 
   io.on("connection", (socket) => {
     // broadcaster
@@ -37,11 +40,9 @@ const setupSocketIO = (app) => {
       if (roomsHolder[roomId]) {
         // Remove the attendanceId from the set
         roomsHolder[roomId].delete(attendanceId);
-    
+
         // Count the number of people in the room after the user exits
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
-    
-      
       }
     });
 
@@ -58,7 +59,6 @@ const setupSocketIO = (app) => {
         // Count the number of people in the room
         numberOfPeopleInRoom = roomsHolder[roomId].size;
         io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
-  
       }
       const room = io.sockets.adapter.rooms.get(roomId);
       let roomSize = room ? room.size : 1;
@@ -99,7 +99,51 @@ const setupSocketIO = (app) => {
         io.to(socket.id).emit("no stream");
       }
     });
+    // Handle heartbeat events
+    socket.on("heartbeat", (userId, roomId) => {
+      // Update the last received heartbeat for the user
+      userHeartbeats[userId] = Date.now();
 
+      // Track which room the user is in
+      userRooms[userId] = roomId;
+
+      // You can also update the room status here if needed
+      // roomStatus[roomId] = updatedStatus; // Update room status as needed
+    });
+
+    // ...
+
+    // Periodically check for inactive users and remove them
+    const heartbeatCheckInterval = setInterval(() => {
+      const currentTime = Date.now();
+      for (const userId in userHeartbeats) {
+        if (userHeartbeats.hasOwnProperty(userId)) {
+          const lastHeartbeatTime = userHeartbeats[userId];
+          if (currentTime - lastHeartbeatTime > heartbeatTimeout) {
+            // User's heartbeat hasn't been received within the timeout
+            const roomId = userRooms[userId]; // Get the room the user is in
+
+            if (roomId) {
+              // Remove the user from the room
+              if (roomsHolder[roomId]) {
+                roomsHolder[roomId].delete(userId);
+              }
+
+              // Update the room status as needed
+              // roomStatus[roomId] = updatedStatus; // Update room status as needed
+
+              // Notify other users in the room about the updated attendance
+              const numberOfPeopleInRoom = roomsHolder[roomId].size;
+              io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
+
+              // Remove the user's heartbeat and room information
+              delete userHeartbeats[userId];
+              delete userRooms[userId];
+            }
+          }
+        }
+      }
+    }, heartbeatTimeout);
     socket.on("startScreenSharing", (roomId, peerId) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
       io.in(roomId).emit("startScreenSharing", peerId);
@@ -237,11 +281,9 @@ const setupSocketIO = (app) => {
         if (roomsHolder[roomId].has(socket.attendanceId)) {
           // Remove the attendanceId from the Set
           roomsHolder[roomId].delete(socket.attendanceId);
-    
+
           // Count the number of people in the room after the user disconnects
           const numberOfPeopleInRoom = roomsHolder[roomId].size;
-    
-         
         }
       }
 
@@ -270,6 +312,7 @@ const setupSocketIO = (app) => {
           }
         }
       );
+      clearInterval(heartbeatCheckInterval);
     });
   });
 

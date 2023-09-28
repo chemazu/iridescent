@@ -1724,7 +1724,7 @@
 }
 @media screen and (max-width: 812px) {
   .page-actions__col{
-    height: calc(100vh - 30px);
+
   }
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
@@ -2052,6 +2052,11 @@
   .live-webinar-watch .chat-control {
     background: transparent !important;
     border: 0;
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: 100%;
   }
   .chat-control {
   }
