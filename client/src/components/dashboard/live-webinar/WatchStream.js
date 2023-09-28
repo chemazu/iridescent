@@ -1061,7 +1061,7 @@ function WatchStream({ schoolname }) {
                         className={`${
                           screenSharing ? "share-active" : "share-inactive"
                         } `}
-                        muted={screenSharing}
+                      
                       ></div>
                     </div>
 

@@ -1723,8 +1723,11 @@
   width: 100%;
 }
 @media screen and (max-width: 812px) {
-  .page-actions__col{
-
+  .watch-screen {
+    background-color: var(--site-white-color);
+  }
+  .chat-interface-text {
+    padding-bottom: 20%;
   }
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
@@ -2020,7 +2023,9 @@
   }
   .live-webinar-watch {
     flex-direction: column;
+    height: 95%;
   }
+
   .live-webinar-watch .watch-left {
     width: 100%;
     height: 100vh;
@@ -2035,7 +2040,7 @@
   }
   .live-webinar-watch .watch-left .video-background video {
     /* object-fit: cover; */
-    height: auto;
+    height: 30vh;
     border-radius: 0;
     max-height: 100vh;
   }
@@ -2057,6 +2062,7 @@
     right: 0;
     left: 0;
     width: 100%;
+    z-index: 5;
   }
   .chat-control {
   }
