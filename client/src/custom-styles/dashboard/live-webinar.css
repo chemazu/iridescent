@@ -2045,6 +2045,7 @@
     padding-top: 0;
     position: fixed;
     top: 0;
+    padding-bottom: 0;
   }
   .live-webinar-watch .watch-left .video-background {
     height: 100dvh;
