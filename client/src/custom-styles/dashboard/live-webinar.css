@@ -2164,9 +2164,10 @@
     width: 10%;
   }
   .reconnect-loading {
-    height: 35vh;
+    height: 100dvh;
     border-radius: 0px;
     overflow: hidden;
+    width: 100dvw;
   }
   .no-camera {
     display: none;
