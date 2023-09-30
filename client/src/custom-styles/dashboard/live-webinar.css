@@ -2114,6 +2114,8 @@
     width: 100%;
     bottom: 0;
     height: 55%;
+    overflow: scroll;
+    position: fixed;
     /* position: revert; */
   }
   .watch-left .presenter-controls {
