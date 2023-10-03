@@ -1723,6 +1723,9 @@
   width: 100%;
 }
 @media screen and (max-width: 812px) {
+  .watcher-chat-box .inchat-poll{
+    margin-bottom: 20%;
+  }
   .mini-screen {
     height: 2px;
   }
@@ -1736,7 +1739,7 @@
     height: 35dvh !important;
   }
   .chat-interface-quiz {
-    padding-bottom: 20%;
+ 
     flex-grow: 1;
   }
   .watch-screen {
