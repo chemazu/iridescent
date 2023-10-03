@@ -1724,7 +1724,7 @@
 }
 @media screen and (max-width: 812px) {
   .watcher-chat-box .inchat-poll{
-    margin-bottom: 20%;
+    margin-bottom: 2.5%;
   }
   .mini-screen {
     height: 2px;
@@ -2094,7 +2094,7 @@
   .live-webinar-watch .chat-control {
     background: #fff !important;
     border: 0;
-    position: absolute;
+    /* position: absolute; */
     bottom: 0;
     right: 0;
     left: 0;
@@ -2133,6 +2133,7 @@
     height: 55%;
     overflow: scroll;
     position: fixed;
+    padding-bottom: 0;
     /* position: revert; */
   }
   .watch-left .presenter-controls {
