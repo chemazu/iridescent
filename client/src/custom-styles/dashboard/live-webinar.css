@@ -1723,8 +1723,8 @@
   width: 100%;
 }
 @media screen and (max-width: 812px) {
-  .mini-screen {
-    height: 0;
+  .bottom ul {
+    margin-bottom: 0.3rem;
   }
   .bottom .progress {
     margin-bottom: 0.1rem !important;
@@ -1733,7 +1733,7 @@
     height: 35dvh !important;
   }
   .chat-interface-quiz {
-    padding-bottom: 15%;
+    padding-bottom: 20%;
     flex-grow: 1;
   }
   .watch-screen {
