@@ -100,7 +100,7 @@ function WatchStream({ schoolname }) {
     }
     return userId;
   };
-  const handleAddStream = (stream,audioStat) => {
+  const handleAddStream = (stream, audioStat) => {
     const pop = videoRef.current;
 
     if (pop) {
@@ -137,14 +137,14 @@ function WatchStream({ schoolname }) {
     // You could update an existing player in the `else` block here
     // on prop change, for example:
   };
-  const secondHandleAddStream = (stream,audioStat) => {
+  const secondHandleAddStream = (stream, audioStat) => {
     const pop = secondVideoRef.current;
     if (pop) {
       if (!secondScreenPlayer.current) {
         const videoElement = document.createElement("video-js");
         videoElement.setAttribute("playsinline", true);
         videoElement.classList.add("vjs-big-play-centered");
-  
+
         videoElement.srcObject = stream;
         if (!audioStat.audio) {
           videoElement.muted = true; // Mute the video if audio is false
@@ -482,7 +482,7 @@ function WatchStream({ schoolname }) {
     peerInstance.on("open", (user) => {
       socket.emit("watcher", roomid, user, getUserId(roomid));
     });
-    const startClass = (peerId, stat,audioStat) => {
+    const startClass = (peerId, stat, audioStat) => {
       console.log(audioVisuals);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
@@ -490,10 +490,10 @@ function WatchStream({ schoolname }) {
           let call = peerInstance.call(peerId, newStream);
           // const call = peerInstance.call(peerId, fast);
           call?.on("stream", (remoteStream) => {
-            handleAddStream(remoteStream,audioStat);
+            handleAddStream(remoteStream, audioStat);
 
             setWaiting(false);
-            secondHandleAddStream(remoteStream,audioStat);
+            secondHandleAddStream(remoteStream, audioStat);
           });
           call?.on("error", (error) => {
             console.error("Call error:", error);
@@ -1422,7 +1422,6 @@ function WatchStream({ schoolname }) {
                               ) : (
                                 <>
                                   {singleChat.type === "poll" ? (
-                     
                                     <div
                                       className="inchat-poll"
                                       // style={{
@@ -1479,7 +1478,6 @@ function WatchStream({ schoolname }) {
                                         )}
                                       </div>
                                       {!minimizedPoll && (
-                                      
                                         <div className="bottom">
                                           {pollResults ? (
                                             ""
@@ -1562,10 +1560,8 @@ function WatchStream({ schoolname }) {
                                             </Button>
                                           )}
                                         </div>
-                                        
                                       )}
                                     </div>
-                               
                                   ) : (
                                     <></>
                                   )}
@@ -1573,51 +1569,50 @@ function WatchStream({ schoolname }) {
                               );
                             })}
                           </div>
-                        </div>
-                        <div
-                          className="chat-control"
-                          style={{
-                            color: theme?.themestyles.navbartextcolor,
-                          }}
-                        >
-                          {showEmojiPicker && (
-                            // <Picker
-                            //
-                            // />
-                            <div
-                              className="emoji-wrapper"
-                              style={{
-                                position: "absolute",
-                                bottom: "90px",
-
-                                width: "100%",
-                              }}
-                            >
-                              <Picker
-                                previewPosition="none"
-                                showPreview="false"
-                                data={data}
-                                onClickOutside={() => {
-                                  setShowEmojiPicker(false);
-                                }}
-                                onEmojiSelect={(emoji) => {
-                                  handleSelectEmoji(emoji);
-                                }}
-                                perLine="7"
-                              />
-                            </div>
-                          )}
                           <div
-                            className="action-wrapper"
-                            style={{ justifyContent: "center" }}
-                            onClick={() => {
-                              handleToggleEmojiPicker();
+                            className="chat-control"
+                            style={{
+                              color: theme?.themestyles.navbartextcolor,
                             }}
                           >
-                            <img src={smiley} alt="emoji" />
-                          </div>
+                            {showEmojiPicker && (
+                              // <Picker
+                              //
+                              // />
+                              <div
+                                className="emoji-wrapper"
+                                style={{
+                                  position: "absolute",
+                                  bottom: "90px",
 
-                          {/* 
+                                  width: "100%",
+                                }}
+                              >
+                                <Picker
+                                  previewPosition="none"
+                                  showPreview="false"
+                                  data={data}
+                                  onClickOutside={() => {
+                                    setShowEmojiPicker(false);
+                                  }}
+                                  onEmojiSelect={(emoji) => {
+                                    handleSelectEmoji(emoji);
+                                  }}
+                                  perLine="7"
+                                />
+                              </div>
+                            )}
+                            <div
+                              className="action-wrapper"
+                              style={{ justifyContent: "center" }}
+                              onClick={() => {
+                                handleToggleEmojiPicker();
+                              }}
+                            >
+                              <img src={smiley} alt="emoji" />
+                            </div>
+
+                            {/* 
                         <textarea
                           value={chatMessage}
                           onChange={(e) => {
@@ -1632,32 +1627,33 @@ function WatchStream({ schoolname }) {
                           }}
                         /> */}
 
-                          <CustomTextArea
-                            text={chatMessage}
-                            setText={setChatMessage}
-                            keyDown={handleKeyDown}
-                            height={height}
-                            setHeight={setHeight}
-                          />
-                          <div
-                            className="expand-wrapper"
-                            onClick={() => {
-                              setVideoFill(!videoFill);
-                            }}
-                          >
-                            <i
-                              className="fa fa-expand"
-                              aria-hidden="true"
-                              style={{ color: "#ccc" }}
-                            ></i>
+                            <CustomTextArea
+                              text={chatMessage}
+                              setText={setChatMessage}
+                              keyDown={handleKeyDown}
+                              height={height}
+                              setHeight={setHeight}
+                            />
+                            <div
+                              className="expand-wrapper"
+                              onClick={() => {
+                                setVideoFill(!videoFill);
+                              }}
+                            >
+                              <i
+                                className="fa fa-expand"
+                                aria-hidden="true"
+                                style={{ color: "#ccc" }}
+                              ></i>
+                            </div>
+                            <Button
+                              onClick={() => {
+                                sendMessage();
+                              }}
+                            >
+                              Send
+                            </Button>
                           </div>
-                          <Button
-                            onClick={() => {
-                              sendMessage();
-                            }}
-                          >
-                            Send
-                          </Button>
                         </div>
                       </>
                     )}
