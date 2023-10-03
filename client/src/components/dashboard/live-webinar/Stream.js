@@ -1119,10 +1119,13 @@ export default function Stream() {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
     peerInstance.on("open", (peerId) => {
-      socket.emit("broadcaster", roomid, peerId);
+ 
+    socket.emit("audiovisuals", roomid, audioVisuals);
+
+
+      socket.emit("broadcaster", roomid, peerId,audioVisuals);
     });
     handleFreeTimer();
-    socket.emit("audiovisualstatus", roomid, audioVisuals);
     navigator.mediaDevices
       .getUserMedia(audioVisuals)
 

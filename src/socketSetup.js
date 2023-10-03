@@ -24,8 +24,10 @@ const setupSocketIO = (app) => {
 
   io.on("connection", (socket) => {
     // broadcaster
-    socket.on("broadcaster", async (roomId, peerId) => {
+    socket.on("broadcaster", async (roomId, peerId,audioStat) => {
       broadcasterHolder[roomId] = { peerId, socketId: socket.id };
+      audioStatus[roomId] = audioStat
+      console.log(audioStatus)
       socket.join(roomId);
       socket.broadcast
         .to(roomId)
@@ -47,6 +49,8 @@ const setupSocketIO = (app) => {
     });
 
     socket.on("watcher", async (roomId, userId, attendanceId) => {
+      console.log(audioStatus)
+
       socket.join(roomId);
       let numberOfPeopleInRoom;
       if (!roomsHolder[roomId]) {
@@ -71,10 +75,9 @@ const setupSocketIO = (app) => {
             broadcasterScreen[roomId].peerId
           );
         }
+        console.log(audioStatus[roomId])
         if (audioStatus[roomId]) {
-          socket.broadcast
-            .to(socket.id)
-            .emit("audiovisuals", audioStatus[roomId]);
+          io.to(socket.id).emit("audio status", audioStatus[roomId]);
         }
 
         io.to(socket.id).emit(
@@ -133,7 +136,7 @@ const setupSocketIO = (app) => {
               // roomStatus[roomId] = updatedStatus; // Update room status as needed
 
               // Notify other users in the room about the updated attendance
-              const numberOfPeopleInRoom = roomsHolder[roomId].size;
+              const numberOfPeopleInRoom = roomsHolder[roomId]?.size;
               io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
 
               // Remove the user's heartbeat and room information
@@ -154,11 +157,10 @@ const setupSocketIO = (app) => {
 
       delete broadcasterScreen[roomId];
     });
-    socket.on("audiovisualstatus", (roomId, item) => {
-      audioStatus[roomId] = item;
-    });
+
     socket.on("audiovisuals", (roomId, updated, type) => {
-      socket.broadcast.to(roomId).emit("audiovisuals", updated);
+
+      io.in(roomId).emit("audiovisuals", updated);
 
       audioStatus[roomId] = updated;
     });

@@ -1723,8 +1723,18 @@
   width: 100%;
 }
 @media screen and (max-width: 812px) {
+  .mini-screen {
+    height: 0;
+  }
+  .bottom .progress {
+    margin-bottom: 0.1rem !important;
+  }
+  .webcam-off {
+    height: 35dvh !important;
+  }
   .chat-interface-quiz {
-    padding-bottom: 20%;
+    padding-bottom: 15%;
+    flex-grow: 1;
   }
   .watch-screen {
     background-color: var(--site-white-color);
@@ -1933,7 +1943,7 @@
     display: none;
   }
   .live-webinar-interface .video-background {
-    max-height: 80vh;
+    max-height: 60vh;
     /* height: 80vh; */
     background: #000;
     /* padding-top: 50%; */

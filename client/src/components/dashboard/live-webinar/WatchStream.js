@@ -100,7 +100,7 @@ function WatchStream({ schoolname }) {
     }
     return userId;
   };
-  const handleAddStream = (stream) => {
+  const handleAddStream = (stream,audioStat) => {
     const pop = videoRef.current;
 
     if (pop) {
@@ -109,6 +109,11 @@ function WatchStream({ schoolname }) {
         videoElement.setAttribute("playsinline", true);
         videoElement.classList.add("vjs-big-play-centered");
         videoElement.srcObject = stream;
+        console.log(audioVisuals.audio, "dsdss");
+
+        if (!audioStat.audio) {
+          videoElement.muted = true; // Mute the video if audio is false
+        }
         videoRef.current.appendChild(videoElement);
         const player = (playerRef.current = videojs(
           videoElement,
@@ -118,6 +123,8 @@ function WatchStream({ schoolname }) {
             // onReady && onReady(player);
           }
         ));
+        player.muted(!audioStat.audio);
+
         player.autoplay(true);
       } else {
       }
@@ -130,15 +137,18 @@ function WatchStream({ schoolname }) {
     // You could update an existing player in the `else` block here
     // on prop change, for example:
   };
-  const secondHandleAddStream = (stream) => {
+  const secondHandleAddStream = (stream,audioStat) => {
     const pop = secondVideoRef.current;
     if (pop) {
       if (!secondScreenPlayer.current) {
         const videoElement = document.createElement("video-js");
         videoElement.setAttribute("playsinline", true);
         videoElement.classList.add("vjs-big-play-centered");
-
+  
         videoElement.srcObject = stream;
+        if (!audioStat.audio) {
+          videoElement.muted = true; // Mute the video if audio is false
+        }
 
         secondVideoRef.current.appendChild(videoElement);
 
@@ -150,7 +160,7 @@ function WatchStream({ schoolname }) {
             // onReady && onReady(player);
           }
         ));
-        player.muted(!audioVisuals.audio);
+        player.muted(!audioStat.audio);
         player.autoplay(true);
       }
     } else {
@@ -472,17 +482,18 @@ function WatchStream({ schoolname }) {
     peerInstance.on("open", (user) => {
       socket.emit("watcher", roomid, user, getUserId(roomid));
     });
-    const startClass = (peerId, stat) => {
+    const startClass = (peerId, stat,audioStat) => {
+      console.log(audioVisuals);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
           let call = peerInstance.call(peerId, newStream);
           // const call = peerInstance.call(peerId, fast);
           call?.on("stream", (remoteStream) => {
-            handleAddStream(remoteStream);
+            handleAddStream(remoteStream,audioStat);
 
             setWaiting(false);
-            secondHandleAddStream(remoteStream);
+            secondHandleAddStream(remoteStream,audioStat);
           });
           call?.on("error", (error) => {
             console.error("Call error:", error);
@@ -490,9 +501,14 @@ function WatchStream({ schoolname }) {
           // });
         });
     };
+
+    socket.on("audio status", () => {
+      console.log("first adv");
+    });
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
-      // setAudioVisuals(roomStatus);
-      startClass(peerId, "join");
+      console.log(roomStatus);
+      setAudioVisuals(roomStatus);
+      startClass(peerId, "join", roomStatus);
       setWaiting(false);
       setDisconnect(false);
     });
@@ -576,7 +592,7 @@ function WatchStream({ schoolname }) {
     return () => {
       socket.off("screenSharingStatus");
     };
-  }, [roomid]);
+  }, [roomid, audioVisuals]);
 
   useEffect(() => {
     socket.on("watcher-exit", (size) => {
@@ -1061,7 +1077,6 @@ function WatchStream({ schoolname }) {
                         className={`${
                           screenSharing ? "share-active" : "share-inactive"
                         } `}
-                      
                       ></div>
                     </div>
 
@@ -1407,6 +1422,7 @@ function WatchStream({ schoolname }) {
                               ) : (
                                 <>
                                   {singleChat.type === "poll" ? (
+                     
                                     <div
                                       className="inchat-poll"
                                       // style={{
@@ -1463,6 +1479,7 @@ function WatchStream({ schoolname }) {
                                         )}
                                       </div>
                                       {!minimizedPoll && (
+                                      
                                         <div className="bottom">
                                           {pollResults ? (
                                             ""
@@ -1545,8 +1562,10 @@ function WatchStream({ schoolname }) {
                                             </Button>
                                           )}
                                         </div>
+                                        
                                       )}
                                     </div>
+                               
                                   ) : (
                                     <></>
                                   )}
