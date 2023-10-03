@@ -1743,7 +1743,7 @@
     background-color: var(--site-white-color);
   }
   .chat-interface-text {
-    padding-bottom: 20%;
+
   }
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
