@@ -109,7 +109,6 @@ function WatchStream({ schoolname }) {
         videoElement.setAttribute("playsinline", true);
         videoElement.classList.add("vjs-big-play-centered");
         videoElement.srcObject = stream;
-        console.log(audioVisuals.audio, "dsdss");
 
         if (!audioStat.audio) {
           videoElement.muted = true; // Mute the video if audio is false
@@ -483,7 +482,6 @@ function WatchStream({ schoolname }) {
       socket.emit("watcher", roomid, user, getUserId(roomid));
     });
     const startClass = (peerId, stat, audioStat) => {
-      console.log(audioVisuals);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
@@ -503,10 +501,8 @@ function WatchStream({ schoolname }) {
     };
 
     socket.on("audio status", () => {
-      console.log("first adv");
     });
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
-      console.log(roomStatus);
       setAudioVisuals(roomStatus);
       startClass(peerId, "join", roomStatus);
       setWaiting(false);
@@ -552,7 +548,6 @@ function WatchStream({ schoolname }) {
 
     socket.on("updateAttendance", (users) => {
       setAttendance(users);
-      console.log(users);
     });
 
     // Clean up the event listener and heartbeat interval when the component unmounts

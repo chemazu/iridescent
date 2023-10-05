@@ -1113,17 +1113,19 @@ export default function Stream() {
       localStorage.setItem(roomid, endTime);
     }
   };
-
+ 
   const initializePeer = async () => {
     getResourceCount();
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
+
     peerInstance.on("open", (peerId) => {
+      socket.emit("broadcaster", roomid, peerId,audioVisuals);
+
  
     socket.emit("audiovisuals", roomid, audioVisuals);
 
 
-      socket.emit("broadcaster", roomid, peerId,audioVisuals);
     });
     handleFreeTimer();
     navigator.mediaDevices
