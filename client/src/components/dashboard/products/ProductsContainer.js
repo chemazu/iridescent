@@ -5,7 +5,6 @@ import ProductItem from "./ProductItem";
 import emptyProduct from "../../../images/empty-product.png";
 
 const ProductsContainer = ({ products, validateProductCountBeforePush }) => {
-  console.log(products);
   return (
     <>
       <div className="products-container">

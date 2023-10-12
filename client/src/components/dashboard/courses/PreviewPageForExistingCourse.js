@@ -357,7 +357,7 @@ export const PreviewPageForExistingCourse = ({
         prerequisite: course.prerequisite,
         language: course.language,
         level: course.level,
-        price: course.price,
+        price: course.price_usd,
         coursediscount: course?.coursediscount,
       });
     }
@@ -404,6 +404,7 @@ export const PreviewPageForExistingCourse = ({
                             <input
                               onChange={handleImageUpdateHandler}
                               ref={updateImageRef}
+                              accept="image/*"
                               style={{
                                 display: "none",
                               }}
@@ -434,7 +435,7 @@ export const PreviewPageForExistingCourse = ({
                               </p>
                               <p className="publisher-details mt-3">{`${course.author.firstname} ${course.author.lastname}`}</p>
                               <h4 className="course-item-price">
-                                &#8358;{course.price}
+                                &#x24;{course.price_usd}
                               </h4>
                             </div>
                             <div className="course-actions">
@@ -659,7 +660,7 @@ export const PreviewPageForExistingCourse = ({
                       required
                     />
                     <label for="price" className="form__label">
-                      Course Price (₦)
+                      Course Price (&#x24;)
                     </label>
                   </FormGroup>
                   <FormGroup>

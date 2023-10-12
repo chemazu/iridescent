@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { CardElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { connect } from "react-redux";
+import { useHistory } from "react-router-dom";
 import CurrencyFormat from "react-currency-format";
 import { Col, Button, Modal, Card } from "reactstrap";
 import axios from "axios";
@@ -30,6 +31,7 @@ const PaymentPlansItem = ({
   currency,
 }) => {
   const alert = useAlert();
+  const history = useHistory();
   const [confirmModal, setConfirmModal] = useState(false);
   const [planChoiceValidationError, setPlanChoiceValidationError] =
     useState(false);
@@ -47,7 +49,9 @@ const PaymentPlansItem = ({
     if (currency.countryCode === "NG") {
       handlePaystackSubscriptionPayment();
     } else {
-      handleStripeSubscriptionPayment();
+      history.push(
+        `/dashboard/plans/subscription/checkout/${plan.stripe_plan_code}`
+      );
     }
   };
 
@@ -94,55 +98,6 @@ const PaymentPlansItem = ({
     }
   };
 
-  const handleStripeSubscriptionPayment = async () => {
-    showLoader();
-    if (localStorage.getItem("token")) {
-      setAuthToken(localStorage.getItem("token"));
-    }
-    const paymentMethod = await stripe?.createPaymentMethod({
-      type: "card",
-      card: elements?.getElement(CardElement),
-      billing_details: {
-        name: `${user.firstname} ${user.lastname}`,
-        email: user.email,
-      },
-    });
-    try {
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      };
-      const body = JSON.stringify({
-        stripe_product_code: plan.stripe_plan_code,
-        payment_method: paymentMethod.paymentMethod.id,
-      });
-      const response = await axios.post(
-        "/api/v1/stripe/create-subscription",
-        body,
-        config
-      );
-      const { data } = response;
-      const confirmPayment = await stripe?.confirmCardPayment(
-        data.clientsecret
-      );
-      if (confirmPayment?.error) {
-        alert.show(confirmPayment.error.message, { type: "error" });
-      } else {
-        alert.show("Subscription completed Successfully", {
-          type: "success",
-        });
-      }
-      removeLoader();
-    } catch (error) {
-      removeLoader();
-      console.log(error);
-      alert.show(error.message, {
-        type: "error",
-      });
-    }
-  };
-
   const handlePlanContentDisplay = (planName) => {
     const plan = planName.toLowerCase();
     if (plan === "free") {
@@ -172,8 +127,8 @@ const PaymentPlansItem = ({
     if (plan === "enterprise") {
       return (
         <ul>
-          <li>Free Plan +</li>
-          <li>20 Free gigabytes for uploading courses</li>
+          <li>Basic Plan +</li>
+          <li>20 Free gigabytes for Uploading courses and Dgital Products</li>
           <li>Tuturly.com sub link removed (coming soon)</li>
           <li>Banner of (created by tuturly.com) removed</li>
         </ul>

@@ -33,6 +33,9 @@ const courseSchema = new mongoose.Schema(
     price: {
       type: Number,
     },
+    price_usd: {
+      type: Number,
+    },
     published: {
       type: Boolean,
       default: false,

@@ -350,6 +350,22 @@ const DashboardNavbar = ({
                         </span>
                       </NavLink>
                     </NavItem>
+
+                    <NavItem
+                      className={classnames("navbar-item-link", {
+                        selected: currentPage.counter === 183,
+                      })}
+                    >
+                      <NavLink
+                        onClick={(e) => updatePage(183)}
+                        tag={Link}
+                        to="/dashboard/students"
+                      >
+                        <i className="fas fa-user-graduate"></i>{" "}
+                        <span className="navlink-text d-none-sm">Students</span>
+                      </NavLink>
+                    </NavItem>
+
                     <NavItem
                       className={classnames("navbar-item-link", {
                         selected: currentPage.counter === 5,

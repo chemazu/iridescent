@@ -8,6 +8,7 @@ import setAuthToken from "../../../utilities/setAuthToken";
 import AuthenticationModal from "../AuthenticationModal";
 import roundToTwoDecimalPlaces from "../../../utilities/roundToTwoDecimalPlaces";
 import CurrencyFormat from "react-currency-format";
+/* eslint-disable react-hooks/exhaustive-deps */
 
 function LiveWebinarSection({ schoolname, theme, currency }) {
   const [userStreams, setUserStreams] = useState(null);
@@ -16,7 +17,6 @@ function LiveWebinarSection({ schoolname, theme, currency }) {
 
   const [purchasedWebinar, setPurchasedWebinar] = useState([]);
 
-  const [purchasedWebinarLoading, setPurchasedWebinarLoading] = useState(true);
   const store = useStore();
   const appState = store.getState();
   const { student } = appState;
@@ -34,7 +34,6 @@ function LiveWebinarSection({ schoolname, theme, currency }) {
         setAuthToken(localStorage.getItem("token"));
         const res = await axios.get(`/api/v1/studentwebinar/${schoolname}`);
         setPurchasedWebinar(res.data);
-        setPurchasedWebinarLoading(false);
       }
     } catch (error) {
       // eslint-disable-next-line
@@ -73,24 +72,7 @@ function LiveWebinarSection({ schoolname, theme, currency }) {
 
   const streams = userStreams;
   console.log(userStreams);
-  function handleTimeDisplay(time) {
-    const timestamp = new Date(time);
-    const dateStr = timestamp.toLocaleString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    const timeStr = timestamp.toLocaleString("en-US", {
-      hour: "numeric",
-      minute: "numeric",
-    });
-
-    const parts = dateStr.split(" ");
-    const month = parts[0].toUpperCase();
-    const day = parts[1];
-
-    const convertedStr = `${timeStr} ${month} ${day}`;
-    return convertedStr;
-  }
+ 
   useEffect(() => {
     getWebinars();
   }, []);

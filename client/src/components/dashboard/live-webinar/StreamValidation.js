@@ -8,6 +8,7 @@ import { loadUser } from "../../../actions/auth";
 import { connect } from "react-redux";
 import { Spinner } from "reactstrap";
 import InvalidStream from "./InvalidStream";
+/* eslint-disable react-hooks/exhaustive-deps */
 
 if (localStorage.getItem("studentToken")) {
   setAuthToken(localStorage.getItem("studentToken"));

@@ -58,10 +58,7 @@ const LiveWebinarMobileNav = ({ currentPage, parent }) => {
   return (
     <>
       <Navbar className="navbar-dark navbar-display-mobile" expand="lg">
-        <Container
- 
-          fluid
-        >
+        <Container fluid>
           <button className="navbar-toggler" id="navbar-primary">
             <i
               style={{
@@ -191,46 +188,45 @@ const LiveWebinarMobileNav = ({ currentPage, parent }) => {
               </NavItem>
             </Nav>
           </UncontrolledCollapse>
-          
-            <div
-              className="time-constraints"
-              style={{ visibility: startController ? "" : "hidden" }}
-            >
-              {planname && (
-                <>
-                  {planname === "free" && (
-                    <div className="time-tracker">
-                      {/* <p>Get More Time</p> */}
-                      <p>Time Remaining</p>
-                      {isLoading ? (
-                        <span>00:00:00</span>
-                      ) : parseInt(localStorage.getItem(`${roomid}`)) ? (
-                        <CountdownTimer
-                          endTime={parseInt(localStorage.getItem(`${roomid}`))}
-                          firstReminder={() => {
-                            setTimeOutModal(true);
-                          }}
-                          classOver={() => {
-                            handlePlanTimeOut();
-                          }}
-                          freeTimerStatus={freeTimerStatus}
-                        />
-                      ) : (
-                        <span>00:00:00</span>
-                      )}
-                    </div>
-                  )}
-                </>
-              )}
 
-              <Button
-                className="page-title_cta-btn"
-                onClick={handleExitStreamModal}
-              >
-                End Class &nbsp; <i className="fa fa-times"></i>
-              </Button>
-            </div>
-     
+          <div
+            className="time-constraints"
+            style={{ visibility: startController ? "" : "hidden" }}
+          >
+            {planname && (
+              <>
+                {planname === "free" && (
+                  <div className="time-tracker">
+                    {/* <p>Get More Time</p> */}
+                    <p>Time Remaining</p>
+                    {isLoading ? (
+                      <span>00:00:00</span>
+                    ) : parseInt(localStorage.getItem(`${roomid}`)) ? (
+                      <CountdownTimer
+                        endTime={parseInt(localStorage.getItem(`${roomid}`))}
+                        firstReminder={() => {
+                          setTimeOutModal(true);
+                        }}
+                        classOver={() => {
+                          handlePlanTimeOut();
+                        }}
+                        freeTimerStatus={freeTimerStatus}
+                      />
+                    ) : (
+                      <span>00:00:00</span>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+
+            <Button
+              className="page-title_cta-btn"
+              onClick={handleExitStreamModal}
+            >
+              End Class &nbsp; <i className="fa fa-times"></i>
+            </Button>
+          </div>
         </Container>
       </Navbar>
     </>

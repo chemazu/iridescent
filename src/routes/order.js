@@ -10,18 +10,51 @@ const router = express.Router();
 // route to get sales for all time
 router.get("/ordersum", auth, async (req, res) => {
   const userId = req.user.id;
+  const currentDate = new Date();
+
   try {
     const userOrderSum = await Order.aggregate([
       {
         $match: {
           boughtfrom: mongoose.Types.ObjectId(userId),
+          $or: [
+            { pendingOrderDate: null },
+            { pendingOrderDate: { $lte: currentDate } },
+          ],
         },
       },
       {
         $group: {
           _id: null,
           salesTotal: {
-            $sum: "$actualearning",
+            $sum: "$actualearning_usd",
+          },
+        },
+      },
+    ]);
+    res.json(userOrderSum);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server error");
+  }
+});
+
+router.get("/ordersum/pending", auth, async (req, res) => {
+  const userId = req.user.id;
+  const currentDate = new Date();
+  try {
+    const userOrderSum = await Order.aggregate([
+      {
+        $match: {
+          pendingOrderDate: { $gte: currentDate },
+          boughtfrom: mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          pendingBalanceSalesTotal: {
+            $sum: "$actualearning_usd",
           },
         },
       },
@@ -58,7 +91,7 @@ router.get("/ordersum/monthly", auth, async (req, res) => {
         $group: {
           _id: null,
           salesTotal: {
-            $sum: "$actualearning",
+            $sum: "$actualearning_usd",
           },
         },
       },
@@ -105,7 +138,7 @@ const getSalesReportPerMonth = async (period, userId) => {
       $group: {
         _id: null,
         salesTotal: {
-          $sum: "$actualearning",
+          $sum: "$actualearning_usd",
         },
       },
     },

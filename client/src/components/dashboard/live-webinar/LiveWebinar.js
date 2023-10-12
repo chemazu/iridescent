@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { connect } from "react-redux";
 import axios from "axios";
-import { Col, Container, Row, Button, Card, Spinner, Modal } from "reactstrap";
+import { Col, Container, Row, Button, Card, Spinner } from "reactstrap";
 import "../../../custom-styles/dashboard/live-webinar.css";
 import bellicon from "../../../images/flat-yellow-bell.png";
 import pollSvg from "../../../images/poll-svg.svg";
@@ -11,16 +11,17 @@ import plusSvg from "../../../images/plus-svg.svg";
 import { useAlert } from "react-alert";
 import DashboardNavbar from "../DashboardNavbar";
 
-import NotificationNavbar from "../NotificationNavbar";
+ 
 import { Link } from "react-router-dom";
+/* eslint-disable react-hooks/exhaustive-deps */
 
-function LiveWebinar({ school, getSchool }) {
+function LiveWebinar({ school }) {
+  
   const [userStreams, setUserStreams] = useState(null);
   const [filterState, setFilterState] = useState("");
   const [sortState, setSortState] = useState("");
 
   const [loading, setLoading] = useState(true);
-  const [instantWebinar, setInstantWebinar] = useState(false);
   const [menuIndex, setMenuIndex] = useState(null);
   const dropdownRef = useRef(null);
 
@@ -60,7 +61,12 @@ function LiveWebinar({ school, getSchool }) {
     if (host.includes("localhost")) {
       return `http://${schoolname}.${host}`;
     }
-    const baseDomain = host.split(".")[1];
+
+    const parts = host.split(".");
+
+    const baseDomain = parts[0] === "www" ? parts[1] : parts[0];
+    
+
     return baseDomain.includes("localhost")
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
@@ -193,7 +199,7 @@ function LiveWebinar({ school, getSchool }) {
       <Container fluid>
         <Row>
           <DashboardNavbar />
-          <Modal isOpen={instantWebinar}></Modal>
+ 
           <Col className="page-actions__col">
             <div className="live-webinar">
               <div className="live-webinar-content">

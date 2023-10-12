@@ -111,34 +111,34 @@ export default function ProductUpdateModal({
   } = productUpdate;
   const onHandleProductDetailUpdate = () => {
     if (title.length === 0) {
-      return alert.show("course title cannot be empty", {
+      return alert.show("product title cannot be empty", {
         type: "error",
       });
     }
     if (subtitle.length === 0) {
-      return alert.show("course subtitle cannot be empty", {
+      return alert.show("product subtitle cannot be empty", {
         type: "error",
       });
     }
     if (category.length === 0) {
-      return alert.show("course category cannot be empty", {
+      return alert.show("product category cannot be empty", {
         type: "error",
       });
     }
     if (description.length === 0) {
-      return alert.show("course description cannot be empty", {
+      return alert.show("product description cannot be empty", {
         type: "error",
       });
     }
 
     if (language.length === 0) {
-      return alert.show("course language cannot be empty", {
+      return alert.show("product language cannot be empty", {
         type: "error",
       });
     }
 
     if (!price) {
-      return alert.show("course price not valid", {
+      return alert.show("product price not valid", {
         type: "error",
       });
     }
@@ -157,7 +157,7 @@ export default function ProductUpdateModal({
         category: product.category,
         description: product.description,
         language: product.language,
-        price: product.price,
+        price: product.price_usd,
       });
     }
   }, [product]);
@@ -281,17 +281,17 @@ export default function ProductUpdateModal({
                     required
                   />
                   <label for="price" className="form__label">
-                    Product Price (₦)
+                    Product Price (&#x24;)
                   </label>
                   <p
                     style={{
                       color: "red",
                       paddingLeft: "1.5rem",
                       visibility:
-                        productUpdate.price < 2000 ? "visible" : "hidden",
+                        productUpdate.price < 3 ? "visible" : "hidden",
                     }}
                   >
-                    product price cannot be less than ₦ 2000
+                    product price cannot be less than $3
                   </p>
                 </FormGroup>
               </Form>
@@ -315,7 +315,7 @@ export default function ProductUpdateModal({
         </Button>{" "}
         <Button
           onClick={onHandleProductDetailUpdate}
-          disabled={productUpdate.price < 2000}
+          disabled={productUpdate.price < 3}
           className="modal-btn-style"
           style={{
             paddingLeft: "40px",

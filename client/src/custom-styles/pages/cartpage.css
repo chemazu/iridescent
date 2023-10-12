@@ -272,6 +272,24 @@
   color: #fff;
 }
 
+.transaction-loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  flex-direction: column;
+}
+
+.modal-header-title {
+  color: var(--site-dark-color);
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+.modal-header-close__btn {
+  cursor: pointer;
+  color: var(--site-dark-color);
+}
+
 .continue-button,
 .continue-button:hover,
 .continue-button:active {

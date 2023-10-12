@@ -5,12 +5,14 @@ import multer, { memoryStorage } from "multer";
 import Course from "../models/Course";
 import School from "../models/School";
 import Tutor from "../models/Tutor";
+import ExchangeRate from "../models/ExchangeRate";
 import User from "../models/User";
 import PaymentPlans from "../models/PaymentPlans";
 import CourseUnit from "../models/CourseUnit";
 import auth from "../middleware/auth";
 import validateUserPayment from "../middleware/validateUserPayment";
 import dataUri from "../utilities/dataUri";
+import roundToTwoDecimalPlaces from "../utilities/roundToTwoDecimalPlaces";
 
 const router = express.Router();
 
@@ -50,7 +52,7 @@ router.post(
       });
     }
 
-    if (req.body.price < 2000) {
+    if (req.body.price < 5) {
       return res.status(400).json({
         errors: [{ msg: "invalid course price" }],
       });
@@ -73,6 +75,11 @@ router.post(
       const coursesCount = await Course.countDocuments({
         // to get the count of courses the user has created
         author: userId,
+      });
+
+      // get exchange rate
+      const exchangeRate = await ExchangeRate.findOne({
+        currencyName: "usd",
       });
 
       if (userPaymentPlan.coursecount === coursesCount) {
@@ -125,12 +132,12 @@ router.post(
       const uploadResponse = await cloudinary.v2.uploader.upload(
         imageToBeUploaded,
         {
-          folder: `tuturly/course/${title}`,
+          folder: `tuturly/course/${title.trim()}`,
         }
       );
 
       let course = new Course({
-        title,
+        title: title.trim(),
         subtitle,
         category,
         rootcategory,
@@ -139,7 +146,10 @@ router.post(
         language,
         level,
         thumbnail: uploadResponse.secure_url,
-        price,
+        price_usd: price,
+        price: roundToTwoDecimalPlaces(
+          exchangeRate.exchangeRateAmountToNaira * price
+        ),
         coursethumbnailid: uploadResponse.public_id,
         transferedToCloudflare: true, // interim key used to keep track of courses that have videos in cloudflare.
         //  before all videos are completely transfered from cloudinary to cloudflare
@@ -247,6 +257,12 @@ router.put("/:courseId", auth, validateUserPayment, async (req, res) => {
         errors: [{ msg: "course not found" }],
       });
     }
+
+    // get exchange rate
+    const exchangeRate = await ExchangeRate.findOne({
+      currencyName: "usd",
+    });
+
     const {
       title,
       subtitle,
@@ -270,7 +286,12 @@ router.put("/:courseId", auth, validateUserPayment, async (req, res) => {
     if (language) course.language = language;
     if (level) course.level = level;
     if (thumbnail) course.thumbnail = thumbnail;
-    if (price) course.price = price;
+    if (price) {
+      course.price_usd = price;
+      course.price = roundToTwoDecimalPlaces(
+        exchangeRate.exchangeRateAmountToNaira * price
+      );
+    }
     if (coursediscount) course.coursediscount = coursediscount;
 
     await course.save();

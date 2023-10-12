@@ -1,6 +1,8 @@
 import express from "express";
 import stripe from "stripe";
 import User from "../models/User";
+import PaymentPlans from "../models/PaymentPlans";
+import Subscription from "../models/Subscription";
 import studentAuth from "../middleware/studentAuth";
 import auth from "../middleware/auth";
 import roundToTwoDecimalPlaces from "../utilities/roundToTwoDecimalPlaces";
@@ -69,10 +71,13 @@ router.post("/create-subscription", auth, async (req, res) => {
   const { stripe_product_code, payment_method } = req.body;
   const userId = req.user.id;
   try {
-    const user = await User.find({ _id: userId });
-
+    const user = await User.findOne({ _id: userId });
+    const paymentPlan = await PaymentPlans.findOne({
+      stripe_plan_code: stripe_product_code,
+    });
+    console.log(stripe_product_code);
     // create user as a new stripe customer
-    const customer = await stripe.CustomersResource.create({
+    const customer = await stripeServer.customers.create({
       name: `${user.firstname} ${user.lastname}`,
       email: user.email,
       payment_method: payment_method,
@@ -81,28 +86,33 @@ router.post("/create-subscription", auth, async (req, res) => {
       },
     });
 
-    const subscription = await stripe.subscriptions.create({
+    const subscription = await stripeServer.subscriptions.create({
       customer: customer.id,
       items: [
         {
-          price: stripe_product_code,
+          plan: stripe_product_code,
         },
       ],
+      expand: ["latest_invoice.payment_intent"],
       payment_settings: {
-        payment_method_options: {
-          card: {
-            request_three_d_secure: "any",
-          },
-        },
         payment_method_types: ["card"],
         save_default_payment_method: "on_subscription",
       },
-      expand: "latest_invoice.payment_intent",
     });
 
     user.stripeCustomerId = customer.id;
     user.stripeSubscriptionId = subscription.id;
+    user.selectedplan = paymentPlan._id;
+
+    // make a new subscription for the newly created subssciption
+    const newSubscription = new Subscription({
+      user: user._id,
+      subscription_plan: paymentPlan._id,
+      amount: paymentPlan.planprice,
+    });
+
     await user.save();
+    await newSubscription.save();
 
     res.json({
       clientsecret: subscription.latest_invoice.payment_intent.client_secret,

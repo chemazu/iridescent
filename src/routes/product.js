@@ -6,11 +6,14 @@ import Product from "../models/Product";
 import School from "../models/School";
 import Tutor from "../models/Tutor";
 import User from "../models/User";
+import ExchangeRate from "../models/ExchangeRate";
 import Section from "../models/Sections";
 import PaymentPlans from "../models/PaymentPlans";
 import auth from "../middleware/auth";
 import validateUserPayment from "../middleware/validateUserPayment";
+import validateUserUploadAgainstAvailableUsageQuota from "../middleware/validateUserUploadAgainstAvailableUsageQuota";
 import dataUri from "../utilities/dataUri";
+import roundToTwoDecimalPlaces from "../utilities/roundToTwoDecimalPlaces";
 
 const router = express.Router();
 
@@ -51,10 +54,11 @@ const uploadFileToCloudinary = (file, options) => {
 };
 
 router.post(
-  "/:schoolId",
+  "/:schoolId/:filesize",
   [
     auth,
     validateUserPayment,
+    validateUserUploadAgainstAvailableUsageQuota,
     checkProductThumbnail.fields([
       { name: "thumbnail", maxCount: 1 },
       { name: "product", maxCount: 1 },
@@ -75,7 +79,7 @@ router.post(
       });
     }
 
-    if (req.body.price < 2000) {
+    if (req.body.price < 3) {
       return res.status(400).json({
         errors: [{ msg: "invalid product price" }],
       });
@@ -128,6 +132,11 @@ router.post(
         author: validUser._id,
       });
 
+      // get exchange rate
+      const exchangeRate = await ExchangeRate.findOne({
+        currencyName: "usd",
+      });
+
       if (userPaymentPlan.productcount === productCount) {
         return res.status(402).json({
           message: "upgrade your plan to upload more products!",
@@ -158,14 +167,14 @@ router.post(
         {
           file: imageToBeUploaded,
           options: {
-            folder: `tuturly/product/${title}`,
+            folder: `tuturly/product/${title.trim()}`,
             resource_type: "image",
           },
         },
         {
           file: productToBeUploaded,
           options: {
-            folder: `tuturly/product/${title}/file`,
+            folder: `tuturly/product/${title.trim()}/file`,
             resource_type: "auto",
           },
         },
@@ -179,12 +188,15 @@ router.post(
       );
 
       const product = new Product({
-        title,
+        title: title.trim(),
         subtitle,
         category,
         description,
         language,
-        price,
+        price: roundToTwoDecimalPlaces(
+          exchangeRate.exchangeRateAmountToNaira * price
+        ),
+        price_usd: price,
         thumbnail: imageUploadResponse.secure_url,
         productthumbnailid: imageUploadResponse.public_id,
         file: productUploadResponse.secure_url,
@@ -273,7 +285,7 @@ router.get("/user/createproduct", auth, async (req, res) => {
       author: userId,
     });
 
-    if (userPaymentPlan.coursecount === productCount) {
+    if (userPaymentPlan.productcount === productCount) {
       return res.status(402).json({
         message: "upgrade your plan to upload more courses!",
       });
@@ -284,6 +296,7 @@ router.get("/user/createproduct", auth, async (req, res) => {
     console.error(error);
   }
 });
+
 // update product by id
 router.put(
   "/detail/:productId",
@@ -301,6 +314,12 @@ router.put(
           errors: [{ msg: "product not found" }],
         });
       }
+
+      // get exchange rate
+      const exchangeRate = await ExchangeRate.findOne({
+        currencyName: "usd",
+      });
+
       const {
         title,
         subtitle,
@@ -319,7 +338,12 @@ router.put(
       if (language) product.language = language;
       if (level) product.level = level;
       if (thumbnail) product.thumbnail = thumbnail;
-      if (price) product.price = price;
+      if (price) {
+        product.price_usd = price;
+        product.price = roundToTwoDecimalPlaces(
+          exchangeRate.exchangeRateAmountToNaira * price
+        );
+      }
 
       await product.save();
       res.json(product);

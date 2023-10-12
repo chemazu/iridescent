@@ -101,7 +101,7 @@ const AddBankAccountModal = ({
         accountname: verifiedAccountName.toLowerCase(),
       });
       const res = await axios.post("/api/v1/bank/", body, config);
-      alert.show("Account Details Save Successfully", {
+      alert.show("Account Details Saved Successfully", {
         type: "success",
       });
       updateUserBankAccountList(res.data);

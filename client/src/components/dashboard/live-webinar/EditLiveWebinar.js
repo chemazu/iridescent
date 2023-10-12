@@ -23,8 +23,8 @@ import DashboardNavbar from "../DashboardNavbar";
 
 import { Link, useHistory, useParams } from "react-router-dom";
 import InvalidStream from "./InvalidStream";
-
-function EditLiveWebinar({ school }) {
+/* eslint-disable react-hooks/exhaustive-deps */
+function EditLiveWebinar() {
   const alert = useAlert();
   const history = useHistory();
   const { id } = useParams();
@@ -54,6 +54,7 @@ function EditLiveWebinar({ school }) {
   const [webinarReps, setWebinarReps] = useState("");
   const [freeWebinar, setFreeWebinar] = useState(null);
   const [prevFee, setPrevFee] = useState(null);
+  const [school, setSchool] = useState(null);
 
   const dispatch = useDispatch();
 
@@ -61,14 +62,12 @@ function EditLiveWebinar({ school }) {
     setIsLoading(true);
 
     try {
-      console.log(webinarId);
       let res = await axios.get(
         `/api/v1/livewebinar/streamdetails/${webinarId}`
       );
 
       if (res.data) {
         let { data } = res;
-        console.log(res);
         setIsValid(true);
 
         setTitle(data.title);
@@ -88,6 +87,9 @@ function EditLiveWebinar({ school }) {
         setFileToSend(data.webinarthumbnailid);
 
         setIsLoading(false);
+       setStreamLink(data)
+
+        setSchool(data.school);
       } else {
         setIsLoading(false);
         setIsValid(false);
@@ -120,7 +122,6 @@ function EditLiveWebinar({ school }) {
     }
   };
 
-  const domain = process.env.REACT_APP_CURRENT_URL;
   const handleDateChange = (e) => {
     const selectedDate = new Date(e.target.value);
     const currentDate = new Date();
@@ -237,18 +238,51 @@ function EditLiveWebinar({ school }) {
       console.error(error);
     }
   };
+  const getSchoolUrl = (schoolname) => {
+    const host = window.location.host;
+    if (host.includes("localhost")) {
+      return `http://${schoolname}.${host}`;
+    }
 
+    const parts = host.split(".");
+
+    const baseDomain = parts[0] === "www" ? parts[1] : parts[0];
+
+    return baseDomain.includes("localhost")
+      ? `http://${schoolname}.${baseDomain}`
+      : `https://${schoolname}.${baseDomain}.com`;
+  };
   function copyText(textToCopy) {
-    navigator.clipboard
-      .writeText(`https://${school.name}.${domain}/live/preview/${textToCopy}`)
-      .then(() => {})
-      .catch((error) => {
-        console.error("Error copying text: ", error);
+    console.log(textToCopy);
+    if (textToCopy.fee === 0) {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(school?.name)}/livewebinar/watch/${
+            textToCopy.streamKey
+          }`
+        )
+
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
       });
-    alert.show("Link Copied", {
-      type: "success",
-    });
-    history.push("/dashboard/livewebinar");
+    } else {
+      navigator.clipboard
+        .writeText(
+          `${getSchoolUrl(school?.name)}/live/preview/${textToCopy._id}`
+        )
+
+        .then(() => {})
+        .catch((error) => {
+          console.error("Error copying text: ", error);
+        });
+      alert.show("Link Copied", {
+        type: "success",
+      });
+    }
   }
   let editTimer = () => {
     const [hours, minutes] = time.split(":");
@@ -258,7 +292,7 @@ function EditLiveWebinar({ school }) {
   };
 
   const convertToDate = (time, date) => {
-    console.log(time, date);
+ 
     if (time || date) {
       const [hours, minutes] = time.split(":");
       const [year, month, day] = date.split("-");
@@ -322,9 +356,12 @@ function EditLiveWebinar({ school }) {
       await axios
         .put(`/api/v1/livewebinar/${webinarId}`, body, config)
         .then((res) => {
-          console.log(res);
-          setStreamLink(res.data.id);
+          console.log(streamLink)
+          // setStreamLink(res.data);
+
+          console.log(res.data)
           dispatch(stopLoading());
+          // console.log(streamLink)
 
           setShowModal(true);
           formReset();
@@ -334,71 +371,6 @@ function EditLiveWebinar({ school }) {
         });
     }
   };
-  // const handleSubmit = async (e) => {
-  //   if (
-  //     title === "" ||
-  //     category === "" ||
-  //     description === "" ||
-  //     fee === "" ||
-  //     currency === "" ||
-  //     recurringFrequency === "" ||
-  //     webinarReps === "" ||
-  //     fileToSend === "" ||
-  //     time === "" ||
-  //     date === "" ||
-  //     (recurring === true && recurringFrequency === "") ||
-  //     (recurring === true && webinarReps === "")
-  //   ) {
-  //     console.log(
-  //       title,
-  //       category,
-  //       description,
-  //       fee,
-  //       currency,
-  //       customRep,
-  //       recurringFrequency,
-  //       webinarReps,
-  //       fileToSend
-  //     );
-  //   } else {
-  //     const formData = new FormData();
-  //     formData.append("isRecurring", recurring);
-  //     formData.append("title", title);
-  //     formData.append("category", category);
-  //     formData.append("description", description);
-  //     formData.append("fee", fee);
-  //     formData.append("currency", currency);
-  //     formData.append("customRep", customRep);
-  //     formData.append("recurringFrequency", recurringFrequency);
-  //     formData.append("webinarReps", webinarReps);
-  //     formData.append("file", fileToSend);
-  //     formData.append("startTime", convertToDate(time, date));
-  //     formData.append("endDate", convertToDate(endTime, endDate));
-
-  //     const config = {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     };
-  //     const body = formData;
-  //     if (localStorage.getItem("token")) {
-  //       setAuthToken(localStorage.getItem("token"));
-  //     }
-  //     dispatch(startLoading());
-  //     await axios
-  //       .post("/api/v1/livewebinar", body, config)
-  //       .then((res) => {
-  //         setStreamLink(res.data.streamKey);
-  //         dispatch(stopLoading());
-
-  //         setShowModal(true);
-  //         formReset();
-  //       })
-  //       .catch((error) => {
-  //         console.error(error);
-  //       });
-  //   }
-  // };
 
   const pickThumbnailFile = () => {
     thumbnailInputRef.current.click();
@@ -480,7 +452,14 @@ function EditLiveWebinar({ school }) {
                     }}
                   >
                     {" "}
-                    {`https://${school?.name}.${domain}/live/preview/${streamLink}`}
+     
+                    {fee === 0
+                      ? `${getSchoolUrl(school?.name)}/livewebinar/watch/${
+                          streamLink.streamKey
+                        }`
+                      : `${getSchoolUrl(school?.name)}/live/preview/${
+                          streamLink._id
+                        }`}
                   </p>
                 </ModalBody>
                 <ModalFooter>
@@ -848,9 +827,8 @@ function EditLiveWebinar({ school }) {
                             setCurrency("USD");
                             setFee(0);
                             setFreeWebinar(!freeWebinar);
-
                           } else {
-                            console.log(fee)
+                            console.log(fee);
                             setFreeWebinar(!freeWebinar);
                             setFee(prevFee);
                           }
@@ -874,7 +852,7 @@ function EditLiveWebinar({ school }) {
                           <option value="" disabled selected hidden>
                             Select Currency
                           </option>
-        
+
                           <option value={"USD"}>USD</option>
                         </select>
                         <input
@@ -890,9 +868,8 @@ function EditLiveWebinar({ school }) {
                                 ""
                               );
                               setFee(value);
-                            }
-                            else{
-                              setFee(0)
+                            } else {
+                              setFee(0);
                             }
                           }}
                           disabled={freeWebinar}
@@ -903,7 +880,6 @@ function EditLiveWebinar({ school }) {
                       <Button
                         className="page-title_cta-btn"
                         onClick={handleSubmit}
-                    
                       >
                         Save Changes
                       </Button>

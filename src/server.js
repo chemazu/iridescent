@@ -51,6 +51,7 @@ import classroomresourcesRoute from "./routes/classroomresources";
 import livewebinarRoute from "./routes/livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
 import setupSocketIO from "./socketSetup"; 
+import domainRoute from "./routes/domain";
 
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -142,6 +143,7 @@ app.use("/api/v1/stripe", stripeRoute);
 app.use("/api/v1/livewebinar", livewebinarRoute);
 app.use("/api/v1/classroomresource", classroomresourcesRoute);
 app.use("/api/v1/studentwebinar", studentWebinarRoute);
+app.use("/api/v1/domain", domainRoute);
 
 const root = require("path").join(__dirname, "../client", "build");
 

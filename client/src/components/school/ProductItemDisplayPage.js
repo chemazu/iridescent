@@ -11,8 +11,9 @@ import getUserIpAddress from "../../utilities/getUserIpAddress";
 import { addToCart } from "../../actions/cart";
 
 import "../../custom-styles/pages/productitemdisplaypage.css";
+import roundToTwoDecimalPlaces from "../../utilities/roundToTwoDecimalPlaces";
 
-const ProductItemDisplayPage = ({ schoolname, match, cart }) => {
+const ProductItemDisplayPage = ({ schoolname, match, cart, currency }) => {
   const dispatch = useDispatch();
   const alert = useAlert();
   const history = useHistory();
@@ -335,10 +336,16 @@ const ProductItemDisplayPage = ({ schoolname, match, cart }) => {
                         </p>
                         <div className="product-price-and-rating">
                           <p className="product-price">
-                            &#8358;
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: currency.htmlCurrencySymbol,
+                              }}
+                            ></span>
                             {
                               <CurrencyFormat
-                                value={product?.price}
+                                value={roundToTwoDecimalPlaces(
+                                  product?.price_usd * currency.exchangeRate
+                                )}
                                 displayType="text"
                                 thousandSeparator={true}
                                 decimalScale={2}
@@ -423,6 +430,7 @@ const ProductItemDisplayPage = ({ schoolname, match, cart }) => {
 const mapStateToProps = (state) => ({
   cart: state.cart,
   schoolname: state.subdomain,
+  currency: state.currency,
 });
 
 export default connect(mapStateToProps)(ProductItemDisplayPage);

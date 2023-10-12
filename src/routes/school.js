@@ -435,6 +435,7 @@ router.post(
               orderedcourse: purchased_course[i].itemId,
               boughtfrom: school.createdBy._id,
               amount: purchased_course[i].itemPrice,
+              amount_usd: purchased_course[i].itemPriceUSD,
               createdVia: "callback",
               ordertype: purchased_course[i].itemType,
               tutor: course.tutor !== null ? course.tutor : null,
@@ -443,6 +444,10 @@ router.post(
               // deducted...
               actualearning: determineActualEarningPerCourseOrder(
                 purchased_course[i].itemPrice,
+                userPaymentPlan.percentchargepercoursesale
+              ),
+              actualearning_usd: determineActualEarningPerCourseOrder(
+                purchased_course[i].itemPriceUSD,
                 userPaymentPlan.percentchargepercoursesale
               ),
             });
@@ -503,6 +508,7 @@ router.post(
               orderedcourse: purchased_course[i].itemId,
               boughtfrom: school.createdBy._id,
               amount: purchased_course[i].itemPrice,
+              amount_usd: purchased_course[i].itemPriceUSD,
               createdVia: "callback",
               ordertype: purchased_course[i].itemType,
               tutor: product.tutor !== null ? product.tutor : null,
@@ -511,6 +517,10 @@ router.post(
               // deducted...
               actualearning: determineActualEarningPerCourseOrder(
                 purchased_course[i].itemPrice,
+                userPaymentPlan.percentchargepercoursesale
+              ),
+              actualearning_usd: determineActualEarningPerCourseOrder(
+                purchased_course[i].itemPriceUSD,
                 userPaymentPlan.percentchargepercoursesale
               ),
             });

@@ -1037,7 +1037,7 @@
 }
 .page-title .time-constraints {
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
 }
 .page-title__text:first-letter {
   text-transform: uppercase;
@@ -1188,6 +1188,7 @@
   width: 100%;
   display: flex;
   justify-content: center;
+  overflow: scroll;
 }
 .quiz-result {
   max-height: 6rem;
@@ -1210,9 +1211,8 @@
   display: flex;
   width: 100%;
   justify-content: space-between;
-  overflow: scroll;
-  /* height: 3rem; */
-  align-items: center;
+  height: fit-content;
+ padding: 1% 2% 0 1%;
   /* padding-bottom: .5rem;
   margin-bottom: .5rem; */
 }
@@ -1406,7 +1406,7 @@
 }
 
 .close-time-out {
-  padding: 2.5% 5%;
+  padding: 5%;
   display: flex;
   flex-direction: column;
   width: 100%;

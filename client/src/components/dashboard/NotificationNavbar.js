@@ -336,6 +336,22 @@ const NotificationNavbar = ({ user, notificationState }) => {
 
               <NavItem
                 className={classnames("vertical-navbar-item-link", {
+                  "notification-link-item__selected":
+                    currentPage.counter === 183,
+                })}
+              >
+                <NavLink
+                  onClick={(e) => updatePage(183)}
+                  tag={Link}
+                  to="/dashboard/students"
+                >
+                  <i className="fas fa-user-graduate mr-3"></i>
+                  <span className="navlink-text">Students</span>
+                </NavLink>
+              </NavItem>
+
+              <NavItem
+                className={classnames("vertical-navbar-item-link", {
                   "notification-link-item__selected": currentPage.counter === 5,
                 })}
               >

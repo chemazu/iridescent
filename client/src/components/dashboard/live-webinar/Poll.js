@@ -1,9 +1,6 @@
-import React, { useState } from "react";
-import { ListGroup } from "reactstrap";
+import React from "react";
 
 export default function Poll({ pollOptions, pollResult }) {
-  const [votes, setVotes] = useState(new Array(pollOptions.length).fill(0));
-  const [selectedOption, setSelectedOption] = useState(null);
   function convertArrayToObject(array) {
     const result = {};
 
@@ -25,17 +22,7 @@ export default function Poll({ pollOptions, pollResult }) {
   }
   let NewResult = convertArrayToObject(pollResult);
   // change NewResult
-
-  const totalVotes = votes.reduce((sum, count) => sum + count, 0);
-
-  // const handleVote = (optionIndex) => {
-  //   if (selectedOption === null) {
-  //     const newVotes = [...votes];
-  //     newVotes[optionIndex] += 1;
-  //     setVotes(newVotes);
-  //     setSelectedOption(optionIndex);
-  //   }
-  // };
+ 
   function calculateSum(obj) {
     const values = Object.values(obj);
     const sum = values.reduce((acc, val) => acc + val, 0);

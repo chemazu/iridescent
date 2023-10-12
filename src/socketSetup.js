@@ -27,7 +27,6 @@ const setupSocketIO = (app) => {
     socket.on("broadcaster", async (roomId, peerId,audioStat) => {
       broadcasterHolder[roomId] = { peerId, socketId: socket.id };
       audioStatus[roomId] = audioStat
-      console.log(audioStatus)
       socket.join(roomId);
       socket.broadcast
         .to(roomId)
@@ -49,7 +48,6 @@ const setupSocketIO = (app) => {
     });
 
     socket.on("watcher", async (roomId, userId, attendanceId) => {
-      console.log(audioStatus)
 
       socket.join(roomId);
       let numberOfPeopleInRoom;
@@ -75,7 +73,6 @@ const setupSocketIO = (app) => {
             broadcasterScreen[roomId].peerId
           );
         }
-        console.log(audioStatus[roomId])
         if (audioStatus[roomId]) {
           io.to(socket.id).emit("audio status", audioStatus[roomId]);
         }

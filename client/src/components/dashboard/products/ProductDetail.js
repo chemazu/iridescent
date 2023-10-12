@@ -284,7 +284,7 @@ const Products = ({ school }) => {
                                 {`${product.author.firstname} ${product.author.lastname}`}
                               </p>
                               <p className="product-item-price-product__details">
-                                &#8358;{addCommas(product.price)}
+                                &#x24;{addCommas(product.price_usd)}
                               </p>
                             </div>
                           </div>

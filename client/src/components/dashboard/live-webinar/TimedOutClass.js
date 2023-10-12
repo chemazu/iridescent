@@ -1,6 +1,6 @@
 import React from "react";
 import DashboardNavbar from "../DashboardNavbar";
-import { Col, Container, Row, Button, Card, Spinner, Modal } from "reactstrap";
+import { Col, Container, Row, Button, Card  } from "reactstrap";
 import classEnd from "../../../images/class-over.svg";
 import "../../../custom-styles/dashboard/timed-out-class.css";
 import { useHistory } from "react-router-dom";

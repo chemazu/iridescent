@@ -3,7 +3,7 @@ import {
   SET_CURRENCY_AND_EXCHANGE_RATE,
   SET_CURRENCY_AND_EXCHANGE_RATE_FAIL,
 } from "./types";
-import getHtlmSymbolFromCurrencyCode from "../utilities/currencyCodeToHTMLSymbol.js";
+import getHtlmSymbolFromCurrencyCode from "../utilities/currencyCodeToHTMLSymbol";
 
 export const fetchCurrencyData = () => {
   return async (dispatch) => {

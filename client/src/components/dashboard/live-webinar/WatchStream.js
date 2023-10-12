@@ -7,8 +7,6 @@ import {
   Container,
   Row,
   Button,
-  Card,
-  Spinner,
   Progress,
   Modal,
   ModalBody,
@@ -34,6 +32,7 @@ function WatchStream({ schoolname }) {
   const { roomid } = useParams();
   let history = useHistory();
   let [currentPeer, setCurrentPeer] = useState(null);
+  let [submitQuizModal, setSubmitQuizModal] = useState(false);
 
   let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
   let [screenSharing, setScreenSharing] = useState(false);
@@ -50,8 +49,6 @@ function WatchStream({ schoolname }) {
   const [title, setTitle] = useState("");
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true);
 
   const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
@@ -67,9 +64,7 @@ function WatchStream({ schoolname }) {
   const [watcherAvatar, setWatcherAvatar] = useState(null);
 
   const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
-  const [school, setSchool] = useState(null);
   const [disableVideoStream, setDisableVideoStream] = useState(null);
-  const [pageLoading, setPageLoading] = useState(true);
   const [videoFill, setVideoFill] = useState(false);
 
   // "https://stream.mux.com/VZtzUzGRv02OhRnZCxcNg49OilvolTqdnFLEqBsTwaxU/low.mp4"
@@ -77,18 +72,15 @@ function WatchStream({ schoolname }) {
   const [presenterAvatar, setPresenterAvatar] = useState(
     "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
   );
-  const [reconnectLoading, setReconnectLoading] = useState(false);
 
-  const [attendees, setAttendees] = useState(true);
   const [theme, setTheme] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [specialChat, setSpecialChat] = useState([]);
   const [pollResults, setPollResults] = useState(null);
   const [waiting, setWaiting] = useState(false);
   const [disconnect, setDisconnect] = useState(false);
-  const [streamSource, setStreamSource] = useState(null);
   const [height, setHeight] = useState("40px");
-
+  /* eslint-disable react-hooks/exhaustive-deps */
   const playerRef = React.useRef(null);
   const screenPlayerRef = React.useRef(null);
 
@@ -206,18 +198,6 @@ function WatchStream({ schoolname }) {
     setAuthToken(localStorage.getItem("studentToken"));
   }
 
-  function addVideoStream(stream) {
-    const video = myVideoRef.current;
-    setStreamSource(stream);
-    if (video) {
-      video.srcObject = stream;
-      video.addEventListener("loadedmetadata", () => {
-        video.play();
-      });
-    }
-    // handleAddStream(stream);
-  }
-
   var currentDate = new Date();
   var options = { day: "numeric", month: "long", year: "numeric" };
 
@@ -233,27 +213,6 @@ function WatchStream({ schoolname }) {
     }
   };
   //
-  const toggleVideo = () => {
-    const videoTracks = myVideoRef.current.srcObject.getVideoTracks();
-
-    videoTracks.forEach((track) => {
-      track.enabled = !isVideoEnabled;
-    });
-    setIsVideoEnabled(!isVideoEnabled);
-  };
-
-  const toggleAudio = () => {
-    const audioTracks = myVideoRef.current.srcObject.getAudioTracks();
-
-    if (audioTracks.length > 0) {
-      audioTracks.forEach((track) => {
-        track.enabled = !isAudioEnabled;
-      });
-      setIsAudioEnabled(!isAudioEnabled);
-    } else {
-      // Handle the case when there are no audio tracks in the stream
-    }
-  };
 
   const handleOptionClick = (index) => {
     // here sets the settings for answers
@@ -311,41 +270,7 @@ function WatchStream({ schoolname }) {
     localStorage.removeItem(roomid);
     history.push("/");
   };
-  const removeStream = () => {
-    // Perform any necessary actions before exiting the stream
-    // For example, stop the video stream, disconnect from the peer, etc.
-    // check if they are video streams avalilbe
-    // socket.emit("watcher-exit", roomid);
 
-    // let videoTracks = myVideoRef.current.srcObject.getVideoTracks();
-    // videoTracks.forEach((track) => (track.enabled = false));
-
-    // // Stop audio and video tracks
-    // let tracks = myVideoRef.current.srcObject.getTracks();
-    // tracks.forEach((track) => track.stop());
-
-    // Set video source object to null
-    if (myVideoRef.current) {
-      myVideoRef.current.srcObject = null;
-    }
-
-    // Stop all media tracks from the user media stream
-    navigator.mediaDevices
-      .getUserMedia({ audio: true, video: true })
-      .then((stream) => {
-        stream.getTracks().forEach((track) => track.stop());
-      });
-
-    if (currentPeer) {
-      currentPeer.destroy();
-      setCurrentPeer(null);
-    }
-    if (peerRef) {
-      peerRef.current.destroy();
-    }
-
-    // history.push("/");
-  };
   const handleSelectEmoji = (emoji) => {
     setChatMessage(
       chatMessage === null ? emoji.native : chatMessage + emoji.native
@@ -355,12 +280,9 @@ function WatchStream({ schoolname }) {
   const getSchoolBySchoolName = async (schoolname) => {
     try {
       const res = await axios.get(`/api/v1/school/${schoolname}`);
-      setSchool(res.data);
       return res.data;
     } catch (error) {
       if (error.response.status === 404) {
-        setSchool(null);
-        setPageLoading(false);
       }
       console.log(error);
       return null;
@@ -374,20 +296,17 @@ function WatchStream({ schoolname }) {
     } catch (error) {
       if (error.response.status === 404) {
         setTheme(null);
-        setPageLoading(false);
       }
       console.log(error);
       return null;
     }
   };
   const getSchoolLandingPageContents = async (schoolName) => {
-    setPageLoading(true);
     const school = await getSchoolBySchoolName(schoolName);
     if (school) {
       setDocumentTitle(school);
       await getSchoolThemeBySchoolId(school._id);
     }
-    setPageLoading(false);
   };
   const validateWebinar = async () => {
     setIsLoading(true);
@@ -500,8 +419,7 @@ function WatchStream({ schoolname }) {
         });
     };
 
-    socket.on("audio status", () => {
-    });
+    socket.on("audio status", () => {});
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
       setAudioVisuals(roomStatus);
       startClass(peerId, "join", roomStatus);
@@ -564,18 +482,15 @@ function WatchStream({ schoolname }) {
       let newStream = createBlankVideoStream();
       const call = screenInstance?.call(peerId, newStream);
       call?.on("stream", (remoteStream) => {
-        setReconnectLoading(false);
         handleAddScreenStream(remoteStream);
       });
     };
     socket.on("join screen stream", (peerId) => {
       setScreenSharing(true);
-      setReconnectLoading(true);
       startScreenSharing(peerId, "enterace");
     });
     socket.on("startScreenSharing", (peerId) => {
       setScreenSharing(true);
-      setReconnectLoading(true);
       startScreenSharing(peerId, "screnn");
     });
 
@@ -590,9 +505,7 @@ function WatchStream({ schoolname }) {
   }, [roomid, audioVisuals]);
 
   useEffect(() => {
-    socket.on("watcher-exit", (size) => {
-      setAttendees(size);
-    });
+    socket.on("watcher-exit", (size) => {});
 
     return () => {
       socket.off("watcher-exit");
@@ -687,7 +600,6 @@ function WatchStream({ schoolname }) {
     socket.on(
       "currentStatus",
       (roomSize, roomTimer, pollQuizHolder, broadcasterScreen) => {
-        setAttendees(roomSize);
         setDisableVideoStream(broadcasterScreen);
         if (pollQuizHolder) {
           setSpecialChat([...defaultChat, ...pollQuizHolder]);
@@ -730,9 +642,7 @@ function WatchStream({ schoolname }) {
   }, [schoolname]);
 
   useEffect(() => {
-    socket.on("watcher", (userId, roomSize) => {
-      setAttendees(roomSize);
-    });
+    socket.on("watcher", (userId, roomSize) => {});
     return () => {
       socket.off("watcher");
     };
@@ -761,6 +671,38 @@ function WatchStream({ schoolname }) {
 
   return (
     <div className="dashboard-layout">
+      <Modal isOpen={submitQuizModal}>
+        <ModalHeader>
+          <p style={{ textAlign: "center", margin: 0 }}>
+           Are you sure you want to submit this quiz 
+          </p>
+        </ModalHeader>
+
+        <ModalFooter>
+          <div className="button-wrapper">
+            <Button
+              type="button"
+              onClick={() => {
+                setSubmitQuizModal(false);
+              }}
+              className="cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                handleUniqueSubmission(answers, "quiz");
+                setSubmitQuizModal(false);
+
+                // handleExitStreamModal();
+              }}
+            >
+              Submit
+            </Button>
+          </div>
+        </ModalFooter>
+        <ModalFooter></ModalFooter>
+      </Modal>
       <Modal isOpen={!authenticated && watcherUsername === ""}>
         <ModalHeader>Enter Username</ModalHeader>
         <ModalBody>
@@ -1395,12 +1337,17 @@ function WatchStream({ schoolname }) {
                                                     // </Button>
                                                     <Button
                                                       onClick={() => {
-                                                        handleUniqueSubmission(
-                                                          answers,
-                                                          "quiz"
+                                                        setSubmitQuizModal(
+                                                          true
                                                         );
                                                       }}
-                                                      className="quiz-button"
+                                                      className={`submit-button ${
+                                                        index + 1 >=
+                                                          arr.length ||
+                                                        arr.length === 1
+                                                          ? "quiz-button"
+                                                          : "prev"
+                                                      }`}
                                                     >
                                                       Submit
                                                     </Button>

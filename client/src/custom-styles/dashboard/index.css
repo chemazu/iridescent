@@ -123,6 +123,32 @@
   border: none;
 }
 
+.payment-history__cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 5px 8px;
+}
+
+.payment-history__cta .view-more__cta {
+  display: flex;
+  align-items: center;
+  justify-content: baseline;
+  color: #3d3c3c;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 16px;
+}
+
+.payment-history__cta .view-more__cta i {
+  transition: all 0.3s;
+}
+
+.payment-history__cta .view-more__cta:hover i {
+  transform: translateX(5px);
+}
+
 .dashborad-statistics-loader {
   margin: 0 auto;
   border-radius: 13px;

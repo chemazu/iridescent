@@ -179,9 +179,9 @@
 }
 
 .product-item-price {
-  font-size: 35px;
+  font-size: 23px;
   margin-top: 3px;
-  font-weight: bolder;
+  font-weight: 700;
 }
 
 @media screen and (max-width: 767px) {

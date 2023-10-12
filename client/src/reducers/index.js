@@ -18,7 +18,6 @@ import preview from "./courseUnitPreviewPlayer";
 import tutor from "./tutor";
 import currency from "./currency";
 
-
 export default combineReducers({
   auth,
   loading,
@@ -38,5 +37,4 @@ export default combineReducers({
   preview,
   tutor,
   currency,
-
 });

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { connect } from "react-redux";
 import axios from "axios";
 import { useAlert } from "react-alert";
-import { Row, Col, Button } from "reactstrap";
+import { Row, Col, Button, UncontrolledTooltip } from "reactstrap";
 import setAuthToken from "../../../utilities/setAuthToken";
 import PaymentPageCardSkeleton from "./PaymentPageCardSkeleton";
 import CurrencyFormat from "react-currency-format";
@@ -12,11 +12,20 @@ import monthlySalesIcon from "../../../images/payment-page-icons/monthly-sales.s
 import totalSalesImg from "../../../images/payment-page-icons/total-Sales.svg";
 import totalWithdrawal from "../../../images/payment-page-icons/total-withdrawal.svg";
 import withdrawalCountImg from "../../../images/payment-page-icons/withdrawal-count.svg";
+import bankIcon from "../../../images/bank.png";
+import escrowIcon from "../../../images/escrow.png";
 
-const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
+const WalletsComponent = ({
+  user,
+  userBankAccounts,
+  userAccountLoading,
+  userInternationalBankAccount,
+  userInternationalAccountLoading,
+}) => {
   const alert = useAlert();
   const [pageContentsLoading, setPageContentsLoading] = useState(true);
   const [totalSales, setTotalSales] = useState(null);
+  const [pendingSalesTotal, setPendingSalesTotal] = useState(null);
   const [monthBasedSales, setMonthBasedSales] = useState(null);
   const [withdrawalCount, setWithdrawalCount] = useState(null);
   const [withdrawalSum, setWithdrawalSum] = useState(null);
@@ -35,6 +44,29 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
       }
     } catch (error) {
       console.log(error);
+      alert.show(error?.msg, {
+        type: "error",
+      });
+    }
+  };
+
+  const getPendingBalanceTotalSales = async () => {
+    try {
+      if (localStorage.getItem("token")) {
+        setAuthToken(localStorage.getItem("token"));
+      }
+      const pendingSalesTotalResponse = await axios.get(
+        "/api/v1/order/ordersum/pending"
+      );
+      if (pendingSalesTotalResponse.data.length === 0) {
+        setPendingSalesTotal(0);
+      } else {
+        setPendingSalesTotal(
+          pendingSalesTotalResponse.data[0].pendingBalanceSalesTotal
+        );
+      }
+    } catch (error) {
+      console.log(error, "line 68 error");
       alert.show(error?.msg, {
         type: "error",
       });
@@ -104,6 +136,7 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
     setPageContentsLoading(true);
     await getTotalSales();
     await getMonthBasedTotal();
+    await getPendingBalanceTotalSales();
     await getWithdrawalCount();
     await getWithdrawalSum();
     setPageContentsLoading(false);
@@ -132,17 +165,55 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
             ) : (
               <>
                 <div className="current-balance-container">
-                  <p className="small">Current Balance</p>
-                  <h2 className="current-balance-amount">
-                    &#8358;
-                    <CurrencyFormat
-                      value={totalSales - withdrawalSum}
-                      displayType="text"
-                      thousandSeparator={true}
-                      decimalScale={2}
-                      fixedDecimalScale={true}
-                    />
-                  </h2>
+                  <div className="balance-item available-balance">
+                    <div className="balance-icon__image-container">
+                      <img src={bankIcon} alt="..." className="img-fluid" />
+                    </div>
+                    <p className="small">Available Balance</p>
+                    <h2 className="current-balance-amount">
+                      &#x24;
+                      <CurrencyFormat
+                        value={totalSales - withdrawalSum}
+                        displayType="text"
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                      />
+                    </h2>
+                  </div>
+                  <div className="balance-item pending-balance">
+                    <div className="balance-icon__image-container">
+                      <img src={escrowIcon} alt="..." className="img-fluid" />
+                    </div>
+                    <div className="balance-info-text">
+                      <p className="small">Pending Balance </p>
+                      <span
+                        className="more-infor__icon"
+                        id="UncontrolledTooltipExample"
+                      >
+                        <i className="fas fa-info-circle"></i>
+                      </span>
+                      <UncontrolledTooltip
+                        placement="top"
+                        target="UncontrolledTooltipExample"
+                      >
+                        The Pending Balance represents the total amount of
+                        earnings from completed purchases on your school that
+                        are yet to be transfered to your Balance. It Typically
+                        takes 5 - 7 days to complete.
+                      </UncontrolledTooltip>
+                    </div>
+                    <h2 className="current-balance-amount">
+                      &#x24;
+                      <CurrencyFormat
+                        value={pendingSalesTotal}
+                        displayType="text"
+                        thousandSeparator={true}
+                        decimalScale={2}
+                        fixedDecimalScale={true}
+                      />
+                    </h2>
+                  </div>
                 </div>
               </>
             )}
@@ -176,7 +247,7 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
 
                     <p>Total Withdrawal</p>
                     <h3>
-                      &#8358;
+                      &#x24;
                       {
                         <CurrencyFormat
                           value={withdrawalSum}
@@ -215,7 +286,7 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
 
                     <p>Sales this month</p>
                     <h3>
-                      &#8358;
+                      &#x24;
                       {
                         <CurrencyFormat
                           value={monthBasedSales}
@@ -240,7 +311,7 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
 
                     <p>Total Sales</p>
                     <h3>
-                      &#8358;
+                      &#x24;
                       {
                         <CurrencyFormat
                           value={totalSales}
@@ -265,6 +336,8 @@ const WalletsComponent = ({ user, userBankAccounts, userAccountLoading }) => {
         getPaymentPageContents={getPaymentPageContents}
         userBankAccounts={userBankAccounts}
         userAccountLoading={userAccountLoading}
+        userInternationalBankAccount={userInternationalBankAccount}
+        userInternationalAccountLoading={userInternationalAccountLoading}
       />
     </>
   );

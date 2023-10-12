@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import { connect } from "react-redux";
 import {
   Button,
   Modal,
@@ -10,8 +11,10 @@ import {
 } from "reactstrap";
 import { useAlert } from "react-alert";
 import setAuthToken from "../../../utilities/setAuthToken";
+import roundToTwoDecimalPlaces from "../../../utilities/roundToTwoDecimalPlaces";
 
 import "../SectionStyles/productlistsection.css";
+import CurrencyFormat from "react-currency-format";
 
 const ProductListSection = ({
   themeData,
@@ -26,6 +29,7 @@ const ProductListSection = ({
   openAddNewSectionModal,
   handleSectionDelete,
   handleBackToDashboard,
+  currency,
 }) => {
   const alert = useAlert();
   const productListContainerRef = useRef();
@@ -293,7 +297,20 @@ const ProductListSection = ({
                               }}
                               className="product-item-price"
                             >
-                              &#8358;{productItem.price}
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: currency.htmlCurrencySymbol,
+                                }}
+                              ></span>
+                              <CurrencyFormat
+                                value={roundToTwoDecimalPlaces(
+                                  productItem.price_usd * currency.exchangeRate
+                                )}
+                                displayType="text"
+                                thousandSeparator={true}
+                                decimalScale={2}
+                                fixedDecimalScale={true}
+                              />
                             </div>
                           </div>
                         </div>
@@ -392,4 +409,8 @@ const ProductListSection = ({
   );
 };
 
-export default ProductListSection;
+const mapStateToProps = (state) => ({
+  currency: state.currency,
+});
+
+export default connect(mapStateToProps)(ProductListSection);

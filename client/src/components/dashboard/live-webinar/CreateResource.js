@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Col,
   Container,
@@ -27,7 +27,6 @@ import PaymentModal from "./PaymentModal";
 export default function CreateResource() {
   const { type } = useParams();
   const dispatch = useDispatch();
-  const [page, setPage] = useState(1);
   const [resourceType, setResourceType] = useState("");
   const [answers, setAnswers] = useState([]);
   const [viewDuration, setViewDuration] = useState(false);
@@ -36,8 +35,7 @@ export default function CreateResource() {
   const [resourceCount, setResourceCount] = useState(null);
   const [resourceId, setResourceId] = useState("");
   const [moreResources, setMoreResources] = useState(false);
-  const [resourceModal, setResourceModal] = useState(false);
-
+ 
   const alert = useAlert();
   const [quizStatus, setQuizStatus] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
@@ -82,6 +80,7 @@ export default function CreateResource() {
     handleQuizCreate();
     setQuizConfirmation(false);
   };
+  /* eslint-disable react-hooks/exhaustive-deps */
   function formatTimeAndDate(timestamp) {
     const months = [
       "Jan",
@@ -511,7 +510,7 @@ export default function CreateResource() {
       try {
         setLoading(true);
         const response = await axios.get(
-          `/api/v1/classroomresource/creator-resources/${type}?page=${page}`
+          `/api/v1/classroomresource/creator-resources/${type}`
         );
 
         setResources(response.data.resources);
@@ -530,7 +529,7 @@ export default function CreateResource() {
       }
     };
     fetchResources();
-  }, [pollTitle, deleteModal, page]);
+  }, [pollTitle, deleteModal]);
 
   return (
     <div className="dashboard-layout">
@@ -1047,7 +1046,6 @@ export default function CreateResource() {
                                 type: "poll",
                               });
                             } else {
-                              setResourceModal(false);
 
                               setPollStatus(true);
                             }
@@ -1068,7 +1066,6 @@ export default function CreateResource() {
                               type: "poll",
                             });
                           } else {
-                            setResourceModal(false);
 
                             setPollStatus(true);
                           }
@@ -1083,7 +1080,7 @@ export default function CreateResource() {
                         resources?.map((item, index) => {
                           const { type, timeStamp, quizHolder, title, _id } =
                             item;
-                          const isLastItem = index === resources.length - 1;
+             
                           return (
                             <div className="single-resource-card" key={index}>
                               <div className="resource-top">

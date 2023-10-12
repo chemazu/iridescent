@@ -5,6 +5,7 @@ import { startLoading, stopLoading } from "../../../actions/appLoading";
 import axios from "axios";
 import { useAlert } from "react-alert";
 import setAuthToken from "../../../utilities/setAuthToken";
+/* eslint-disable react-hooks/exhaustive-deps */
 
 import {
   Col,
@@ -67,7 +68,12 @@ function CreateLiveWebinar({ school }) {
     if (host.includes("localhost")) {
       return `http://${schoolname}.${host}`;
     }
-    const baseDomain = host.split(".")[1];
+
+    const parts = host.split(".");
+
+    const baseDomain = parts[0] === "www" ? parts[1] : parts[0];
+    
+
     return baseDomain.includes("localhost")
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
@@ -370,58 +376,7 @@ function CreateLiveWebinar({ school }) {
       });
     }
   };
-  function calculateEndDate(startDate, selectedOption) {
-    const currentDate = new Date(startDate);
-
-    switch (selectedOption) {
-      case "Every 1st week of the month":
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        currentDate.setDate(1);
-        break;
-      case "Every 2nd week of the month":
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        currentDate.setDate(8);
-        break;
-      case "Every 3rd week of the month":
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        currentDate.setDate(15);
-        break;
-      case "Every Last week of the month":
-        currentDate.setMonth(currentDate.getMonth() + 2);
-        currentDate.setDate(0);
-        break;
-      default:
-        // Handle custom logic or invalid options here
-        break;
-    }
-
-    return currentDate;
-  }
-  let recurringDateCheck = (e) => {
-    const selectedEndDate = e.target.value;
-
-    if (recurring) {
-      if (recurringFrequency === "daily" && webinarReps !== "custom") {
-        let a = dailyRepOption.indexOf(webinarReps) + 1;
-
-        const newDate = new Date(date);
-        newDate.setDate(newDate.getDate() + a);
-
-        if (date && selectedEndDate >= newDate) {
-          setEndDate(selectedEndDate);
-        } else {
-          alert.show("Selected end date is too early.", {
-            type: "error",
-          });
-        }
-      }
-      if (recurringFrequency === "weekly") {
-        let a = weeklyRepOption.indexOf(webinarReps) + 1;
-     
-   
-      }
-    }
-  };
+ 
   useEffect(() => {
     getCategoryListing();
     dateCheck();

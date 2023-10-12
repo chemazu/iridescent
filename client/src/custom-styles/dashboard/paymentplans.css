@@ -105,6 +105,12 @@
   font-weight: 400;
 }
 
+.stripe-checkout__content h3 {
+  color: var(--site-dark-color);
+  font-weight: 400;
+  font-size: 24px;
+}
+
 .payment-plan__item-footer {
   width: 100%;
   padding: 20px;

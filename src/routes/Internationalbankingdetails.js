@@ -1,7 +1,7 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
 import InternationalBankDetails from "../models/InternationalBankDetails";
-import ExchangeRate from "../models/ExchangeRate.js";
+import ExchangeRate from "../models/ExchangeRate";
 import Wallet from "../models/Wallet";
 import auth from "../middleware/auth";
 import axios from "axios";

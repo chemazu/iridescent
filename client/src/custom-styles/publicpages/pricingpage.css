@@ -1,202 +1,180 @@
 .user-plans {
-    width: 100%;
-    padding: 4vh 2.3vw;
-    position: relative;
-    min-height: 100vh;
-    height: fit-content;
-    background: linear-gradient(90deg, #1EA9DA 3.82%, #328CEA 43.16%, #3F7BF5 51.9%, #476EFA 102.43%);
-    z-index: 1;
+  width: 100%;
+  padding: 4vh 2.3vw;
+  position: relative;
+  min-height: 100vh;
+  height: fit-content;
+  background: linear-gradient(
+    90deg,
+    #1ea9da 3.82%,
+    #328cea 43.16%,
+    #3f7bf5 51.9%,
+    #476efa 102.43%
+  );
+  z-index: 1;
 }
 
 .user-plans h3 {
-    color: var(--site-white-color);
-    font-weight: 800;
-    font-size: 2.6rem;
+  color: var(--site-white-color);
+  font-weight: 800;
+  font-size: 2.6rem;
 }
 
-.user-plans 
-.payment-plan__item {
+.user-plans .payment-plan__item {
   width: 95%;
-  min-height: 69vh;
-  height: fit-content;
+  height: 66vh;
   border-radius: 15px !important;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 2;
 }
 
-.user-plans 
-.payment-plan__item .item-header {
+.user-plans .payment-plan__item .item-header {
+  width: 100%;
+  height: fit-content;
+  background-color: #3f7bf5;
+  padding: 20px 5px;
+  position: relative;
+  z-index: 1;
+  border-top-left-radius: 13px;
+  border-top-right-radius: 13px;
+}
+
+.payment-plan__first-item-header {
+  width: 100%;
+  height: fit-content;
+  background-color: #1ea9da;
+  padding: 24px 5px;
+  border-top-left-radius: 13px;
+  border-top-right-radius: 13px;
+}
+
+.user-plans .plan-name {
+  color: var(--site-white-color);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.user-plans .payment-plan__item .item-body {
+  width: 100%;
+  height: 100%;
+  background-color: var(--site-white-color);
+  padding: 20px 10px;
+  position: relative;
+  z-index: 2;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.user-plans .payment-plan__item .btn-select__plan,
+.user-plans .payment-plan__item .btn-select__plan:hover,
+.user-plans .payment-plan__item .btn-select__plan:active {
+  width: 90%;
+  border-radius: 15px;
+  box-shadow: none;
+  background-color: var(--site-white-color) !important;
+  color: var(--site-dark-color) !important;
+  border-color: var(--site-dark-color) !important;
+}
+
+.course-counter-span__landing-page {
+  font-weight: bolder;
+  font-size: 16px;
+}
+
+.user-plans .payment-plan__item .item-body li {
+  margin: 13px;
+}
+
+.user-plans .plan-price__tag {
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.user-plans .price-tag__extra-info {
+  font-weight: 300;
+  color: var(--site-white-color);
+  text-align: center;
+  margin-top: -15px;
+}
+
+.user-plans .percentage-discount {
+  background-color: var(--site-cta-color);
+  color: var(--site-white-color);
+  width: 70%;
+  padding: 5px 8px;
+  border-radius: 25px;
+  position: absolute;
+  z-index: 1000;
+  text-align: center;
+  top: 133px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.user-plans .percentage-discount span {
+  font-weight: 800;
+  display: block;
+  font-size: 20px;
+}
+
+.user-plans .custom-shape-divider-bottom-1651592650 {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  z-index: 1;
+}
+
+.user-plans .custom-shape-divider-bottom-1651592650 svg {
+  position: relative;
+  display: block;
+  width: calc(100% + 1.3px);
+  height: 402px;
+}
+
+.user-plans .custom-shape-divider-bottom-1651592650 .shape-fill {
+  fill: #f9fafd;
+}
+
+@media (max-width: 993px) {
+  .user-plans .custom-shape-divider-bottom-1651592650 {
+    display: none;
+  }
+
+  .user-plans {
+    height: fit-content;
+  }
+
+  .user-plans h3 {
+    color: var(--site-white-color);
+    font-weight: 800;
+    font-size: 1.8rem;
+  }
+
+  .user-plans .payment-plan__item {
+    width: 100%;
+    margin-bottom: 2rem;
+  }
+
+  .user-plans .payment-plan__item .item-header {
     width: 100%;
     height: fit-content;
-    background-color: #3F7BF5;
+    background-color: #3f7bf5;
     padding: 20px 5px;
     position: relative;
     z-index: 1;
     border-top-left-radius: 13px;
     border-top-right-radius: 13px;
-}
+  }
 
-.payment-plan__first-item-header {
-    width: 100%;
+  .user-plans .payment-plan__first-item-header {
     height: fit-content;
-    background-color: #1ea9da;
-    padding: 24px 5px;
-    border-top-left-radius: 13px;
-    border-top-right-radius: 13px;
-}
-
-.user-plans
-.plan-name {
-    color: var(--site-white-color);
-    font-size: 17px;
-    font-weight: 600;
-}
-
-.user-plans 
-.payment-plan__item
-.item-body {
-    width: 100%;
-    height: 100%;
-    background-color: var(--site-white-color);
-    padding: 35px 15px;
-    position: relative;
-    z-index: 2;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-.user-plans 
-.payment-plan__item
-.btn-select__plan,
-.user-plans 
-.payment-plan__item
-.btn-select__plan:hover,
-.user-plans 
-.payment-plan__item
-.btn-select__plan:active
-{
-    width: 90%;
-    border-radius: 15px;
-    box-shadow: none;
-    background-color: var(--site-white-color) !important;
-    color: var(--site-dark-color) !important;
-    border-color: var(--site-dark-color) !important;
-}
-
-.course-counter-span__landing-page
-{
-    font-weight: bolder;
-    font-size: 16px;
-}
-
-.user-plans 
-.payment-plan__item
-.item-body li {
-    margin: 13px;
-}
-
-.user-plans 
-.plan-price__tag {
-    font-size: 30px;
-    font-weight: 800;
-}
-
-.user-plans
-.price-tag__extra-info {
-    font-weight: 300;
-    color: var(--site-white-color);
-    text-align: center;
-    margin-top: -15px;
-}
-
-.user-plans 
-.percentage-discount {
-    background-color: var(--site-cta-color);
-    color: var(--site-white-color);
-    width: 70%;
-    padding: 5px 8px;
-    border-radius: 25px;
-    position: absolute;
-    z-index: 1000;
-    text-align: center;
-    top: 133px;
-    left: 50%;
-    transform: translateX(-50%)
-}
-
-.user-plans 
-.percentage-discount span {
-    font-weight: 800;
-    display: block;
-    font-size: 20px;
-}
-
-.user-plans 
-.custom-shape-divider-bottom-1651592650 {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    overflow: hidden;
-    line-height: 0;
-    z-index: 1;
-}
-
-.user-plans 
-.custom-shape-divider-bottom-1651592650 svg {
-    position: relative;
-    display: block;
-    width: calc(100% + 1.3px);
-    height: 402px;
-}
-
-.user-plans 
-.custom-shape-divider-bottom-1651592650 .shape-fill {
-    fill: #f9fafd;
-}
-
-
-@media (max-width: 993px) { 
-    .user-plans 
-    .custom-shape-divider-bottom-1651592650 {
-        display: none;
-    }
-
-    .user-plans {
-        height: fit-content;
-    }
-
-    .user-plans h3 {
-        color: var(--site-white-color);
-        font-weight: 800;
-        font-size: 1.8rem;
-    }
-
-    .user-plans 
-    .payment-plan__item {
-        width: 100%;
-        margin-bottom: 2rem;
-    }
-
-    .user-plans 
-    .payment-plan__item .item-header {
-        width: 100%;
-        height: fit-content;
-        background-color: #3F7BF5;
-        padding: 20px 5px;
-        position: relative;
-        z-index: 1;
-        border-top-left-radius: 13px;
-        border-top-right-radius: 13px;
-    }
-
-    .user-plans 
-    .payment-plan__first-item-header {
-        height: fit-content;
-    }
+  }
 }

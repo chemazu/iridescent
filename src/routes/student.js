@@ -235,6 +235,29 @@ router.get("/count/:schoolId", auth, async (req, res) => {
   }
 });
 
+// route to get students by schoolId
+router.get("/list/:schoolId", async (req, res) => {
+  const { page, size } = req.query;
+  const schoolId = req.params.schoolId;
+
+  const limit = parseInt(size);
+  const skip = parseInt(page - 1) * size;
+
+  try {
+    const students = await Student.find({
+      enrolledTo: schoolId,
+    })
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: 1 });
+
+    res.json(students);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server error");
+  }
+});
+
 router.get("/password/reset/:emailAddress", async (req, res) => {
   const userEmail = req.params.emailAddress;
   try {

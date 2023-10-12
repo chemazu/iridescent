@@ -27,7 +27,7 @@ export const CourseItem = ({ course }) => {
             <p className="author-course-item-author-info">
               {`${course.author.firstname} ${course.author.lastname}`}
             </p>
-            <p className="author-course-card-price">&#8358;{course.price}</p>
+            <p className="author-course-card-price">&#x24;{course.price_usd}</p>
           </div>
         </div>
       </Col>

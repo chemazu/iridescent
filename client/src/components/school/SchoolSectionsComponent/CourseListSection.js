@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, { useRef, useState, useEffect } from "react";
+import { connect } from "react-redux";
 import {
   Button,
   Modal,
@@ -7,7 +8,9 @@ import {
   FormGroup,
   UncontrolledCollapse,
 } from "reactstrap";
+import CurrencyFormat from "react-currency-format";
 import setAuthToken from "../../../utilities/setAuthToken";
+import roundToTwoDecimalPlaces from "../../../utilities/roundToTwoDecimalPlaces";
 import { Link } from "react-router-dom";
 import { useAlert } from "react-alert";
 
@@ -26,6 +29,7 @@ const CourseListSection = ({
   openAddNewSectionModal,
   handleSectionDelete,
   handleBackToDashboard,
+  currency,
 }) => {
   const courseListContainerRef = useRef();
   const alert = useAlert();
@@ -289,7 +293,20 @@ const CourseListSection = ({
                               }}
                               className="course-item-price"
                             >
-                              &#8358;{courseItem.price}
+                              <span
+                                dangerouslySetInnerHTML={{
+                                  __html: currency.htmlCurrencySymbol,
+                                }}
+                              ></span>
+                              <CurrencyFormat
+                                value={roundToTwoDecimalPlaces(
+                                  courseItem.price_usd * currency.exchangeRate
+                                )}
+                                displayType="text"
+                                thousandSeparator={true}
+                                decimalScale={2}
+                                fixedDecimalScale={true}
+                              />
                             </div>
                           </div>
                         </div>
@@ -388,4 +405,8 @@ const CourseListSection = ({
   );
 };
 
-export default CourseListSection;
+const mapStateToProps = (state) => ({
+  currency: state.currency,
+});
+
+export default connect(mapStateToProps)(CourseListSection);

@@ -1,8 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, connect } from "react-redux";
 import { useAlert } from "react-alert";
-import { useHistory } from "react-router-dom";
-import { Col, Container, Row, FormGroup, Input, Button } from "reactstrap";
+import { useHistory, Link } from "react-router-dom";
+import {
+  Col,
+  Container,
+  Row,
+  FormGroup,
+  Input,
+  Button,
+  Modal,
+} from "reactstrap";
 import axios from "axios";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import {
@@ -30,6 +38,7 @@ const CreateProduct = ({ school, loggedInUsername }) => {
   const [categoryListing, setCategoryListing] = useState([]);
   const [validCourseTitle, setValidCourseTitle] = useState(true);
   const [createProductStep, setCreateProductSteps] = useState(1);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [productFile, setProductFile] = useState(null);
   const [formInputs, setFormInputs] = useState({
     title: "",
@@ -196,7 +205,7 @@ const CreateProduct = ({ school, loggedInUsername }) => {
       }
     }
 
-    if (price < 2000) {
+    if (price < 3) {
       return alert.show("invalid product price.", {
         type: "error",
       });
@@ -231,10 +240,13 @@ const CreateProduct = ({ school, loggedInUsername }) => {
       },
     };
     const body = formData;
+    const fileSizeInMegaBytes = productFile?.size / (1024 * 1024); // uploaded filesize in MB
+    const fileSizeRoundedToNearestDecimal =
+      Math.round(fileSizeInMegaBytes * 10) / 10;
     dispatch(startLoading());
     try {
       const res = await axios.post(
-        `/api/v1/product/${school._id}`,
+        `/api/v1/product/${school._id}/${fileSizeRoundedToNearestDecimal}`,
         body,
         config
       );
@@ -253,6 +265,9 @@ const CreateProduct = ({ school, loggedInUsername }) => {
         });
       }
       alert.show(error.message);
+      if (error.response.status === 401) {
+        setShowPaymentModal(true);
+      }
       if (error.response.status === 402) {
         dispatch({
           type: SHOW_PAYMENT_MODAL,
@@ -262,283 +277,344 @@ const CreateProduct = ({ school, loggedInUsername }) => {
     }
   };
 
+  const validateProductCountBeforePush = async () => {
+    try {
+      dispatch(startLoading());
+      if (localStorage.getItem("token")) {
+        setAuthToken(localStorage.getItem("token"));
+      }
+      await axios.get("/api/v1/product/user/createproduct");
+      dispatch(stopLoading());
+      history.push("/dashboard/createproduct");
+    } catch (error) {
+      dispatch(stopLoading());
+      const errors = error.response.data.errors;
+      if (errors) {
+        errors.forEach((element) => {
+          alert.show(element.msg, {
+            type: "error",
+          });
+        });
+      }
+      if (error.response.status === 402) {
+        dispatch({
+          type: SHOW_PAYMENT_MODAL,
+        });
+      }
+      alert.show(error.message, {
+        type: "error",
+      });
+    }
+  };
+
   useEffect(() => {
     dispatch({ type: UPDATE_DASHBOARD_PAGE_COUNTER, payload: 102 });
+    validateProductCountBeforePush();
     getCategoryListing();
     // eslint-disable-next-line
   }, []);
 
   return (
-    <div className="dashboard-layout">
-      <Container fluid>
-        <Row>
-          <DashboardNavbar />
-          <Col className="page-actions__col">
-            <div className="page-actions">
-              <NotificationNavbar />
-              <div className="product-page-content-container">
-                {createProductStep === 1 ? (
-                  <>
-                    <div className="product-page__header">
-                      <h2>Create New Product</h2>
-                      <p>Fill the form below to create a New Product</p>
-                    </div>
-                    <div className="product-page__form-container">
-                      <FormGroup>
-                        <input
-                          type="text"
-                          class="form__input"
-                          placeholder="Product Title"
-                          name="title"
-                          id="title"
-                          value={title}
-                          onChange={(e) => updateFormFields(e)}
-                          required
-                          autoFocus
-                        />
-                        <label for="title" className="form__label">
-                          Product Title
-                        </label>
-                        {validCourseTitle === false && (
-                          <p
-                            style={{
-                              color: "red",
-                            }}
-                          >
-                            product title cannot contain special characters
-                          </p>
-                        )}
-                      </FormGroup>
-
-                      <FormGroup>
-                        <input
-                          type="text"
-                          class="form__input"
-                          placeholder="Product subtitle"
-                          name="subtitle"
-                          id="subtitle"
-                          value={subtitle}
-                          onChange={(e) => updateFormFields(e)}
-                          required
-                        />
-                        <label for="title" className="form__label">
-                          Product subtitle
-                        </label>
-                      </FormGroup>
-
-                      <FormGroup>
-                        <Input
-                          type="select"
-                          className="form__input category-input"
-                          placeholder="Select Category"
-                          name="category"
-                          id="category"
-                          value={category}
-                          onChange={(e) => updateFormFields(e)}
-                          required
-                        >
-                          <option value="">Choose Category</option>
-                          {categoryListing.map((field) => (
-                            <option
-                              value={field?.title?.toLowerCase()}
-                              key={field._id}
-                              style={{ textTransform: "capitalize" }}
+    <>
+      <div className="dashboard-layout">
+        <Container fluid>
+          <Row>
+            <DashboardNavbar />
+            <Col className="page-actions__col">
+              <div className="page-actions">
+                <NotificationNavbar />
+                <div className="product-page-content-container">
+                  {createProductStep === 1 ? (
+                    <>
+                      <div className="product-page__header">
+                        <h2>Create New Product</h2>
+                        <p>Fill the form below to create a New Product</p>
+                      </div>
+                      <div className="product-page__form-container">
+                        <FormGroup>
+                          <input
+                            type="text"
+                            class="form__input"
+                            placeholder="Product Title"
+                            name="title"
+                            id="title"
+                            value={title}
+                            onChange={(e) => updateFormFields(e)}
+                            required
+                            autoFocus
+                          />
+                          <label for="title" className="form__label">
+                            Product Title
+                          </label>
+                          {validCourseTitle === false && (
+                            <p
+                              style={{
+                                color: "red",
+                              }}
                             >
-                              {field.title}
-                            </option>
-                          ))}
-                        </Input>
-                      </FormGroup>
-                      <FormGroup>
-                        <Input
-                          className="form__input"
-                          placeholder="Product description"
-                          rows="3"
-                          type="textarea"
-                          name="description"
-                          value={description}
-                          onChange={(e) => updateFormFields(e)}
-                          autoComplete="off"
-                        />
-                      </FormGroup>
-                      <FormGroup>
-                        <Input
-                          type="select"
-                          className="form__input"
-                          placeholder="Select Language"
-                          name="language"
-                          id="language"
-                          value={language}
-                          onChange={(e) => updateFormFields(e)}
-                          required
-                        >
-                          <option value="">Select Language</option>
-                          <option value="english">English</option>
-                          <option value="french">French</option>
-                          <option value="west african pidgin">
-                            West African Pidgin
-                          </option>
-                          <option value="spanish">Spanish</option>
-                          <option value="arabic">Arabic</option>
-                          <option value="yoruba">Yoruba</option>
-                          <option value="igbo">Igbo</option>
-                        </Input>
-                      </FormGroup>
-                      <FormGroup>
-                        <input
-                          type="number"
-                          class="form__input"
-                          placeholder="Product Price"
-                          name="price"
-                          id="price"
-                          value={price}
-                          onChange={(e) => updatePriceFormField(e)}
-                          required
-                        />
-                        <label for="price" className="form__label">
-                          Product Price (&#8358;){" "}
-                        </label>
-                        {price < 2000 && (
-                          <p
-                            style={{
-                              color: "red",
-                            }}
+                              product title cannot contain special characters
+                            </p>
+                          )}
+                        </FormGroup>
+
+                        <FormGroup>
+                          <input
+                            type="text"
+                            class="form__input"
+                            placeholder="Product subtitle"
+                            name="subtitle"
+                            id="subtitle"
+                            value={subtitle}
+                            onChange={(e) => updateFormFields(e)}
+                            required
+                          />
+                          <label for="title" className="form__label">
+                            Product subtitle
+                          </label>
+                        </FormGroup>
+
+                        <FormGroup>
+                          <Input
+                            type="select"
+                            className="form__input category-input"
+                            placeholder="Select Category"
+                            name="category"
+                            id="category"
+                            value={category}
+                            onChange={(e) => updateFormFields(e)}
+                            required
                           >
-                            product price cannot be less than 2000
-                          </p>
-                        )}
-                      </FormGroup>
-                      {loggedInUsername?.toLowerCase() === "courses" && (
-                        <>
-                          <FormGroup>
-                            <input
-                              type="email"
-                              class="form__input"
-                              placeholder="Your Registered Tutors Email"
-                              name="tutorEmail"
-                              id="tutorEmail"
-                              value={tutorEmail}
-                              onChange={(e) => updateFormFields(e)}
-                            />
-                            <label for="tutorEmail" className="form__label">
-                              Your Registered Tutors Email
-                            </label>
-                          </FormGroup>
-                        </>
-                      )}
-                      <FormGroup>
-                        <input
-                          style={{ display: "none" }}
-                          ref={thumbnailInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => filePickerEventHandle(e)}
-                        />
-                        <Button
-                          onClick={pickThumbnailFile}
-                          className="btn-updates"
-                          block
-                        >
-                          {thumbnailToSend === null
-                            ? "Upload Thumbnail"
-                            : "Change Thumbnail"}
-                        </Button>
-                        {thumbnailToSend !== null && (
+                            <option value="">Choose Category</option>
+                            {categoryListing.map((field) => (
+                              <option
+                                value={field?.title?.toLowerCase()}
+                                key={field._id}
+                                style={{ textTransform: "capitalize" }}
+                              >
+                                {field.title}
+                              </option>
+                            ))}
+                          </Input>
+                        </FormGroup>
+                        <FormGroup>
+                          <Input
+                            className="form__input"
+                            placeholder="Product description"
+                            rows="3"
+                            type="textarea"
+                            name="description"
+                            value={description}
+                            onChange={(e) => updateFormFields(e)}
+                            autoComplete="off"
+                          />
+                        </FormGroup>
+                        <FormGroup>
+                          <Input
+                            type="select"
+                            className="form__input"
+                            placeholder="Select Language"
+                            name="language"
+                            id="language"
+                            value={language}
+                            onChange={(e) => updateFormFields(e)}
+                            required
+                          >
+                            <option value="">Select Language</option>
+                            <option value="english">English</option>
+                            <option value="french">French</option>
+                            <option value="west african pidgin">
+                              West African Pidgin
+                            </option>
+                            <option value="spanish">Spanish</option>
+                            <option value="arabic">Arabic</option>
+                            <option value="yoruba">Yoruba</option>
+                            <option value="igbo">Igbo</option>
+                          </Input>
+                        </FormGroup>
+                        <FormGroup>
+                          <input
+                            type="number"
+                            class="form__input"
+                            placeholder="Product Price"
+                            name="price"
+                            id="price"
+                            value={price}
+                            onChange={(e) => updatePriceFormField(e)}
+                            required
+                          />
+                          <label for="price" className="form__label">
+                            Product Price (&#x24;){" "}
+                          </label>
+                          {price < 3 && (
+                            <p
+                              style={{
+                                color: "red",
+                              }}
+                            >
+                              product price cannot be less than &#x24;3
+                            </p>
+                          )}
+                        </FormGroup>
+                        {loggedInUsername?.toLowerCase() === "courses" && (
                           <>
-                            <div className="upload-image-contents">
-                              <div className="upload-image-container">
-                                <img src={imageToPreview} alt="..." />
+                            <FormGroup>
+                              <input
+                                type="email"
+                                class="form__input"
+                                placeholder="Your Registered Tutors Email"
+                                name="tutorEmail"
+                                id="tutorEmail"
+                                value={tutorEmail}
+                                onChange={(e) => updateFormFields(e)}
+                              />
+                              <label for="tutorEmail" className="form__label">
+                                Your Registered Tutors Email
+                              </label>
+                            </FormGroup>
+                          </>
+                        )}
+                        <FormGroup>
+                          <input
+                            style={{ display: "none" }}
+                            ref={thumbnailInputRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => filePickerEventHandle(e)}
+                          />
+                          <Button
+                            onClick={pickThumbnailFile}
+                            className="btn-updates"
+                            block
+                          >
+                            {thumbnailToSend === null
+                              ? "Upload Thumbnail"
+                              : "Change Thumbnail"}
+                          </Button>
+                          {thumbnailToSend !== null && (
+                            <>
+                              <div className="upload-image-contents">
+                                <div className="upload-image-container">
+                                  <img src={imageToPreview} alt="..." />
+                                </div>
                               </div>
+                            </>
+                          )}
+                        </FormGroup>
+                        <FormGroup className="mt-3">
+                          <Button
+                            className="create-product-btn"
+                            size="lg"
+                            block
+                            disabled={
+                              thumbnailToSend === null ||
+                              validCourseTitle === false ||
+                              price < 3
+                            }
+                            onClick={() => setCreateProductSteps(2)}
+                          >
+                            Proceed
+                          </Button>
+                        </FormGroup>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="create-product-back-step__header">
+                        <div onClick={() => setCreateProductSteps(1)}>
+                          <i className="fas fa-long-arrow-alt-left"></i>
+                        </div>
+                        <p>Upload Product File</p>
+                      </div>
+                      <div className="upload-product-file-form__container">
+                        {productFile === null ? (
+                          <>
+                            <img
+                              src={uploadProductIcon}
+                              alt="..."
+                              className="img-fluid"
+                            />
+                            <Dropzone acceptProductFile={acceptProductFile} />
+                          </>
+                        ) : (
+                          <>
+                            <img
+                              src={uploadProductSuccessIcon}
+                              alt="..."
+                              className="img-fluid"
+                            />
+                            <div className="product-file__info">
+                              <p>{productFile.name}</p>
+                              <div onClick={() => setProductFile(null)}>
+                                <i className="fas fa-times"></i>
+                              </div>
+                            </div>
+                            <div className="product-file-action__btn">
+                              <Button
+                                onClick={() => setProductFile(null)}
+                                className="modal-btn-style-outline"
+                                block
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                onClick={handleProductCreateClickHandler}
+                                className="modal-btn-style"
+                                block
+                              >
+                                Create Product
+                              </Button>
                             </div>
                           </>
                         )}
-                      </FormGroup>
-                      <FormGroup className="mt-3">
-                        <Button
-                          className="create-product-btn"
-                          size="lg"
-                          block
-                          disabled={
-                            thumbnailToSend === null ||
-                            validCourseTitle === false ||
-                            price < 2000
-                          }
-                          onClick={() => setCreateProductSteps(2)}
-                        >
-                          Proceed
-                        </Button>
-                      </FormGroup>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="create-product-back-step__header">
-                      <div onClick={() => setCreateProductSteps(1)}>
-                        <i className="fas fa-long-arrow-alt-left"></i>
                       </div>
-                      <p>Upload Product File</p>
-                    </div>
-                    <div className="upload-product-file-form__container">
-                      {productFile === null ? (
-                        <>
-                          <img
-                            src={uploadProductIcon}
-                            alt="..."
-                            className="img-fluid"
-                          />
-                          <Dropzone acceptProductFile={acceptProductFile} />
-                        </>
-                      ) : (
-                        <>
-                          <img
-                            src={uploadProductSuccessIcon}
-                            alt="..."
-                            className="img-fluid"
-                          />
-                          <div className="product-file__info">
-                            <p>{productFile.name}</p>
-                            <div onClick={() => setProductFile(null)}>
-                              <i className="fas fa-times"></i>
-                            </div>
-                          </div>
-                          <div className="product-file-action__btn">
-                            <Button
-                              onClick={() => setProductFile(null)}
-                              className="modal-btn-style-outline"
-                              block
-                            >
-                              Cancel
-                            </Button>
-                            <Button
-                              onClick={handleProductCreateClickHandler}
-                              className="modal-btn-style"
-                              block
-                            >
-                              Create Product
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div className="upload-product-file-warning">
-                      <p>
-                        <span>Warning:</span> Do not upload malicious files or
-                        files that are found to be offensive to any group of
-                        people.
-                      </p>
-                      <p>
-                        <span>Allowed file types: </span> .pdf .epub .mobi .azw
-                        .csv .docx .xlsx .pptx .mp3 .jpg .png .gif
-                      </p>
-                    </div>
-                  </>
-                )}
+                      <div className="upload-product-file-warning">
+                        <p>
+                          <span>Warning:</span> Do not upload malicious files or
+                          files that are found to be offensive to any group of
+                          people.
+                        </p>
+                        <p>
+                          <span>Allowed file types: </span> .pdf .epub .mobi
+                          .azw .csv .docx .xlsx .pptx .mp3 .jpg .png .gif
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          </Col>
-        </Row>
-      </Container>
-    </div>
+            </Col>
+          </Row>
+        </Container>
+      </div>
+      <Modal isOpen={showPaymentModal} size="md" centered>
+        <div className="modal-header plan-upgrade-modal__header">
+          <h3>Plan Upgrade</h3>
+          <div
+            onClick={() => setShowPaymentModal(false)}
+            className="modal-close__btn"
+          >
+            <i className="fas fa-times"></i>
+          </div>
+        </div>
+        <div className="modal-body plan-upgrade-modal__body">
+          <p className="text-center lead">
+            You have used the total amount of storage space allocated to you as
+            per your plan. <br /> Consider Upgrading your plan to get more
+            space.
+          </p>
+        </div>
+        <div className="modal-footer">
+          <Button
+            block
+            tag={Link}
+            to="/dashboard/plans/payment"
+            className="modal-btn-style"
+          >
+            Upgrade Plan
+          </Button>
+        </div>
+      </Modal>
+    </>
   );
 };
 

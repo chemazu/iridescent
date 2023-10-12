@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useAlert } from "react-alert";
 import { connect } from "react-redux";
+import { useHistory } from "react-router-dom";
 import CurrencyFormat from "react-currency-format";
 import { Container, Row, Col, Table } from "reactstrap";
 import { UPDATE_DASHBOARD_PAGE_COUNTER } from "../../../actions/types";
@@ -41,6 +42,7 @@ const Index = ({
   const [totalPageVisit, setTotalPageVisit] = useState(null);
   const [pageVisitChartData, setPageVisitChartData] = useState(null);
   const [salesChartData, setSalesChartData] = useState(null);
+  const history = useHistory();
   const alert = useAlert();
 
   useEffect(() => {
@@ -231,6 +233,10 @@ const Index = ({
     }
   };
 
+  const handleViewMoreCoursePurchases = () => {
+    history.push("/dashboard/payment?tabId=3");
+  };
+
   useEffect(() => {
     if (user && schoolDetails) {
       getDashboardPageContents();
@@ -293,6 +299,20 @@ const Index = ({
                         {/* payment history section  */}
                         <div className="paymeny-history__section">
                           <h4>Payment History</h4>
+                          <div className="payment-history__cta">
+                            <small className="ml-2">
+                              Showing only six(6) most recent purchases
+                            </small>
+                            <div
+                              className="view-more__cta"
+                              onClick={handleViewMoreCoursePurchases}
+                            >
+                              <span className="mr-2">
+                                <small>View More</small>
+                              </span>
+                              <i className="fas fa-arrow-right mt-1"></i>
+                            </div>
+                          </div>
                           {/* table starting  */}
                           {pageLoading ? (
                             <PaymentHistoryLoader />
@@ -402,7 +422,7 @@ const Index = ({
                                       </p>
 
                                       <h5 className="analytics-counter">
-                                        &#8358;
+                                        &#x24;
                                         <CurrencyFormat
                                           value={
                                             salesTotal !== null

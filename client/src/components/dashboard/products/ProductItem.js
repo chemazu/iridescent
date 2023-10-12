@@ -29,7 +29,7 @@ const ProductItem = ({ product }) => {
             <p className="product-item-author__info">
               {`${product.author.firstname} ${product.author.lastname}`}
             </p>
-            <p className="product-item-price">&#8358;{product.price}</p>
+            <p className="product-item-price">&#x24;{product.price_usd}</p>
           </div>
         </div>
       </Col>

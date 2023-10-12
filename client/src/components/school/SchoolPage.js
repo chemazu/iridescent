@@ -60,6 +60,7 @@ export const SchoolPage = ({
   const [pageLoading, setPageLoading] = useState(true);
   const [isPreviewMode, setIsPreviewMode] = useState(true);
   const [showPageBuilderLoader, setShowPageBuilderLoader] = useState(false);
+  const [schoolUser, setSchoolUser] = useState(null);
   const tutorToken = localStorage.getItem("token");
   const [
     addSectionUseSecondaryColorScheme,
@@ -343,6 +344,24 @@ export const SchoolPage = ({
     }
   };
 
+  const getSchoolUserBySchoolName = async (schoolName) => {
+    try {
+      const userInfoResponse = await axios.get(
+        `/api/v1/user/school/page/user/${schoolName}`
+      );
+      setSchoolUser(userInfoResponse.data);
+    } catch (error) {
+      const errors = error?.response?.data?.errors;
+      if (errors) {
+        errors.forEach((error) => {
+          alert.show(error.msg, {
+            type: "error",
+          });
+        });
+      }
+    }
+  };
+
   const determineSectionToRenderBySectionName = (
     sectionName,
     backendData,
@@ -416,66 +435,71 @@ export const SchoolPage = ({
       case "courselist":
         return (
           <>
-            {tutorToken !== null &&
-            user !== null &&
-            user.username.toLowerCase() === schoolname.toLowerCase() &&
-            isPreviewMode === true ? (
-              <Draggable
-                key={backendData._id}
-                draggableId={backendData._id}
-                index={index}
-              >
-                {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
+            {schoolCourses.length !== 0 && (
+              <>
+                {tutorToken !== null &&
+                user !== null &&
+                user.username.toLowerCase() === schoolname.toLowerCase() &&
+                isPreviewMode === true ? (
+                  <Draggable
+                    key={backendData._id}
+                    draggableId={backendData._id}
+                    index={index}
                   >
-                    <CourseListSection
-                      themeData={theme}
-                      isAuthenticated={
-                        tutorToken !== null &&
-                        user !== null &&
-                        user.username.toLowerCase() === schoolname.toLowerCase()
-                      }
-                      isPreviewMode={isPreviewMode}
-                      coursesLoading={coursesLoading}
-                      backendSectionData={backendData}
-                      schoolCourses={schoolCourses}
-                      displayUpdateLoader={displayPageBuilderLoader}
-                      removeUpdateLoader={removePageBuilderLoader}
-                      updateSectionAfterBackendSubmit={
-                        updateSectionAfterBackendSubmit
-                      }
-                      openAddNewSectionModal={openAddNewSectionModal}
-                      handleSectionDelete={handleSectionDelete}
-                      handleBackToDashboard={handleBackToDashboard}
-                    />
-                  </div>
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                      >
+                        <CourseListSection
+                          themeData={theme}
+                          isAuthenticated={
+                            tutorToken !== null &&
+                            user !== null &&
+                            user.username.toLowerCase() ===
+                              schoolname.toLowerCase()
+                          }
+                          isPreviewMode={isPreviewMode}
+                          coursesLoading={coursesLoading}
+                          backendSectionData={backendData}
+                          schoolCourses={schoolCourses}
+                          displayUpdateLoader={displayPageBuilderLoader}
+                          removeUpdateLoader={removePageBuilderLoader}
+                          updateSectionAfterBackendSubmit={
+                            updateSectionAfterBackendSubmit
+                          }
+                          openAddNewSectionModal={openAddNewSectionModal}
+                          handleSectionDelete={handleSectionDelete}
+                          handleBackToDashboard={handleBackToDashboard}
+                        />
+                      </div>
+                    )}
+                  </Draggable>
+                ) : (
+                  <CourseListSection
+                    key={backendData._id}
+                    themeData={theme}
+                    isAuthenticated={
+                      tutorToken !== null &&
+                      user !== null &&
+                      user.username.toLowerCase() === schoolname.toLowerCase()
+                    }
+                    isPreviewMode={isPreviewMode}
+                    coursesLoading={coursesLoading}
+                    backendSectionData={backendData}
+                    schoolCourses={schoolCourses}
+                    displayUpdateLoader={displayPageBuilderLoader}
+                    removeUpdateLoader={removePageBuilderLoader}
+                    updateSectionAfterBackendSubmit={
+                      updateSectionAfterBackendSubmit
+                    }
+                    openAddNewSectionModal={openAddNewSectionModal}
+                    handleSectionDelete={handleSectionDelete}
+                    handleBackToDashboard={handleBackToDashboard}
+                  />
                 )}
-              </Draggable>
-            ) : (
-              <CourseListSection
-                key={backendData._id}
-                themeData={theme}
-                isAuthenticated={
-                  tutorToken !== null &&
-                  user !== null &&
-                  user.username.toLowerCase() === schoolname.toLowerCase()
-                }
-                isPreviewMode={isPreviewMode}
-                coursesLoading={coursesLoading}
-                backendSectionData={backendData}
-                schoolCourses={schoolCourses}
-                displayUpdateLoader={displayPageBuilderLoader}
-                removeUpdateLoader={removePageBuilderLoader}
-                updateSectionAfterBackendSubmit={
-                  updateSectionAfterBackendSubmit
-                }
-                openAddNewSectionModal={openAddNewSectionModal}
-                handleSectionDelete={handleSectionDelete}
-                handleBackToDashboard={handleBackToDashboard}
-              />
+              </>
             )}
           </>
         );
@@ -1029,6 +1053,7 @@ export const SchoolPage = ({
         localStorage.removeItem("token");
       }
       getLoggedInUser();
+      getSchoolUserBySchoolName(schoolname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [schoolname]);
@@ -1120,6 +1145,7 @@ export const SchoolPage = ({
                                 )}
                                 {provided.placeholder}
                               </div>
+            
                               <LiveWebinarSection
                                 schoolname={schoolname}
                                 theme={theme}
@@ -1132,7 +1158,12 @@ export const SchoolPage = ({
                     </DragDropContext>
                   </>
                 }
-                <Footer theme={theme} schoolName={schoolname} />
+                <Footer
+                  theme={theme}
+                  schoolName={schoolname}
+                  schoolUser={schoolUser}
+                  enterprisePlan={process.env.REACT_APP_ENTERPRISE_PLAN_ID}
+                />
               </>
             )}
           </div>

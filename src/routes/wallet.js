@@ -1,14 +1,15 @@
 import express from "express";
+import axios from "axios";
 import { body, validationResult } from "express-validator";
-import crypto from "crypto";
 import mongoose from "mongoose";
 import Wallet from "../models/Wallet";
 import User from "../models/User";
 import Order from "../models/Order";
 import Bankdetails from "../models/Bankdetails";
 import auth from "../middleware/auth";
+import ExchangeRate from "../models/ExchangeRate";
 import validateUserPayment from "../middleware/validateUserPayment";
-import axios from "axios";
+import roundToTwoDecimalPlaces from "../utilities/roundToTwoDecimalPlaces";
 
 const router = express.Router();
 
@@ -21,7 +22,12 @@ router.post(
   validateUserPayment,
   async (req, res) => {
     const userId = req.user.id;
-    const { accountid, amount, actualPayout } = req.body;
+    const { accountid, amount, actualPayout, actualPayoutInDollar } = req.body;
+
+    // get exchange rate
+    const exchangeRate = await ExchangeRate.findOne({
+      currencyName: "usd",
+    });
 
     try {
       const errors = validationResult(req);
@@ -132,10 +138,16 @@ router.post(
         ) {
           const wallet = new Wallet({
             user: userId,
-            amount: amount,
+            amount_usd: amount,
+            amount: roundToTwoDecimalPlaces(
+              exchangeRate.exchangeRateAmountToNaira * amount
+            ),
             status: "success",
+            withdrawal_currency_type: "ngn",
+            transaction_type: "local",
             transferrecipient: accountid,
             actualPayout: actualPayout,
+            actualPayout_usd: actualPayoutInDollar,
             transferreference: transfer_response.data.data.reference,
             recipientcode: paystack_response.data.data.recipient_code,
           });
@@ -192,7 +204,7 @@ router.get("/withraw/sum", auth, async (req, res) => {
         $group: {
           _id: null,
           withdrawalsumTotal: {
-            $sum: "$amount",
+            $sum: "$amount_usd",
           },
         },
       },

@@ -31,7 +31,7 @@ const router = express.Router();
 const stripeServer = stripe(process.env.STRIPE_SECRET_KEY);
 // This is your Stripe CLI webhook secret for testing your endpoint locally.
 const endpointSecret =
-  "whsec_9b287e8b8a88a331234792afbbc94addb2dd307990347034486958b207441186";
+  "whsec_85d4a70f39f5afc6cbb5c2230822b429dcfe2789193620fd65d549801618f2af";
 
 router.post("/app", async (req, res) => {
   const paystackKey = process.env.PAYSTACK_PRIVATE_KEY;
@@ -489,7 +489,6 @@ router.post(
 );
 
 const convertCurrencyUsedInPurchaseToUsd = async (currencyInUse) => {
-  // const url = `https://v6.exchangerate-api.com/v6/8db196e0a0dcaf24cc1debfd/latest/${currencyInUse}`;
   const url = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_RATE_API}/latest/${currencyInUse}`;
   try {
     const response = await axios.get(url);

@@ -142,8 +142,8 @@ const CreateCourse = ({
       });
     }
 
-    if (price < 2000) {
-      return alert.show("invalid product price", {
+    if (price < 5) {
+      return alert.show("invalid course price", {
         type: "error",
       });
     }
@@ -376,7 +376,7 @@ const CreateCourse = ({
                         <FormGroup>
                           <input
                             type="text"
-                            class="form__input"
+                            className="form__input"
                             placeholder="Course Title"
                             name="title"
                             id="title"
@@ -401,7 +401,7 @@ const CreateCourse = ({
                         <FormGroup>
                           <input
                             type="text"
-                            class="form__input"
+                            className="form__input"
                             placeholder="Course Subtitle"
                             name="subtitle"
                             id="subtitle"
@@ -536,15 +536,15 @@ const CreateCourse = ({
                             required
                           />
                           <label for="price" className="form__label">
-                            Course Price (&#8358;){" "}
+                            Course Price (&#x24;){" "}
                           </label>
-                          {price < 2000 && (
+                          {price < 5 && (
                             <p
                               style={{
                                 color: "red",
                               }}
                             >
-                              product price cannot be less than 2000
+                              Course price cannot be less than &#x24;5
                             </p>
                           )}
                         </FormGroup>
@@ -605,7 +605,7 @@ const CreateCourse = ({
                             disabled={
                               fileToSend === null ||
                               validCourseTitle === false ||
-                              price < 2000
+                              price < 5
                             }
                           >
                             Create Course

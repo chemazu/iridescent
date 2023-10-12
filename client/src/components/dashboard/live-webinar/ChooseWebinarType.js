@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-import { Col, Container, Row, Button, Card, Spinner, Modal } from "reactstrap";
+import { Col, Container, Row, Button, Card } from "reactstrap";
 import DashboardNavbar from "../DashboardNavbar";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import axios from "axios";
@@ -13,7 +13,7 @@ import { useAlert } from "react-alert";
 import { Link, useHistory } from "react-router-dom";
 import { useDispatch, connect } from "react-redux";
 import setAuthToken from "../../../utilities/setAuthToken";
-
+/* eslint-disable react-hooks/exhaustive-deps */
 function ChooseWebinarType({ school }) {
   const [webinarType, setWebinarType] = useState("");
   const alert = useAlert();
@@ -31,7 +31,12 @@ function ChooseWebinarType({ school }) {
     if (host.includes("localhost")) {
       return `http://${schoolname}.${host}`;
     }
-    const baseDomain = host.split(".")[1];
+
+    const parts = host.split(".");
+
+    const baseDomain = parts[0] === "www" ? parts[1] : parts[0];
+    
+
     return baseDomain.includes("localhost")
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;

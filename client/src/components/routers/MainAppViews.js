@@ -43,6 +43,8 @@ import PaymentPlansPage from "../../components/dashboard/paymentPlans/PaymentPla
 import SubscriptionComplete from "../../components/dashboard/paymentPlans/SubscriptionComplete";
 import TutorDashboardIndex from "../../components/dashboard/index/Index";
 import TutorialsPage from "../../components/dashboard/tutorials/Tutorials";
+import Student from "../dashboard/students/Student";
+import StripeSubscriptionCheckoutPage from "../dashboard/paymentPlans/StripeSubscriptionCheckoutPage";
 
 //  admin component imports
 import Overview from "../admin/overview/Overview";
@@ -53,7 +55,6 @@ import CourseReviewVerificationDetailsPage from "../admin/courseVerification/Cou
 import ProductDetail from "../dashboard/products/ProductDetail";
 import LiveWebinar from "../dashboard/live-webinar/LiveWebinar";
 import CreateLiveWebinar from "../dashboard/live-webinar/CreateLiveWebinar";
-import Stream from "../dashboard/live-webinar/Stream";
 import PresenterValidation from "../dashboard/live-webinar/PresenterValidation";
 import EditLiveWebinar from "../dashboard/live-webinar/EditLiveWebinar";
 import ChooseWebinarType from "../dashboard/live-webinar/ChooseWebinarType";
@@ -183,6 +184,11 @@ export const MainAppViews = () => {
           path="/dashboard/plans/payment"
           component={PaymentPlansPage}
         />
+        <PrivateRoute
+          exact
+          path="/dashboard/plans/subscription/checkout/:stripeCodePlanId"
+          component={StripeSubscriptionCheckoutPage}
+        />
         <PrivateRouteForToken
           exact
           path="/dashboard/subscription/complete"
@@ -198,6 +204,7 @@ export const MainAppViews = () => {
           path="/dashboard/tutorials"
           component={TutorialsPage}
         />
+        <PrivateRoute exact path="/dashboard/students" component={Student} />
         {/* admin routes  */}
         <AdminPrivateRoute exact path="/admin/dashboard" component={Overview} />
         <AdminPrivateRoute

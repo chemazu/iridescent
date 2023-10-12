@@ -721,6 +721,27 @@ router.get("/password/token/:token", async (req, res) => {
   }
 });
 
+router.get("/school/page/user/:schoolname", async (req, res) => {
+  const schoolName = req.params.schoolname;
+  try {
+    const user = await User.findOne({
+      username: schoolName,
+    })
+      .select("-password")
+      .populate("selectedplan");
+
+    if (!user) {
+      return res.status(404).json({ errors: [{ msg: "user not found" }] });
+    }
+    res.json(user);
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({
+      msg: "school not found",
+    });
+  }
+});
+
 router.put(
   "/password/change/:userid",
   [

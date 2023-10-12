@@ -612,7 +612,9 @@ router.get("/schoolstreams/:schoolName", async (req, res) => {
 router.get("/streamdetails/:streamId", async (req, res) => {
   const { streamId } = req.params;
   try {
-    const livestream = await LiveWebinar.findOne({ _id: streamId });
+    const livestream = await LiveWebinar.findOne({ _id: streamId }).populate(
+      "school"
+    );
     if (livestream) {
       res.json(livestream);
     }

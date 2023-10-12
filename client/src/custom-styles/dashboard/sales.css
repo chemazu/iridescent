@@ -93,14 +93,101 @@
   border-radius: 18px;
   padding: 24px 19px;
   width: 92%;
-  background-color: var(--site-background-color);
+  background-color: var(--site-white-color);
   color: var(--site-dark-color);
+  display: flex;
+  align-items: center;
 }
+
+.balance-item {
+  width: 240px;
+  height: fit-content;
+  padding: 0.23rem 0.112rem;
+  border-radius: 15px;
+  color: var(--site-white-color);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.current-balance-amount {
+  color: var(--site-white-color) !important;
+  font-weight: 600 !important;
+  font-size: 38px !important;
+}
+
+.available-balance {
+  background-color: #476efa;
+}
+
+.pending-balance {
+  background-color: #a6b3e9;
+}
+
+.balance-item:last-child {
+  margin-left: 2.5rem;
+}
+
+.balance-info-text {
+  display: flex;
+  align-items: center;
+}
+
+.more-infor__icon {
+  margin-left: 0.7rem;
+  cursor: pointer;
+}
+
+.more-infor__icon i {
+  font-size: 15px;
+}
+
+/* .current-balance-container .current-balance__nav-item {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  width: 50%;
+}
+
+.current-balance-container .nav-pills .current-balance__style {
+  background-color: #000000;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.current-balance-container .nav-pills .pending-balance__style {
+  background-color: #a6b3e9;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.current-balance-container .nav-pills {
+  width: 100%;
+}
+
+.current-balance-container .nav-pills .nav-link {
+  color: var(--site-white-color);
+  text-transform: capitalize;
+  width: 100% !important;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: none;
+  text-align: center;
+  transition: all 500ms;
+}
+
+.current-balance-container .nav-pills .nav-item:not(:last-child) {
+  padding-right: 0;
+} */
 
 .current-balance-container p {
   margin: 0;
   padding: 0;
-  font-size: 26px;
+  font-size: 16px;
   font-weight: 400;
 }
 
@@ -110,6 +197,148 @@
   font-weight: 700;
   font-size: 45px;
   color: var(--site-dark-color);
+}
+
+.withdraw-modal-content-container {
+  height: 95vh;
+  overflow-y: auto;
+}
+
+.withdraw-modal-content-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.withdraw-modal-content-container::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+.withdraw-modal-content-container::-webkit-scrollbar-thumb {
+  background-color: rgba(84, 95, 125, 0.15);
+  border-radius: 10px;
+}
+
+.withdraw-modal-content-container::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.withraw-tabs-switcher {
+  margin-top: 0.3rem;
+  margin-bottom: 1.5rem;
+}
+
+.withdrawal-nav {
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.withraw-tabs-switcher .nav-pills .nav-link {
+  color: var(--site-cta-color);
+  text-transform: uppercase;
+  width: 100% !important;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: none;
+  border-radius: 0;
+  text-align: center;
+  border-top: 0.0889rem solid transparent;
+  transition: all 500ms;
+}
+
+.international-account-modal-item {
+  width: 100%;
+  margin-top: 10px;
+  cursor: pointer;
+  padding: 10px 0;
+  border-bottom: 0.001345rem solid #525f7f;
+}
+
+.account-selector-indicator {
+  height: 10px;
+  width: 10px;
+  border: 0.8px solid var(--site-dark-color);
+  border-radius: 50%;
+}
+
+.account-item-name {
+  font-weight: 400;
+  font-size: 15px;
+  text-transform: capitalize;
+}
+
+.account-name__selector-indicator {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.account-active {
+  background-color: var(--site-dark-color);
+}
+
+.modal-error-color {
+  color: red;
+}
+
+.account-more__details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.3rem;
+}
+
+.account-item-type {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--site-cta-color);
+  text-transform: uppercase;
+  margin-bottom: 0;
+}
+
+.account-item-code {
+  color: var(--site-dark-color);
+  font-size: 13px;
+  font-weight: 500;
+  margin-left: 5px;
+  margin-bottom: 0;
+}
+
+.account-item-number {
+  color: var(--site-dark-color);
+  font-weight: 500;
+  margin-bottom: 0;
+}
+
+.account-more__details p {
+  padding: 0;
+}
+
+.account-label {
+  display: flex;
+  align-items: baseline;
+}
+
+.account-item_icon {
+  margin-left: 9px;
+}
+
+.account-item_icon img {
+  height: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.withraw-tabs-switcher .nav-pills .nav-link:hover {
+  border-bottom: 0.0889rem solid var(--site-cta-color);
+}
+
+.withraw-tabs-switcher .nav-pills .nav-link.active-tab,
+.nav-pills .show > .nav-link {
+  border-bottom: 0.0889rem solid var(--site-cta-color);
 }
 
 .withdrawal-button button,
@@ -169,7 +398,10 @@
 
 .bank-details__contents .bank-details-title {
   color: var(--site-dark-color);
-  font-size: 2rem;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  margin-left: 10px;
 }
 
 .bank-details__highlighted {
@@ -200,6 +432,155 @@
   transition: all 0.5s;
 }
 
+.internation-bank-details-title {
+  color: var(--site-dark-color);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  margin-left: 10px;
+}
+
+.international-account-details__container {
+  width: 100%;
+}
+
+.international-bank-details__item {
+  width: 100%;
+  margin-bottom: 1rem;
+  margin-top: 0.3rem;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.4s;
+  padding: 0.7555rem 0.9rem;
+  border-radius: 4px;
+}
+
+.international-bank-details__item:hover {
+  background-color: #f2f5fc;
+}
+
+.account-switcher-btn {
+  box-shadow: none !important;
+  background-color: var(--site-white-color) !important;
+  color: var(--site-cta-color) !important;
+  border-color: var(--site-cta-color) !important;
+}
+
+.account-switch-btn__active {
+  background-color: var(--site-cta-color) !important;
+  border-color: var(--site-cta-color) !important;
+  color: var(--site-white-color) !important;
+}
+
+.account-warning-text {
+  color: var(--site-cta-color);
+}
+
+.add-bank-account-modal__content {
+  height: 93vh;
+  overflow-y: auto;
+}
+
+.add-bank-account-modal__content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.add-bank-account-modal__content::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+.add-bank-account-modal__content::-webkit-scrollbar-thumb {
+  background-color: rgba(84, 95, 125, 0.15);
+  border-radius: 10px;
+}
+
+.add-bank-account-modal__content::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.account-name__summary {
+  height: 70px;
+  width: 70px;
+  text-align: center;
+  text-transform: uppercase;
+  display: flex;
+  font-size: 1.2876869rem;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 50%;
+  background-color: var(--site-background-color);
+  font-weight: 600;
+  color: var(--site-dark-color);
+}
+
+.delete-account-header {
+  align-items: center;
+}
+
+.delete-account-header h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--site-dark-color);
+}
+
+.delete-account-header .close-icon {
+  cursor: pointer;
+}
+
+.account-caution-text span {
+  color: var(--site-cta-color);
+  font-weight: 600;
+}
+
+.account-details__delete-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.account-details-info {
+  margin-left: 1.6rem;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-right: 1rem;
+}
+
+.account-item-delete__btn {
+  cursor: pointer;
+}
+
+.account-details-info p {
+  margin: 0;
+  padding: 0;
+}
+
+.account-item-img-type {
+  height: 25px;
+  width: 25px;
+  border-radius: 50%;
+  position: absolute;
+  z-index: 2;
+  bottom: 5px;
+  right: -10px;
+}
+
+.add-international-account-details-btn__container {
+  margin: 3rem 0;
+}
+
+.add-international-account-details-btn__container button,
+.add-international-account-details-btn__container button:hover,
+.add-international-account-details-btn__container button:active {
+  box-shadow: none;
+  background-color: var(--site-cta-color) !important;
+  color: var(--site-white-color) !important;
+}
+
 .add-account-modal__header {
   font-weight: 550;
   font-size: 17px;
@@ -213,6 +594,34 @@
 
 .header-modal-clsoe-btn i {
   font-size: 15px;
+}
+
+.bank-details-swticher__container {
+  width: fit-content;
+  margin-top: 2.4rem;
+  margin-bottom: 1.9rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.bank-details-swticher__container .nav-pills .nav-link {
+  color: var(--site-cta-color);
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: none;
+  border: 0.000678rem solid var(--site-cta-color);
+}
+
+.bank-details-swticher__container .nav-pills .nav-link:hover {
+  background-color: var(--site-cta-color);
+  color: var(--site-white-color);
+}
+
+.bank-details-swticher__container .nav-pills .nav-link.active-tab,
+.nav-pills .show > .nav-link {
+  background-color: var(--site-cta-color);
+  color: var(--site-white-color);
 }
 
 .bank-details-modal-btn-outline,
@@ -322,8 +731,8 @@
 }
 
 .table-contents .tr-style {
-  border-bottom: 0.0625rem solid #C4C4C4;
-  color: #3D3C3C;
+  border-bottom: 0.0625rem solid #c4c4c4;
+  color: #3d3c3c;
   font-size: 12.4px;
   white-space: nowrap;
 }
@@ -422,6 +831,38 @@
 }
 
 @media screen and (max-width: 768px) {
+  .current-balance-container .current-balance__nav-item {
+    width: 100%;
+  }
+
+  .current-balance-container .nav-pills .current-balance__style {
+    border-radius: 0;
+  }
+
+  .current-balance-container .nav-pills .pending-balance__style {
+    border-radius: 0;
+  }
+
+  .current-balance-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .balance-item {
+    width: 100%;
+  }
+
+  .balance-item:last-child {
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+}
+
+@media screen and (max-width: 495px) {
+  .account-more__details {
+    flex-direction: column;
+    align-items: baseline;
+  }
 }
 
 /* styles for our toggle Buttons */

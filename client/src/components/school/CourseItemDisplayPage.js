@@ -16,8 +16,8 @@ import {
   Button,
 } from "reactstrap";
 import { useAlert } from "react-alert";
-import PageNavbar from "./PageNavbar";
 import CurrencyFormat from "react-currency-format";
+import PageNavbar from "./PageNavbar";
 import ModuleItem from "./ModuleItem";
 import CourseItemDisplayMoreInfo from "./CourseItemDisplayMoreInfo";
 import CourseUnitVideoPreviewModal from "./CourseUnitVideoPreviewModal";
@@ -26,12 +26,14 @@ import getUserIpAddress from "../../utilities/getUserIpAddress";
 import { addToCart } from "../../actions/cart";
 
 import "../../custom-styles/pages/courseitemdisplaypage.css";
+import roundToTwoDecimalPlaces from "../../utilities/roundToTwoDecimalPlaces";
 
 export const CourseItemDisplayPage = ({
   match,
   cart,
   schoolname,
   displayPreviewModal,
+  currency,
 }) => {
   const [school, setSchool] = useState(null);
   const [theme, setTheme] = useState(null);
@@ -519,16 +521,20 @@ export const CourseItemDisplayPage = ({
                         </p>
                         <div className="course-price-and-rating">
                           <p className="course-price">
-                            &#8358;
-                            {
-                              <CurrencyFormat
-                                value={course?.price}
-                                displayType="text"
-                                thousandSeparator={true}
-                                decimalScale={2}
-                                fixedDecimalScale={true}
-                              />
-                            }
+                            <span
+                              dangerouslySetInnerHTML={{
+                                __html: currency.htmlCurrencySymbol,
+                              }}
+                            ></span>
+                            <CurrencyFormat
+                              value={roundToTwoDecimalPlaces(
+                                course?.price_usd * currency.exchangeRate
+                              )}
+                              displayType="text"
+                              thousandSeparator={true}
+                              decimalScale={2}
+                              fixedDecimalScale={true}
+                            />
                           </p>
                         </div>
                       </div>
@@ -611,6 +617,7 @@ const mapStateToProps = (state) => ({
   cart: state.cart,
   schoolname: state.subdomain,
   displayPreviewModal: state.preview.displayPlayer,
+  currency: state.currency,
 });
 
 export default connect(mapStateToProps)(CourseItemDisplayPage);

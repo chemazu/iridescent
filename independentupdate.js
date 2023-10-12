@@ -1,26 +1,27 @@
-const connectDB = require("./src/config/connection");
-const Student = require("./src/models/Student");
-const StudentCourse = require("./src/models/StudentCourse");
+// const connectDB = require("./src/config/connection");
+// const Student = require("./src/models/Student");
+// const StudentCourse = require("./src/models/StudentCourse");
+const DecimalJS = require("decimal.js");
 
-connectDB();
+// // connectDB();
 
-const constGetStudents = () => {
-  studentsArray.forEach(async (email) => {
-    const student = await Student.findOne({ email: email });
-    console.log(student._id);
+// const constGetStudents = () => {
+//   studentsArray.forEach(async (email) => {
+//     const student = await Student.findOne({ email: email });
+//     console.log(student._id);
 
-    const studentCourse = new StudentCourse({
-      student: student._id, // with the model instantiation
-      coursebought: "",
-      boughtfrom: "",
-    });
+//     const studentCourse = new StudentCourse({
+//       student: student._id, // with the model instantiation
+//       coursebought: "",
+//       boughtfrom: "",
+//     });
 
-    await studentCourse.save();
-    console.log(studentCourse);
-  });
-};
+//     await studentCourse.save();
+//     console.log(studentCourse);
+//   });
+// };
 
-constGetStudents();
+// constGetStudents();
 // const axios = require("axios");
 
 // const getUserIpAddress = async () => {
@@ -214,3 +215,6 @@ const updateStateModuleUnit = () => {
 
   return updatedModules;
 };
+
+const decimal = new DecimalJS(9.56258);
+console.log(decimal.toFixed(2));

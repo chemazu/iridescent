@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 
+/* eslint-disable react-hooks/exhaustive-deps */
 const CountdownTimer = ({
   endTime,
   firstReminder,

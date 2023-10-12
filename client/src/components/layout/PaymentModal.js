@@ -37,8 +37,8 @@ const PaymentModal = ({ loading, closeModal, history }) => {
           <br />
           <div className="payment-message">
             <p>
-              You have used up the resources for your current plan, Please click
-              on upgrade plan to continue using Tuturly's features
+              Your current plan does not allow you to use this resource, Please
+              click on upgrade plan to continue using Tuturly's features
             </p>
           </div>
           <div

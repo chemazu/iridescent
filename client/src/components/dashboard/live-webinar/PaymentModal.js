@@ -11,7 +11,7 @@ import { Elements } from "@stripe/react-stripe-js";
 import StripeCheckoutModal from "../../school/StripeCheckoutModal";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import { loadStripe } from "@stripe/stripe-js";
-import { Link, useHistory } from "react-router-dom";
+import {useHistory } from "react-router-dom";
 
 function PaymentModal({
   currency,
@@ -34,8 +34,8 @@ function PaymentModal({
   });
   const [amountToPay, setAmountToPay] = useState(1);
   const [stripeClientSecret, setStripeClientSecret] = useState("");
-  const [school, setSchool] = useState(null);
-  const [addedResource, setAddedResource] = useState(0);
+ 
+ 
 
   const [theme, setTheme] = useState(null);
   const [stripeCheckoutModalDialog, setStripeCheckoutModalDialog] =
@@ -63,11 +63,9 @@ function PaymentModal({
   const getSchoolBySchoolName = async (schoolname) => {
     try {
       const res = await axios.get(`/api/v1/school/${schoolname}`);
-      setSchool(res.data);
       return res.data;
     } catch (error) {
       if (error.response.status === 404) {
-        setSchool(null);
       }
       console.log(error.response.data.errors[0].msg);
       return null;
@@ -221,7 +219,6 @@ function PaymentModal({
     });
   };
   const checkOut = async (value, newResource) => {
-    setAddedResource(newResource);
     switch (paymentMethodToUse.name) {
       case "paystack":
         payStackPaymentHandler(paymentMethodToUse, value, newResource);

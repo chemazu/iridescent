@@ -106,7 +106,7 @@ liveWebinarSchema.pre("save", async function (next) {
     const currentTime = Date.now();
     if (currentTime >= this.classEndTime) {
       this.endStatus = true;
-      console.log("Class has ended.");
+    
     }
   }
   next();

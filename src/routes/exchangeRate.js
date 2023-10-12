@@ -1,6 +1,6 @@
 import express from "express";
 import { body, validationResult } from "express-validator";
-import ExchangeRate from "../models/ExchangeRate.js";
+import ExchangeRate from "../models/ExchangeRate";
 import auth from "../middleware/auth";
 import validateAdminRoute from "../middleware/validateAdminRoute";
 

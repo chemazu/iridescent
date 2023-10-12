@@ -25,6 +25,9 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
+  price_usd: {
+    type: Number,
+  },
   thumbnail: {
     type: String,
     required: false,

@@ -49,17 +49,14 @@ export default function Stream() {
   const peerRef = useRef();
   const screenPeerRef = useRef();
   const videoStreamRef = useRef(null);
-  const screenStreamRef = useRef(null);
-  const drawerRef = useRef(null);
+
   const [reconnectLoading, setReconnectLoading] = useState(false);
   const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
   const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
   const [videoDevices, setVideoDevices] = useState([]);
   const [resources, setResources] = useState([]);
-  const [freeTimer, setFreeTimer] = useState(null);
   const [freeTimerStatus, disableFreeTimer] = useState(true);
-  const [offsetY, setOffsetY] = useState(0);
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
 
@@ -84,8 +81,7 @@ export default function Stream() {
   const [moreResources, setMoreResources] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [attendies, setAttendies] = useState(1);
-  const [loading, setLoading] = useState(true);
+
   const [resourceModal, setResourceModal] = useState(false);
   const [unReadCount, setUnReadCount] = useState(0);
   const [minimizedPoll, setMinimizedPoll] = useState(false);
@@ -102,7 +98,6 @@ export default function Stream() {
     video: true,
     audio: true,
   });
-  const [screenPeerhandler, setScreenPeerhandler] = useState(null);
   const [screenStreamhandler, setScreenStreamhandler] = useState(null);
 
   const [presenterDetails, setPresenterDetails] = useState(null);
@@ -121,7 +116,7 @@ export default function Stream() {
   const [screenSharing, setScreenSharing] = useState(false);
   const [peerHolder, setPeerHolder] = useState(null);
   const [mobileChat, setMobileChat] = useState(false);
-
+  /* eslint-disable react-hooks/exhaustive-deps */
   const toggleAudioVisuals = (type) => {
     switch (type) {
       case "cam":
@@ -146,8 +141,7 @@ export default function Stream() {
         break;
     }
   };
-  const attendanceCount = attendance||1;
- 
+  const attendanceCount = attendance || 1;
 
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
@@ -235,7 +229,11 @@ export default function Stream() {
     if (host.includes("localhost")) {
       return `http://${schoolname}.${host}`;
     }
-    const baseDomain = host.split(".")[1];
+
+    const parts = host.split(".");
+
+    const baseDomain = parts[0] === "www" ? parts[1] : parts[0];
+
     return baseDomain.includes("localhost")
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
@@ -246,6 +244,7 @@ export default function Stream() {
     if (res) {
       if (res.data.paymentInfo === "free") {
         let { pollCount, quizCount, resourceCount } = res.data;
+        console.log(res.data);
         setResourceCount({ pollCount, quizCount, resourceCount });
       } else {
       }
@@ -259,7 +258,6 @@ export default function Stream() {
 
     socket.on("updateAttendance", (users) => {
       setAttendance(users);
- 
     });
 
     // Clean up the event listener and heartbeat interval when the component unmounts
@@ -357,16 +355,6 @@ export default function Stream() {
   };
   const handleCreatePoll = async () => {
     let durationInSec = convertToSeconds(durationValue, durationUnit);
-    let newDefaultChat = [
-      ...defaultChat,
-      {
-        user: 1,
-        type: "poll",
-        title: pollTitle,
-        options: pollOptions,
-        durationInSec,
-      },
-    ];
 
     // handle special chat
     setSpecialChat([
@@ -464,8 +452,6 @@ export default function Stream() {
         });
     }
 
-    let newIndex = newDefaultChat.length;
-
     let timerData = {
       duration: durationInSec,
       roomid,
@@ -525,17 +511,20 @@ export default function Stream() {
             config
           )
           .then((res) => {
-            dispatch(stopLoading());
-            alert.show("Quiz Edited");
-            setAnswers([]);
-            setQuizHolder([]);
-            setPollTitle("");
-            setPollOptions(["", "", "", ""]);
-            setDurationValue("");
-            setDurationUnit("secs");
-            setTotalQuestion(0);
-            setQuestionNumber(1);
-            setSaveResource(false);
+            if (res) {
+              alert.show("Quiz Edited");
+              setAnswers([]);
+              setQuizHolder([]);
+              setPollTitle("");
+              setPollOptions(["", "", "", ""]);
+              setDurationValue("");
+              setDurationUnit("secs");
+              setTotalQuestion(0);
+              setQuestionNumber(1);
+              setSaveResource(false);
+              dispatch(stopLoading());
+              getResourceCount();
+            }
           })
           .catch((error) => {
             console.error(error);
@@ -551,16 +540,20 @@ export default function Stream() {
             config
           )
           .then((res) => {
-            dispatch(stopLoading());
-            setAnswers([]);
-            setQuizHolder([]);
-            setPollTitle("");
-            setPollOptions(["", "", "", ""]);
-            setDurationValue("");
-            setDurationUnit("secs");
-            setTotalQuestion(0);
-            setQuestionNumber(1);
-            setSaveResource(false);
+            if (res) {
+              setAnswers([]);
+              setQuizHolder([]);
+              setPollTitle("");
+              setPollOptions(["", "", "", ""]);
+              setDurationValue("");
+              setDurationUnit("secs");
+              setTotalQuestion(0);
+              setQuestionNumber(1);
+              setSaveResource(false);
+              getResourceCount();
+
+              dispatch(stopLoading());
+            }
           })
           .catch((error) => {
             console.error(error);
@@ -887,21 +880,15 @@ export default function Stream() {
   };
 
   const handleStudentPollSubmit = (newResult) => {
+   
     let newResultHolder = [...pollResultHolder, newResult];
     setPollResultHolder(newResultHolder);
 
     socket.emit("updatedPollResult", roomid, newResultHolder, 0);
+ 
+
   };
-
-  useEffect(() => {
-    socket.on("watcher-exit", (size) => {
-      setAttendies(size);
-    });
-
-    return () => {
-      socket.off("watcher-exit");
-    };
-  }, [roomid]);
+ 
 
   useEffect(() => {
     socket.on("roomTimerStarted", (roomTimer) => {
@@ -948,8 +935,10 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("special submit", (type, result, user) => {
+      
       if (type === "poll") {
         handleStudentPollSubmit(result);
+        console.log("first",result)
       }
 
       if (type === "quiz") {
@@ -984,6 +973,7 @@ export default function Stream() {
     quizResultHolder,
     quizSubmission,
     setQuizResultHolder,
+
   ]);
 
   useEffect(() => {
@@ -1034,14 +1024,6 @@ export default function Stream() {
   }, [roomid, timerHolder]);
 
   useEffect(() => {
-    socket.on("user-disconnected", (userId, roomSize) => {
-      setAttendies(roomSize);
-    });
-    return () => {
-      socket.off("user-disconnected");
-    };
-  });
-  useEffect(() => {
     validateWebinar();
   }, [roomid]);
   const colors = [
@@ -1089,11 +1071,6 @@ export default function Stream() {
     scrollToBottom();
   }, [defaultChat]);
 
-  useEffect(() => {
-    socket.on("watcher", (userId, roomSize) => {
-      setAttendies(roomSize);
-    });
-  }, [roomid]);
   let handleFreeTimer = async () => {
     let now = Date.now();
     const endTime = now + 45 * 60 * 1000;
@@ -1104,28 +1081,23 @@ export default function Stream() {
       let res = await axios.get(`/api/v1/livewebinar/classtimer/${roomid}`);
       if (res) {
         localStorage.setItem(roomid, res?.data.classEndTime);
-        setFreeTimer(res?.data.classEndTime);
       } else {
         localStorage.setItem(roomid, endTime);
-        setFreeTimer(endTime);
       }
     } catch (error) {
       localStorage.setItem(roomid, endTime);
     }
   };
- 
+
   const initializePeer = async () => {
     getResourceCount();
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
 
     peerInstance.on("open", (peerId) => {
-      socket.emit("broadcaster", roomid, peerId,audioVisuals);
+      socket.emit("broadcaster", roomid, peerId, audioVisuals);
 
- 
-    socket.emit("audiovisuals", roomid, audioVisuals);
-
-
+      socket.emit("audiovisuals", roomid, audioVisuals);
     });
     handleFreeTimer();
     navigator.mediaDevices
@@ -1153,7 +1125,6 @@ export default function Stream() {
         });
         const screenInstance = new Peer();
         screenPeerRef.current = screenInstance;
-        setScreenPeerhandler(screenInstance);
         setScreenStreamhandler(stream);
         screenInstance.on("open", (peerId) => {
           socket.emit("startScreenSharing", roomid, peerId);
@@ -1275,6 +1246,8 @@ export default function Stream() {
       setDurationValue(durationInSec);
       // handle duration unit
       setPollStatus(true);
+      getResourceCount();
+
       dispatch(stopLoading());
 
       //
@@ -1316,8 +1289,7 @@ export default function Stream() {
   const handleOpenResourceModal = async (type) => {
     dispatch(startLoading());
     try {
-      setLoading(true);
-
+      console.log(type);
       const response = await axios.get(
         `/api/v1/classroomresource/creator-resources/${type}?page=${1}`
       );
@@ -1325,10 +1297,8 @@ export default function Stream() {
       setResources(response.data.resources);
       dispatch(stopLoading());
       setResourceModal(true);
-      setLoading(false);
     } catch (error) {
       console.error("Error fetching resources:", error);
-      setLoading(false);
       dispatch(stopLoading());
     }
   };
@@ -1368,7 +1338,7 @@ export default function Stream() {
       setDurationUnit("secs");
       setResourceModal(false);
     } else {
-      let { type, durationInSec } = item;
+      let { durationInSec } = item;
       setAnswerHolder(item.answers);
       setSpecialChat([
         {
@@ -1637,7 +1607,6 @@ export default function Stream() {
 
                     <PaymentModal
                       roomId={roomid}
-                      setFreeTimer={setFreeTimer}
                       type={"time"}
                       close={() => {
                         setTimeOutModal(false);
@@ -1671,7 +1640,6 @@ export default function Stream() {
 
                     <PaymentModal
                       roomId={roomid}
-                      setFreeTimer={setFreeTimer}
                       type={moreResources.type}
                       close={() => {
                         setMoreResources({
@@ -2747,7 +2715,7 @@ export default function Stream() {
                                               <Poll
                                                 pollOptions={item.options}
                                                 pollResult={
-                                                  pollResultHolder[index]
+                                                  pollResultHolder
                                                 }
                                               />
                                             </div>
@@ -3095,7 +3063,7 @@ export default function Stream() {
                                               <Poll
                                                 pollOptions={item.options}
                                                 pollResult={
-                                                  pollResultHolder[index]
+                                                  pollResultHolder
                                                 }
                                               />
                                             </div>

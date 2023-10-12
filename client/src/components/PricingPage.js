@@ -21,18 +21,14 @@ const PricingPage = () => {
                 </div>
                 <div className="item-body">
                   <ul>
-                    <li>
-                      <span className="course-counter-span__landing-page">
-                        1
-                      </span>{" "}
-                      Course Upload <br />
-                      <span>(200MB/Video)</span>
-                    </li>
-                    <li>400 Megabytes Storage space.</li>
+                    <li>30 mins of Tuturly classsroom</li>
+                    <li>3 Quiz creation</li>
+                    <li>3 Polls creation</li>
+                    <li>2 Digital Products</li>
+                    <li>Website builder and landing page</li>
+                    <li>Get paid from anywhere in the world</li>
                     <li>Unlimited Students</li>
-                    <li>Instant Payout</li>
-                    <li>Course Design Templates</li>
-                    <li>20% Commission/Sale</li>
+                    <li>Tuturly Classroom</li>
                   </ul>
                   <Button className="btn-select__plan" tag={Link} to="/signin">
                     Select
@@ -44,23 +40,15 @@ const PricingPage = () => {
               <div className="payment-plan__item">
                 <div className="item-header">
                   <p className="plan-name text-center">Tuturly Basic</p>
-                  <h3 className="plan-price__tag text-center">&#8358;8,000</h3>
+                  <h3 className="plan-price__tag text-center">&#36;25</h3>
                   <div className="price-tag__extra-info">per month</div>
                 </div>
                 <div className="item-body">
                   <ul>
-                    <li>
-                      <span className="course-counter-span__landing-page">
-                        10
-                      </span>{" "}
-                      Courses Upload
-                      <span>(200MB/Video)</span>
-                    </li>
-                    <li>10 Gigabytes Storage space.</li>
-                    <li>Unlimited Students</li>
-                    <li>Instant Payout</li>
-                    <li>Course Design Templates</li>
-                    <li>20% Commission/Sale</li>
+                    <li>Free Plan +</li>
+                    <li>Unlimited time on tuturly classroom</li>
+                    <li>Unlimited tests to students</li>
+                    <li>Unlimited polls</li>
                   </ul>
                   <Button className="btn-select__plan" tag={Link} to="/signin">
                     Select
@@ -76,23 +64,18 @@ const PricingPage = () => {
                             </div> */}
                 <div className="item-header">
                   <p className="plan-name text-center">Tuturly Enterprise</p>
-                  <h3 className="plan-price__tag text-center">&#8358;15,000</h3>
+                  <h3 className="plan-price__tag text-center">&#36;50</h3>
                   <div className="price-tag__extra-info">per month</div>
                 </div>
                 <div className="item-body">
                   <ul>
+                    <li>Basic Plan +</li>
                     <li>
-                      <span className="course-counter-span__landing-page">
-                        25
-                      </span>{" "}
-                      Courses Upload
-                      <span>(200MB/Video)</span>
+                      20 Free gigabytes for Uploading courses and Dgital
+                      Products
                     </li>
-                    <li>25 Gigabytes Storage space.</li>
-                    <li>Unlimited Students</li>
-                    <li>Instant Payout</li>
-                    <li>Course Design Templates</li>
-                    <li>20% Commission/Sale</li>
+                    <li>Tuturly.com sub link removed (coming soon)</li>
+                    <li>Banner of (created by tuturly.com) removed</li>
                   </ul>
                   <Button className="btn-select__plan" tag={Link} to="/signin">
                     Select

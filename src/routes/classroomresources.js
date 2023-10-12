@@ -24,6 +24,7 @@ router.post("/add-resource", [auth], async (req, res) => {
 router.post("/create/:type", [auth], async (req, res) => {
   const { type } = req.params;
   const creator = req.user.id;
+
   try {
     const creatorSchool = await School.findOne({ createdBy: req.user.id });
     if (!creatorSchool) {
@@ -46,7 +47,6 @@ router.post("/create/:type", [auth], async (req, res) => {
         persist,
       });
       await newResource.save();
-      console.log(type);
       res.json({
         message: "Quiz created successfully",
       });
@@ -89,6 +89,7 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
       type,
       persist: true,
     });
+ 
     // .limit(limit)
     // .skip(skip)
     // .sort({ createdAt: -1 });
@@ -197,79 +198,6 @@ router.get("/count", [auth], async (req, res) => {
       });
     }
   } catch (error) {}
-  // try {
-  //   const addedPoll = await AddResource.find({
-  //     orderfrom: creator,
-  //     ordertype: "poll",
-  //   });
-  //   const addedQuiz = await AddResource.find({
-  //     orderfrom: creator,
-  //     ordertype: "quiz",
-  //   });
-  //   const pollResources = await ClassroomResource.find({
-  //     creator,
-  //     type: "poll",
-  //   }).populate("creator");
-  //   const quizResources = await ClassroomResource.find({
-  //     creator,
-  //     type: "quiz",
-  //   }).populate("creator");
-
-  //   if (pollResources.length > 0 || quizResources.length > 0) {
-  //     const payment = await PaymentPlans.findOne({
-  //       _id: pollResources[0].creator.selectedplan,
-  //     });
-  //     console.log(addedPoll, "ap", addedQuiz, "aq");
-  //     let updatedPollCount = pollResources.length - addedPoll.length;
-  //     let updatedQuizCount = quizResources.length - addedQuiz.length;
-
-  //     let totalCount = pollResources.length + quizResources.length;
-
-  //     res.json({
-  //       resourceCount: totalCount,
-  //       paymentInfo: payment.planname,
-  //       pollCount: updatedPollCount,
-  //       quizCount: updatedQuizCount,
-  //     });
-  //     console.log({
-  //       resourceCount: totalCount,
-  //       paymentInfo: payment.planname,
-  //       pollCount: updatedPollCount,
-  //       quizCount: updatedQuizCount,
-  //     });
-  //   } else {
-  //     res.json({
-  //       resourceCount: 0,
-  //       paymentInfo: 0,
-  //       pollCount: 0,
-  //       quizCount: 0,
-  //     });
-  //   }
-
-  //   // const resources = await ClassroomResource.find({ creator }).populate(
-  //   //   "creator"
-  //   // );
-  //   // if (resources.length > 0) {
-  //   // const payment = await PaymentPlans.findOne({
-  //   //   _id: resources[0].creator.selectedplan,
-  //   // });
-
-  //   //   res.json({
-  //   //     resourceCount: resources.length,
-  //   //     paymentInfo: payment.planname,
-  //   //   });
-  //   // } else {
-  //   //   res.json({
-  //   //     resourceCount: 0,
-  //   //     paymentInfo: null,
-  //   //   });
-  //   // }
-  // } catch (error) {
-  //   console.error(error);
-  //   res
-  //     .status(500)
-  //     .json({ error: "An error occurred while fetching resources." });
-  // }
 });
 
 // PUT endpoint to update a resource (both quiz and poll)
