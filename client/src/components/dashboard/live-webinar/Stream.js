@@ -33,7 +33,7 @@ import Picker from "@emoji-mart/react";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
-import CountdownTimer from "./CountdownTimer";
+import CountdownTimer from "./CountDownTimer";
 import PaymentModal from "./PaymentModal";
 import LiveWebinarMobileNav from "./LiveWebinarMobileNav";
 import CustomTextArea from "./CustomTextArea";
@@ -880,15 +880,11 @@ export default function Stream() {
   };
 
   const handleStudentPollSubmit = (newResult) => {
-   
     let newResultHolder = [...pollResultHolder, newResult];
     setPollResultHolder(newResultHolder);
 
     socket.emit("updatedPollResult", roomid, newResultHolder, 0);
- 
-
   };
- 
 
   useEffect(() => {
     socket.on("roomTimerStarted", (roomTimer) => {
@@ -935,10 +931,9 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("special submit", (type, result, user) => {
-      
       if (type === "poll") {
         handleStudentPollSubmit(result);
-        console.log("first",result)
+        console.log("first", result);
       }
 
       if (type === "quiz") {
@@ -973,7 +968,6 @@ export default function Stream() {
     quizResultHolder,
     quizSubmission,
     setQuizResultHolder,
-
   ]);
 
   useEffect(() => {
@@ -2714,9 +2708,7 @@ export default function Stream() {
                                               )}
                                               <Poll
                                                 pollOptions={item.options}
-                                                pollResult={
-                                                  pollResultHolder
-                                                }
+                                                pollResult={pollResultHolder}
                                               />
                                             </div>
                                           </div>
@@ -3062,9 +3054,7 @@ export default function Stream() {
                                               )}
                                               <Poll
                                                 pollOptions={item.options}
-                                                pollResult={
-                                                  pollResultHolder
-                                                }
+                                                pollResult={pollResultHolder}
                                               />
                                             </div>
                                           </div>

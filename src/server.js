@@ -50,7 +50,7 @@ import stripeRoute from "./routes/stripe";
 import classroomresourcesRoute from "./routes/classroomresources";
 import livewebinarRoute from "./routes/livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
-import setupSocketIO from "./socketSetup"; 
+import setupSocketIO from "./socketSetup";
 import domainRoute from "./routes/domain";
 
 cloudinary.v2.config({

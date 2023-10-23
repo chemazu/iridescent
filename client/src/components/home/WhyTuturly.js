@@ -1,59 +1,109 @@
 import React from "react";
 import { Col, Container, Row } from "reactstrap";
-import { LazyLoadImage } from "react-lazy-load-image-component";
 
-import whyTuturly from "../../images/home-page-images/why-tuturly.png";
-import benefitsOfTuturly from "../../images/home-page-images/benefits.png";
+import teachable from "../../images/home-page-images/competitors/teachable.png";
+import selar from "../../images/home-page-images/competitors/selar.png";
+import paypal from "../../images/home-page-images/competitors/paypal.png";
+import zoom from "../../images/home-page-images/competitors/zoom.png";
+import calendly from "../../images/home-page-images/competitors/calendly.png";
+import telegram from "../../images/home-page-images/competitors/telegram.png";
+import plusIcon from "../../images/home-page-images/plus-icon.png";
+import logo from "../../images/tuturlySvgLogo.svg";
 
 const WhyTuturly = () => {
   return (
     <>
       <section className="why-tuturly">
         <Container fluid className="why-tuturly__container">
-          <div className="why-explainer-section">
-            <Row>
-              <Col data-aos="zoom-in-down" xs="12" sm="12" md="6" lg="6" xl="6">
-                <br />
-                <br />
-                <h2>Why Tuturly?</h2>
-                <p>
-                  Tuturly was created to make it easy for professionals from all
-                  works of life to share their knowledge through generations and
-                  earn from it.
-                </p>
+          <h2 className="intro-header">
+            Trusted by individuals and teams across the globe
+          </h2>
+          <h2 className="intro-header">about</h2>
+          <h2 className="usage-count-header">7000+</h2>
+          <h2 className="intro-header">Academies</h2>
+
+          <div className="usage-info__container">
+            <h3>
+              Before you would need all these to <br /> interact and sell to
+              your audience
+            </h3>
+            <Row className="justify-content-sm-between align-items-baseline mt-3">
+              <Col xs="4" lg="1">
+                <div className="why-tuturly-icon__container">
+                  <img src={teachable} alt="..." className="img-fluid" />
+                  <p>Courses</p>
+                </div>
               </Col>
-              <Col data-aos="zoom-in-up" xs="12" sm="12" md="6" lg="6" xl="6">
-                <LazyLoadImage
-                  src={whyTuturly}
-                  className="img-fluid"
-                  alt="why tuturly..."
-                  // style={{ borderRadius: "10px" }}
-                />
+              {/* plus icon  */}
+              <Col xs="4" lg="1" className="why-tuturly-plus-icon__col">
+                <div className="why-tuturly-plus-icon__container">
+                  <img src={plusIcon} alt="..." className="img-fluid" />
+                </div>
+              </Col>
+              {/* plus icon end  */}
+              <Col xs="4" lg="1">
+                <div className="why-tuturly-icon__container">
+                  <img src={selar} alt="..." className="img-fluid" />
+                  <p>Ebooks</p>
+                </div>
+              </Col>
+              {/* plus icon  */}
+              <Col xs="4" lg="1" className="why-tuturly-plus-icon__col">
+                <div className="why-tuturly-plus-icon__container">
+                  <img src={plusIcon} alt="..." className="img-fluid" />
+                </div>
+              </Col>
+              {/* plus icon end */}
+              <Col xs="4" lg="1">
+                <div className="why-tuturly-icon__container">
+                  <img src={paypal} alt="..." className="img-fluid" />
+                  <p>Payments</p>
+                </div>
+              </Col>
+              {/* plus icon  */}
+              <Col xs="4" lg="1" className="why-tuturly-plus-icon__col">
+                <div className="why-tuturly-plus-icon__container">
+                  <img src={plusIcon} alt="..." className="img-fluid" />
+                </div>
+              </Col>
+              {/* plus icon end */}
+              <Col xs="4" lg="1">
+                <div className="why-tuturly-icon__container">
+                  <img src={zoom} alt="..." className="img-fluid" />
+                  <p>Live</p>
+                </div>
+              </Col>
+              {/* plus icon  */}
+              <Col xs="4" lg="1" className="why-tuturly-plus-icon__col">
+                <div className="why-tuturly-plus-icon__container">
+                  <img src={plusIcon} alt="..." className="img-fluid" />
+                </div>
+              </Col>
+              {/* plus icon end */}
+              <Col xs="4" lg="1">
+                <div className="why-tuturly-icon__container">
+                  <img src={calendly} alt="..." className="img-fluid" />
+                  <p>Scheduling</p>
+                </div>
+              </Col>
+              {/* plus icon  */}
+              <Col xs="4" lg="1" className="why-tuturly-plus-icon__col">
+                <div className="why-tuturly-plus-icon__container">
+                  <img src={plusIcon} alt="..." className="img-fluid" />
+                </div>
+              </Col>
+              {/* plus icon  end */}
+              <Col xs="4" lg="1">
+                <div className="why-tuturly-icon__container">
+                  <img src={telegram} alt="..." className="img-fluid" />
+                  <p>Community</p>
+                </div>
               </Col>
             </Row>
-          </div>
-          <div className="benefits-explainer-section">
-            <Row>
-              <Col data-aos="zoom-in-down" xs="12" sm="12" md="6" lg="6" xl="6">
-                <LazyLoadImage
-                  src={benefitsOfTuturly}
-                  alt="benefits of tuturly..."
-                  className="img-fluid"
-                />
-              </Col>
-              <Col data-aos="zoom-in-up" xs="12" sm="12" md="6" lg="6" xl="6">
-                <br />
-                <br />
-                <h4>Benefits of Tuturly</h4>
-                <ul>
-                  <li>You own your customizable website.</li>
-                  <li>Zero coding knowledge required.</li>
-                  <li>Upload large size videos.</li>
-                  <li>Interact with your students.</li>
-                  <li>Monetize your videos</li>
-                </ul>
-              </Col>
-            </Row>
+            <div className="why-tuturly-logo">
+              <h4>Now all you need is</h4>
+              <img src={logo} className="img-fluid" alt="..." />
+            </div>
           </div>
         </Container>
       </section>

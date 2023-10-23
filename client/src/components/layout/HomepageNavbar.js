@@ -12,7 +12,7 @@ import {
   Col,
 } from "reactstrap";
 
-import logo from "../../images/tuturlySVGHomeLogo.svg";
+import logo from "../../images/tuturlySvgLogo.svg";
 import logo2 from "../../images/tuturlySvgLogo.svg";
 
 const HomepageNavbar = (props) => {

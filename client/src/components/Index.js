@@ -2,10 +2,15 @@ import React, { useEffect } from "react";
 import { Modal } from "reactstrap";
 
 import Header from "./home/Header";
-import Howitworks from "./home/Howitworks";
+import Partners from "./home/Partners";
 import WhyTuturly from "./home/WhyTuturly";
-import Tools from "./home/Tools";
+import Special from "./home/Special";
+import TuturlyTracking from "./home/TuturlyTracking";
 import Audience from "./home/Audience";
+import CustomLandingPage from "./home/CustomLandingPage";
+import Notice from "./home/Notice";
+import Testimonial from "./home/Testimonial";
+import Payments from "./home/Payments";
 import Faq from "./home/Faq";
 import CtaText from "./home/CtaText";
 import Footer from "./home/Footer";
@@ -23,10 +28,15 @@ export const Index = ({ match: { params } }) => {
   return (
     <>
       <Header />
-      <Howitworks />
+      <Partners />
       <WhyTuturly />
-      <Tools />
+      <Special />
+      <TuturlyTracking />
+      <CustomLandingPage />
+      <Payments />
+      <Notice />
       <Audience />
+      <Testimonial />
       <Faq />
       <CtaText />
       <Footer />

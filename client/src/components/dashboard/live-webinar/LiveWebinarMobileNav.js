@@ -23,7 +23,7 @@ import classnames from "classnames";
 import logo2 from "../../../images/tuturlySvgLogo.svg";
 
 import "../../../custom-styles/dashboard/notificationbar.css";
-import CountdownTimer from "./CountdownTimer";
+import CountdownTimer from "./CountDownTimer";
 
 const LiveWebinarMobileNav = ({ currentPage, parent }) => {
   let {

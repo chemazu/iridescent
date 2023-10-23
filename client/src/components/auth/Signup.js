@@ -30,7 +30,10 @@ const Signup = () => {
   const dispatch = useDispatch();
 
   const [formData, setFormData] = useState({
-    email: "",
+    email:
+      localStorage.getItem("userEmail").length > 0
+        ? localStorage.getItem("userEmail")
+        : "",
     password: "",
   });
 
@@ -198,7 +201,7 @@ const Signup = () => {
                       {
                         // password.length > 0 &&
                         !validPassword && (
-                          <p className="form-warning">invalid password</p>
+                          <p className="form-warning">Invalid password</p>
                         )
                       }
                     </FormGroup>

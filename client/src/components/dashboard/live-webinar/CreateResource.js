@@ -969,7 +969,7 @@ export default function CreateResource() {
 
               <PaymentModal
                 roomId={"roomid"}
-                setFreeTimer={"setFreeTimer"}
+                
                 type={moreResources.type}
                 close={() => {
                   setMoreResources({

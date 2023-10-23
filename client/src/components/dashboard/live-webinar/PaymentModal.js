@@ -16,7 +16,7 @@ import {useHistory } from "react-router-dom";
 function PaymentModal({
   currency,
   roomId,
-  setFreeTimer,
+ 
   type,
   close,
   updateCount,
@@ -51,7 +51,7 @@ function PaymentModal({
     toggleTransactionModal();
     // handleSuccess();
    
-    setFreeTimer();
+ 
     close();
     setStripeCheckoutModalDialog(false);
     setStripePromise(null);
@@ -151,7 +151,7 @@ function PaymentModal({
     let res = await axios.put("/api/v1/livewebinar/addTime", body);
     console.log(res.data.newTime);
     localStorage.setItem(roomId, res.data.newTime);
-    setFreeTimer(res.data.newTime);
+ 
     close();
     // make the api call
 
