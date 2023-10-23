@@ -33,7 +33,6 @@ import Picker from "@emoji-mart/react";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
-import CountdownTimer from "./CountDownTimer";
 import PaymentModal from "./PaymentModal";
 import LiveWebinarMobileNav from "./LiveWebinarMobileNav";
 import CustomTextArea from "./CustomTextArea";
