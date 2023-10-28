@@ -836,6 +836,7 @@
   max-width: 60%;
   font-weight: 300;
   overflow-wrap: break-word;
+  word-break: break-word; 
   /* text-align: left;
   align-items: flex-start; */
 }
@@ -1092,7 +1093,9 @@
 }
 .live-webinar-interface .chat-box .chat-interface .chat-interface-text {
   flex-grow: 1;
-  overflow: scroll;
+  overflow-y: scroll;
+  overflow-x: hidden;
+
   padding: 5%;
 }
 .live-webinar-interface .chat-box .chat-interface .chat-interface-quiz {
@@ -1212,7 +1215,7 @@
   width: 100%;
   justify-content: space-between;
   height: fit-content;
- padding: 1% 2% 0 1%;
+  padding: 1% 2% 0 1%;
   /* padding-bottom: .5rem;
   margin-bottom: .5rem; */
 }
@@ -1723,7 +1726,7 @@
   width: 100%;
 }
 @media screen and (max-width: 812px) {
-  .watcher-chat-box .inchat-poll{
+  .watcher-chat-box .inchat-poll {
     margin-bottom: 2.5%;
   }
   .mini-screen {
@@ -1739,14 +1742,12 @@
     height: 35dvh !important;
   }
   .chat-interface-quiz {
- 
     flex-grow: 1;
   }
   .watch-screen {
     background-color: var(--site-white-color);
   }
   .chat-interface-text {
-
   }
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;

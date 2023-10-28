@@ -18,6 +18,14 @@ const PricingPage = () => {
                 <div className="payment-plan__first-item-header">
                   <p className="plan-name text-center">Tuturly Free</p>
                   <h3 className="plan-price__tag text-center">Free</h3>
+                  <h3
+                    style={{
+                      visibility: "hidden",
+                    }}
+                    className="plan-price__discount text-center"
+                  >
+                    &#36;20
+                  </h3>
                 </div>
                 <div className="item-body">
                   <ul>
@@ -40,7 +48,10 @@ const PricingPage = () => {
               <div className="payment-plan__item">
                 <div className="item-header">
                   <p className="plan-name text-center">Tuturly Basic</p>
-                  <h3 className="plan-price__tag text-center">&#36;25</h3>
+                  <h3 className="plan-price__tag text-center old-price">
+                    &#36;25
+                  </h3>
+                  <h3 className="plan-price__discount text-center">&#36;20</h3>
                   <div className="price-tag__extra-info">per month</div>
                 </div>
                 <div className="item-body">
@@ -64,7 +75,10 @@ const PricingPage = () => {
                             </div> */}
                 <div className="item-header">
                   <p className="plan-name text-center">Tuturly Enterprise</p>
-                  <h3 className="plan-price__tag text-center">&#36;50</h3>
+                  <h3 className="plan-price__tag text-center old-price">
+                    &#36;50
+                  </h3>
+                  <h3 className="plan-price__discount text-center">&#36;40</h3>
                   <div className="price-tag__extra-info">per month</div>
                 </div>
                 <div className="item-body">

@@ -20,6 +20,9 @@ const paymentPlansSchema = new mongoose.Schema(
     planprice_usd: {
       type: Number,
     },
+    plandiscountprice_usd: {
+      type: Number,
+    },
     totaluploadsize: {
       // saved in MB(megabytes)
       type: Number,

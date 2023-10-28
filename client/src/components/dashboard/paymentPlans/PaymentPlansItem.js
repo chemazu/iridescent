@@ -169,7 +169,11 @@ const PaymentPlansItem = ({
                 </span>
               )}
             </div>
-            <div className="plan-cost">
+            <div
+              className={`plan-cost ${
+                plan.planname.toLowerCase() !== "free" && "old-plan__price"
+              }`}
+            >
               {plan.planprice === 0 ? (
                 "Free"
               ) : (
@@ -183,15 +187,26 @@ const PaymentPlansItem = ({
                   />
                 </>
               )}
-              {plan.planprice !== 0 && (
-                <span className="per-month__text">Per Month</span>
-              )}
             </div>
-            {/* {
-               plan.planname.toLowerCase() === 'enterprise' && <div className='enterprise-plan__more-info'>
-               Save 20% When you Pay Per Annum
-             </div>
-             } */}
+            <div className="discount-plan__cost">
+              &#36;
+              <CurrencyFormat
+                value={plan.plandiscountprice_usd}
+                displayType="text"
+                thousandSeparator={true}
+                fixedDecimalScale={true}
+              />
+            </div>
+            {plan.planprice !== 0 ? (
+              <span className="per-month__text">Per Month</span>
+            ) : (
+              <span
+                style={{ visibility: "hidden" }}
+                className="per-month__text"
+              >
+                Per Month
+              </span>
+            )}
           </div>
           <div className="payment-plan__content mt-5">
             {handlePlanContentDisplay(plan.planname)}

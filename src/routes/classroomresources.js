@@ -5,8 +5,87 @@ import School from "../models/School";
 import PaymentPlans from "../models/PaymentPlans";
 import AddResource from "../models/AdditonalResource";
 import User from "../models/User";
+import ResourceDeployment from "../models/ResourceDeployment";
 const router = Router();
 
+router.post("/add-deployment", [auth], async (req, res) => {
+  const { type } = req.body;
+
+  if (!type) {
+    return res.status(400).json({ success: false, error: "Type is required." });
+  }
+
+  const creator = req.user.id;
+  const newDeployment = new ResourceDeployment({
+    type,
+    creator,
+  });
+  try {
+    await newDeployment.save();
+    res.status(201).json({
+      success: true,
+      message: `${type} created successfully`,
+      data: newDeployment, // You can include the created deployment in the response
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ success: false, error: "Failed to create deployment." });
+  }
+});
+
+router.get("/deployment-count", [auth], async (req, res) => {
+  const creator = req.user.id;
+
+  try {
+    const user = await User.findById(creator);
+ 
+    const payment = await PaymentPlans.findOne({
+      _id: user.selectedplan,
+    });
+    if (payment.planname === "free") {
+      const addedPoll = await AddResource.find({
+        orderfrom: creator,
+        ordertype: "poll",
+      });
+      const addedQuiz = await AddResource.find({
+        orderfrom: creator,
+        ordertype: "quiz",
+      });
+      const pollResources = await ResourceDeployment.find({
+        creator,
+        type: "poll",
+      });
+      const quizResources = await ResourceDeployment.find({
+        creator,
+        type: "quiz",
+      });
+      let addedQuizLength = addedQuiz.reduce((accumulator, object) => {
+        return accumulator + object.added || 0;
+      }, 0);
+      let addedPollLength =
+        addedPoll.reduce((accumulator, object) => {
+          return accumulator + object.added;
+        }, 0) || 0;
+      let updatedPollCount = pollResources.length - addedPollLength;
+      let updatedQuizCount = quizResources.length - addedQuizLength;
+
+      res.json({
+        paymentInfo: "free",
+        pollCount: updatedPollCount,
+        quizCount: updatedQuizCount,
+      });
+    } else {
+      res.json({
+        paymentInfo: 0,
+        pollCount: 0,
+        quizCount: 0,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 router.post("/add-resource", [auth], async (req, res) => {
   const { streamKey, added, transaction_reference, amount, orderType } =
     req.body;
@@ -89,7 +168,7 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
       type,
       persist: true,
     });
- 
+
     // .limit(limit)
     // .skip(skip)
     // .sort({ createdAt: -1 });
@@ -116,6 +195,7 @@ router.get("/creator-resources/:type", [auth], async (req, res) => {
 router.get("/purge", async (req, res) => {
   await ClassroomResource.deleteMany({});
   await AddResource.deleteMany({});
+  await ResourceDeployment.deleteMany({});
 
   res.json("all records deleted");
 });
@@ -197,7 +277,9 @@ router.get("/count", [auth], async (req, res) => {
         quizCount: 0,
       });
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log("error");
+  }
 });
 
 // PUT endpoint to update a resource (both quiz and poll)

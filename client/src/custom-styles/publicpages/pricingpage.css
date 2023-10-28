@@ -14,6 +14,10 @@
   z-index: 1;
 }
 
+.user-plans {
+  padding-bottom: 12rem;
+}
+
 .user-plans h3 {
   color: var(--site-white-color);
   font-weight: 800;
@@ -70,6 +74,11 @@
   justify-content: space-between;
 }
 
+.user-plans .payment-plan__item .item-body ul {
+  height: 330px;
+  min-height: fit-content;
+}
+
 .user-plans .payment-plan__item .btn-select__plan,
 .user-plans .payment-plan__item .btn-select__plan:hover,
 .user-plans .payment-plan__item .btn-select__plan:active {
@@ -91,6 +100,16 @@
 }
 
 .user-plans .plan-price__tag {
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.old-price {
+  text-decoration: line-through;
+  font-size: 20px;
+}
+
+.user-plans .plan-price__discount {
   font-size: 30px;
   font-weight: 800;
 }

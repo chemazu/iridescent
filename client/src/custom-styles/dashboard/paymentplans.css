@@ -81,6 +81,10 @@
   margin: 13px;
 }
 
+.payment-plan__item-header {
+  height: fit-content;
+}
+
 .payment-plan__item-header .plan-name {
   font-size: 18px;
   font-weight: 550;
@@ -92,9 +96,21 @@
   font-size: 35px;
   font-weight: 800;
   color: var(--site-subtle-dark);
-  margin-top: 10px;
   text-align: center;
   margin-bottom: 1px;
+  margin-bottom: 0;
+}
+
+.old-plan__price {
+  text-decoration: line-through;
+  font-size: 20px;
+}
+
+.payment-plan__item-header .discount-plan__cost {
+  font-size: 35px;
+  font-weight: 800;
+  color: var(--site-subtle-dark);
+  text-align: center;
 }
 
 .per-month__text {

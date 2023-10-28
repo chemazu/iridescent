@@ -29,14 +29,13 @@ import { useParams, useHistory } from "react-router-dom";
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-
+import CountdownTimer from "./CountdownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import PaymentModal from "./PaymentModal";
 import LiveWebinarMobileNav from "./LiveWebinarMobileNav";
 import CustomTextArea from "./CustomTextArea";
-import CountdownTimer from "./CountdownTimer"
 // import TutorNotificationNavbar from "../tutorly-courses/TutorArea/TutorNotificationNavbar";
 
 export default function Stream() {
@@ -51,6 +50,13 @@ export default function Stream() {
   const videoStreamRef = useRef(null);
 
   const [reconnectLoading, setReconnectLoading] = useState(false);
+  const [planStatus, setPlanStatus] = useState(null);
+
+  const [trackResourceDeployment, setTrackResourceDeployment] = useState({
+    pollCount: 0,
+    quizCount: 0,
+  });
+
   const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
   const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
@@ -59,7 +65,6 @@ export default function Stream() {
   const [freeTimerStatus, disableFreeTimer] = useState(true);
   const history = useHistory();
   const chatInterfaceRef = useRef(null);
-
   const alert = useAlert();
   const [title, setTitle] = useState("");
   const [attendance, setAttendance] = useState(1);
@@ -81,12 +86,10 @@ export default function Stream() {
   const [moreResources, setMoreResources] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
   const [resourceModal, setResourceModal] = useState(false);
   const [unReadCount, setUnReadCount] = useState(0);
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
-
   const [resourceType, setResourceType] = useState("");
   const [editStat, setEditStat] = useState(false);
   const [deleteModal, setDeleteModal] = useState(false);
@@ -99,7 +102,6 @@ export default function Stream() {
     audio: true,
   });
   const [screenStreamhandler, setScreenStreamhandler] = useState(null);
-
   const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
   const [questionNumber, setQuestionNumber] = useState(1);
@@ -238,18 +240,46 @@ export default function Stream() {
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
   };
-  const getResourceCount = async () => {
-    let res = await axios.get(`/api/v1/classroomresource/count`);
+  // const getResourceCount = async () => {
+  //   let res = await axios.get(`/api/v1/classroomresource/count`);
+
+  //   if (res) {
+  //     if (res.data.paymentInfo === "free") {
+  //       let { pollCount, quizCount, resourceCount } = res.data;
+  //       setPlanStatus("free");
+  //       console.log(res.data);
+  //       setResourceCount({ pollCount, quizCount, resourceCount });
+  //     } else {
+  //     }
+  //   }
+  // };
+  const getResourceDeploymentCount = async () => {
+    let res = await axios.get("/api/v1/classroomresource/deployment-count");
 
     if (res) {
       if (res.data.paymentInfo === "free") {
-        let { pollCount, quizCount, resourceCount } = res.data;
+        let { pollCount, quizCount } = res.data;
+        setPlanStatus("free");
         console.log(res.data);
-        setResourceCount({ pollCount, quizCount, resourceCount });
+        console.log(trackResourceDeployment);
+        setTrackResourceDeployment({ pollCount, quizCount });
       } else {
       }
     }
   };
+  const createResourceDeployment = async (type) => {
+    try {
+      await axios.post(
+        "/api/v1/classroomresource/add-deployment",
+        { type },
+        {}
+      );
+      getResourceDeploymentCount();
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     // Send a heartbeat to the server periodically
     const heartbeatInterval = setInterval(() => {
@@ -267,7 +297,7 @@ export default function Stream() {
     };
   }, [roomid]);
   useEffect(() => {
-    getResourceCount();
+    getResourceDeploymentCount();
   }, [roomid]);
   function copyText() {
     if (presenterDetails.fee === 0) {
@@ -357,6 +387,9 @@ export default function Stream() {
     let durationInSec = convertToSeconds(durationValue, durationUnit);
 
     // handle special chat
+
+    createResourceDeployment("poll");
+
     setSpecialChat([
       // ...specialChat,
       {
@@ -413,7 +446,7 @@ export default function Stream() {
           setPollOptions(["", "", "", ""]);
           setDurationValue("");
           setDurationUnit("secs");
-          getResourceCount();
+          getResourceDeploymentCount();
           setResourceModal(false);
           setSaveResource(false);
         })
@@ -442,7 +475,7 @@ export default function Stream() {
           setDurationValue("");
           setDurationUnit("secs");
           setSaveResource(false);
-          getResourceCount();
+          getResourceDeploymentCount();
           setResourceModal(false);
           setSaveResource(false);
         })
@@ -472,8 +505,10 @@ export default function Stream() {
       ];
 
       setQuizHolder(newQuizHolder);
-      // setSpecialChat
+
       let durationInSec = convertToSeconds(durationValue, durationUnit);
+      setQuizResultHolder([]);
+      createResourceDeployment("quiz");
 
       setSpecialChat([
         {
@@ -523,7 +558,7 @@ export default function Stream() {
               setQuestionNumber(1);
               setSaveResource(false);
               dispatch(stopLoading());
-              getResourceCount();
+              getResourceDeploymentCount();
             }
           })
           .catch((error) => {
@@ -550,7 +585,7 @@ export default function Stream() {
               setTotalQuestion(0);
               setQuestionNumber(1);
               setSaveResource(false);
-              getResourceCount();
+              getResourceDeploymentCount();
 
               dispatch(stopLoading());
             }
@@ -593,6 +628,8 @@ export default function Stream() {
       setTotalQuestion(0);
       setQuestionNumber(1);
     } else {
+      setQuizResultHolder([]);
+      createResourceDeployment("quiz");
       setSpecialChat([
         {
           user: 1,
@@ -706,6 +743,7 @@ export default function Stream() {
     }
   };
   const handlePollSubmit = (event) => {
+    // check the payement status
     event.preventDefault();
     handleCreatePoll();
     setPollConfirmation(false);
@@ -826,6 +864,10 @@ export default function Stream() {
   };
   const hanlePollQuizTimeOut = () => {
     setSpecialChat((prevSpecialChat) => {
+      // console.lof(reset the poll array)
+      // setPollStatus(false);
+      // setPollDuration(true);
+      // setPollResultHolder([]);
       const updatedChat = {
         ...prevSpecialChat[0],
         submissionStatus: true,
@@ -1084,7 +1126,7 @@ export default function Stream() {
   };
 
   const initializePeer = async () => {
-    getResourceCount();
+    getResourceDeploymentCount();
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
 
@@ -1240,7 +1282,7 @@ export default function Stream() {
       setDurationValue(durationInSec);
       // handle duration unit
       setPollStatus(true);
-      getResourceCount();
+      getResourceDeploymentCount();
 
       dispatch(stopLoading());
 
@@ -1280,8 +1322,36 @@ export default function Stream() {
     }
   };
 
+  const handleOpenResourceModalController = async (type) => {
+    if (planStatus === "free") {
+      if (type === "poll") {
+        if (trackResourceDeployment.pollCount < 3) {
+          handleOpenResourceModal(type);
+        } else {
+          setMoreResources({
+            status: "true",
+            type,
+          });
+        }
+      }
+      if (type === "quiz") {
+        if (trackResourceDeployment.quizCount < 3) {
+          handleOpenResourceModal(type);
+        } else {
+          setMoreResources({
+            status: "true",
+            type,
+          });
+        }
+      }
+    } else {
+      handleOpenResourceModal(type);
+    }
+  };
+
   const handleOpenResourceModal = async (type) => {
     dispatch(startLoading());
+    // check the
     try {
       console.log(type);
       const response = await axios.get(
@@ -1299,6 +1369,9 @@ export default function Stream() {
   const handlePollSelect = (item) => {
     let { type, title, options, durationInSec } = item;
     if (type === "poll") {
+      setPollResultHolder([]);
+
+      createResourceDeployment("poll");
       setSpecialChat([
         {
           user: 1,
@@ -1334,6 +1407,8 @@ export default function Stream() {
     } else {
       let { durationInSec } = item;
       setAnswerHolder(item.answers);
+      setQuizResultHolder([]);
+      createResourceDeployment("quiz");
       setSpecialChat([
         {
           user: 1,
@@ -1648,12 +1723,22 @@ export default function Stream() {
                             quizCount: resourceCount.quizCount,
                             resourceCount: resourceCount.resourceCount,
                           });
+                          setTrackResourceDeployment({
+                            pollCount:
+                              trackResourceDeployment.pollCount - number,
+                            quizCount: trackResourceDeployment.quizCount,
+                          });
                         }
                         if (moreResources.type === "quiz") {
                           setResourceCount({
                             quizCount: resourceCount.quizCount - number,
                             pollCount: resourceCount.pollCount,
                             resourceCount: resourceCount.resourceCount,
+                          });
+                          setTrackResourceDeployment({
+                            quizCount:
+                              trackResourceDeployment.quizCount - number,
+                            pollCount: trackResourceDeployment.pollCount,
                           });
                         }
                       }}
@@ -1923,6 +2008,8 @@ export default function Stream() {
                     </Button>{" "}
                     <Button
                       onClick={(e) => {
+                        setPollResultHolder([]);
+
                         handlePollSubmit(e);
                       }}
                     >
@@ -3235,7 +3322,7 @@ export default function Stream() {
                       className="control-object"
                       onClick={() => {
                         if (!timerHolder) {
-                          handleOpenResourceModal("poll");
+                          handleOpenResourceModalController("poll");
                         } else {
                           alert.show("ASSESSMENT ONGOING");
                         }
@@ -3251,7 +3338,7 @@ export default function Stream() {
                         if (!timerHolder) {
                           // setPollStatus(true);
 
-                          handleOpenResourceModal("quiz");
+                          handleOpenResourceModalController("quiz");
                         } else {
                           alert.show("ASSESSMENT ONGOING");
                         }

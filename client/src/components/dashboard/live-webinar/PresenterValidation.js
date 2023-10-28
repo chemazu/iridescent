@@ -10,56 +10,59 @@ import TimedOutClass from "./TimedOutClass";
 
 const PresenterValidation = ({ school }) => {
   const { roomid } = useParams();
-  const [isValid, setIsValid] = useState(false);
+  const [isValid, setIsValid] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [timeout, setTimeout] = useState(false);
   const [schoolInfo, setSchoolInfo] = useState(null);
 
   // get school name
+
   useEffect(() => {
     const validateWebinar = async () => {
       setIsLoading(true);
       let now = Date.now();
+      console.log(localStorage)
+      if (localStorage.getItem("token")) {
+        setAuthToken(localStorage.getItem("token"));
+        try {
+          let res = await axios.get(`/api/v1/livewebinar/validate/${roomid}`);
 
-      try {
-        if (localStorage.getItem("tutorToken")) {
-          setAuthToken(localStorage.getItem("tutorToken"));
-        }
-        let res = await axios.get(`/api/v1/livewebinar/validate/${roomid}`);
+          if (res) {
+            setSchoolInfo(res.data);
 
-        if (res) {
-          setSchoolInfo(res.data);
-
-          if (!res.data.endStatus) {
-            if (res.data.classEndTime > now || res.data.classEndTime === 0) {
-              // localStorage.setItem(`${roomid}`, `${res.data.classEndTime}`);
-              setIsValid(true);
-              setIsLoading(false);
+            if (!res.data.endStatus) {
+              if (res.data.classEndTime > now || res.data.classEndTime === 0) {
+                // localStorage.setItem(`${roomid}`, `${res.data.classEndTime}`);
+                setIsValid(true);
+                setIsLoading(false);
+              } else {
+                setTimeout(true);
+                setIsLoading(false);
+              }
             } else {
-              setTimeout(true);
-              setIsLoading(false);
+              setIsValid(false);
             }
-          } else {
-          }
-          // classEndTime
-          // endStatus
-          // setIsValid(true);
-          // setIsLoading(false);
-          // if (res.data.timeLeft > 0) {
+            // classEndTime
+            // endStatus
+            // setIsValid(true);
+            // setIsLoading(false);
+            // if (res.data.timeLeft > 0) {
 
-          // } else {
-          //   setTimeout(true);
-          // }
+            // } else {
+            //   setTimeout(true);
+            // }
+          }
+        } catch (error) {
+          console.log(error);
+          setIsValid(false);
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.log(error);
-        setIsValid(false);
-        setIsLoading(false);
       }
+    
     };
 
     validateWebinar();
-  }, [roomid]);
+  }, []);
 
   if (isLoading) {
     return (
@@ -79,14 +82,13 @@ const PresenterValidation = ({ school }) => {
 
   if (timeout) {
     return <TimedOutClass schoolInfo={schoolInfo} />;
-    // return <Stream />;
   }
 
-  if (!isValid) {
-    return <InvalidStream />;
+  if (isValid) {
+    return <Stream />;
   }
 
-  return <Stream />;
+  return <InvalidStream />;
 };
 const mapStateToProps = (state) => ({
   school: state.school,

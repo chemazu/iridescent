@@ -35,7 +35,7 @@ export default function CreateResource() {
   const [resourceCount, setResourceCount] = useState(null);
   const [resourceId, setResourceId] = useState("");
   const [moreResources, setMoreResources] = useState(false);
- 
+
   const alert = useAlert();
   const [quizStatus, setQuizStatus] = useState(false);
   const [pollOptions, setPollOptions] = useState(["", "", "", ""]);
@@ -53,7 +53,6 @@ export default function CreateResource() {
   const [pollDuration, setPollDuration] = useState(false);
 
   const getResourceCount = async () => {
-
     let res = await axios.get(`/api/v1/classroomresource/count`);
 
     console.log(res, "countsss");
@@ -969,7 +968,6 @@ export default function CreateResource() {
 
               <PaymentModal
                 roomId={"roomid"}
-                
                 type={moreResources.type}
                 close={() => {
                   setMoreResources({
@@ -1046,7 +1044,6 @@ export default function CreateResource() {
                                 type: "poll",
                               });
                             } else {
-
                               setPollStatus(true);
                             }
                           }}
@@ -1056,21 +1053,21 @@ export default function CreateResource() {
                       )}
                       {type.toLowerCase() === "poll" && (
                         <div
-                        className="single-resource-card empty"
-                        onClick={() => {
-                          console.log(resourceCount);
-
-                          if (resourceCount?.pollCount >= 3) {
-                            setMoreResources({
-                              status: "true",
-                              type: "poll",
-                            });
-                          } else {
-
+                          className="single-resource-card empty"
+                          onClick={() => {
                             setPollStatus(true);
-                          }
-                        }}
-                      >
+
+                            // if (resourceCount?.pollCount >= 3) {
+                            //   setMoreResources({
+                            //     status: "true",
+                            //     type: "poll",
+                            //   });
+                            // } else {
+
+                            //   setPollStatus(true);
+                            // }
+                          }}
+                        >
                           <p>Click here to create new {typeText}</p>
                         </div>
                       )}
@@ -1080,7 +1077,7 @@ export default function CreateResource() {
                         resources?.map((item, index) => {
                           const { type, timeStamp, quizHolder, title, _id } =
                             item;
-             
+
                           return (
                             <div className="single-resource-card" key={index}>
                               <div className="resource-top">
