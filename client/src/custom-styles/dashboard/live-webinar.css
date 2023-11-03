@@ -1021,6 +1021,33 @@
   border-bottom-right-radius: 10px;
   border-top: 0px;
 }
+.student-room-info-parent {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.audio-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  color: #000;
+  padding: 2% 5%;
+  border-radius: 15px;
+  border: 2px solid #000;
+  box-sizing: border-box;
+}
+.audio-wrapper :hover {
+  cursor: pointer;
+}
+.audio-wrapper i {
+  font-size: 1.5rem;
+}
+.audio-wrapper span {
+  line-height: normal;
+  margin: 0;
+  padding-left: 1rem;
+}
 .student-room-info {
   width: 35%;
   /* margin-top: 2rem; */
@@ -1030,6 +1057,7 @@
   justify-content: space-between;
   background-color: rgb(25, 28, 45);
 }
+
 .student-room-info span {
   text-align: center;
 }
@@ -1501,6 +1529,17 @@
 
   font-weight: bold;
 }
+.live-button {
+  display: inline-block;
+  background-color: red;
+  color: #fff;
+  font-size: 16px;
+  padding: 5px 15px;
+  border-radius: 20px;
+  animation: pulse 1s infinite;
+
+  font-weight: bold;
+}
 
 @keyframes pulse {
   0% {
@@ -1722,8 +1761,15 @@
 }
 .mini-screen {
   position: absolute;
-  height: 150px;
+  height: 250px;
   width: 100%;
+}
+.attendance-list-item {
+  display: flex;
+  width: 150px;
+}
+.attendance-list-item .action:hover{
+  cursor: pointer;
 }
 @media screen and (max-width: 812px) {
   .watcher-chat-box .inchat-poll {

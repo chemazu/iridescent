@@ -628,7 +628,7 @@ router.get("/streamdetails/:streamId", async (req, res) => {
 router.get("/studentdetails", studentAuth, async (req, res) => {
   let user = await Student.findOne({ _id: req.student.id });
 
-  res.json({ username: user.username, avatar: user.avatar });
+  res.json({ username: user.username, avatar: user.avatar,id:user._id });
 });
 
 // get user payment details

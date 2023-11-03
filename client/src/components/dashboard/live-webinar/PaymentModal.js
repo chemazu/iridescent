@@ -16,7 +16,6 @@ import {useHistory } from "react-router-dom";
 function PaymentModal({
   currency,
   roomId,
- 
   type,
   close,
   updateCount,

@@ -13,6 +13,7 @@ const setupSocketIO = (app) => {
   const timerControl = {};
   const roomStatus = {};
   const broadcasterHolder = {};
+
   const freeTimers = {};
   let pollQuizHolder = {};
   let broadcasterScreen = {};
@@ -24,10 +25,11 @@ const setupSocketIO = (app) => {
 
   io.on("connection", (socket) => {
     // broadcaster
-    socket.on("broadcaster", async (roomId, peerId,audioStat) => {
+    socket.on("broadcaster", async (roomId, peerId, audioStat) => {
       broadcasterHolder[roomId] = { peerId, socketId: socket.id };
-      audioStatus[roomId] = audioStat
+      audioStatus[roomId] = audioStat;
       socket.join(roomId);
+
       socket.broadcast
         .to(roomId)
         .emit("broadcaster", broadcasterHolder[roomId].peerId);
@@ -35,7 +37,21 @@ const setupSocketIO = (app) => {
       currentWebinar.isLive = true;
       await currentWebinar.save();
     });
+    socket.on("request audio", (roomId) => {
+      const currentSocketId = socket.id;
+      socket
+        .to(broadcasterHolder[roomId].socketId)
+        .emit("request audio", currentSocketId);
+    });
+    socket.on("student stream", (roomId, peerId, audioStat) => {
+      broadcasterHolder[roomId].studentStream = peerId;
 
+      socket.broadcast.to(roomId).emit("student stream", peerId);
+    });
+    socket.on("speaking_status", (roomId, status) => {
+      console.log(roomId, status, socket.id);
+      socket.broadcast.to(roomId).emit("speaking_status", status, socket.id);
+    });
     socket.on("watcher-exit", (roomId, attendanceId) => {
       // Check if the room exists in roomsHolder
       if (roomsHolder[roomId]) {
@@ -47,58 +63,73 @@ const setupSocketIO = (app) => {
       }
     });
 
-    socket.on("watcher", async (roomId, userId, attendanceId) => {
+    socket.on(
+      "watcher",
+      async (roomId, peerId, attendanceId, userName, watcherAvatar) => {
+        socket.join(roomId);
+        let numberOfPeopleInRoom;
+        if (!roomsHolder[roomId]) {
+          roomsHolder[roomId] = new Set();
+        }
+        if (!roomsHolder[roomId].has(attendanceId)) {
+          // If it's not in the set, add it
+          roomsHolder[roomId].add(attendanceId);
 
-      socket.join(roomId);
-      let numberOfPeopleInRoom;
-      if (!roomsHolder[roomId]) {
-        roomsHolder[roomId] = new Set();
-      }
-      if (!roomsHolder[roomId].has(attendanceId)) {
-        // If it's not in the set, add it
-        roomsHolder[roomId].add(attendanceId);
+          // Count the number of people in the room
+          numberOfPeopleInRoom = roomsHolder[roomId].size;
+          io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
+        }
+        const room = io.sockets.adapter.rooms.get(roomId);
+        let roomSize = room ? room.size : 1;
+        // check screensharing
 
-        // Count the number of people in the room
-        numberOfPeopleInRoom = roomsHolder[roomId].size;
-        io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
-      }
-      const room = io.sockets.adapter.rooms.get(roomId);
-      let roomSize = room ? room.size : 1;
-      // check screensharing
+        if (broadcasterHolder[roomId]) {
+          if (broadcasterScreen[roomId]) {
+            io.to(socket.id).emit(
+              "join screen stream",
+              broadcasterScreen[roomId].peerId
+            );
+          }
+          if (audioStatus[roomId]) {
+            io.to(socket.id).emit("audio status", audioStatus[roomId]);
+          }
 
-      if (broadcasterHolder[roomId]) {
-        if (broadcasterScreen[roomId]) {
           io.to(socket.id).emit(
-            "join screen stream",
-            broadcasterScreen[roomId].peerId
+            "join stream",
+            numberOfPeopleInRoom,
+            broadcasterHolder[roomId].peerId,
+            audioStatus[roomId]
           );
-        }
-        if (audioStatus[roomId]) {
-          io.to(socket.id).emit("audio status", audioStatus[roomId]);
-        }
+          if (broadcasterHolder[roomId].studentStream) {
+            io.to(socket.id).emit(
+              "active student stream",
+              broadcasterHolder[roomId].studentStream
+            );
+          }
 
-        io.to(socket.id).emit(
-          "join stream",
-          numberOfPeopleInRoom,
-          broadcasterHolder[roomId].peerId,
-          audioStatus[roomId]
-        );
-
-        io.in(roomId).emit("watcher", socket.id, numberOfPeopleInRoom);
-        let roomTimer = null;
-        if (freeTimers[roomId]) {
-          roomTimer = freeTimers[roomId];
+          io.in(roomId).emit(
+            "watcher",
+            socket.id,
+            peerId,
+            userName,
+            watcherAvatar,
+            watcherAvatar
+          );
+          let roomTimer = null;
+          if (freeTimers[roomId]) {
+            roomTimer = freeTimers[roomId];
+          }
+          io.to(socket.id).emit(
+            "currentStatus",
+            roomSize,
+            roomTimer,
+            pollQuizHolder[roomId]
+          );
+        } else {
+          io.to(socket.id).emit("no stream");
         }
-        io.to(socket.id).emit(
-          "currentStatus",
-          roomSize,
-          roomTimer,
-          pollQuizHolder[roomId]
-        );
-      } else {
-        io.to(socket.id).emit("no stream");
       }
-    });
+    );
     // Handle heartbeat events
     socket.on("heartbeat", (userId, roomId) => {
       // Update the last received heartbeat for the user
@@ -148,7 +179,9 @@ const setupSocketIO = (app) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
       io.in(roomId).emit("startScreenSharing", peerId);
     });
-
+    socket.on("grant student access", (roomid, studentSocketId) => {
+      io.to(studentSocketId).emit("start streaming");
+    });
     socket.on("stopScreenSharing", (roomId) => {
       io.in(roomId).emit("stopScreenSharing");
 
@@ -156,7 +189,6 @@ const setupSocketIO = (app) => {
     });
 
     socket.on("audiovisuals", (roomId, updated, type) => {
-
       io.in(roomId).emit("audiovisuals", updated);
 
       audioStatus[roomId] = updated;

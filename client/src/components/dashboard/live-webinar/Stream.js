@@ -43,12 +43,11 @@ export default function Stream() {
   const dispatch = useDispatch();
   const myVideoRef = useRef();
   const mySecondVideoRef = useRef();
-
   const myScreenRef = useRef();
   const peerRef = useRef();
   const screenPeerRef = useRef();
   const videoStreamRef = useRef(null);
-
+  const [audioRequests, setAudioRequests] = useState([]);
   const [reconnectLoading, setReconnectLoading] = useState(false);
   const [planStatus, setPlanStatus] = useState(null);
 
@@ -56,11 +55,14 @@ export default function Stream() {
     pollCount: 0,
     quizCount: 0,
   });
+  const audioRef = useRef(null);
 
   const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
   const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
   const [videoDevices, setVideoDevices] = useState([]);
+  const [attendanceList, setAttendanceList] = useState([]);
+
   const [resources, setResources] = useState([]);
   const [freeTimerStatus, disableFreeTimer] = useState(true);
   const history = useHistory();
@@ -69,6 +71,8 @@ export default function Stream() {
   const [title, setTitle] = useState("");
   const [attendance, setAttendance] = useState(1);
   const [quizStatus, setQuizStatus] = useState(false);
+  const [studentSpeaking, setStudentSpeaking] = useState({});
+
   const [startController, setStartController] = useState(false);
   const [quizHolder, setQuizHolder] = useState([]);
   const [quizResultHolder, setQuizResultHolder] = useState([]);
@@ -258,15 +262,92 @@ export default function Stream() {
 
     if (res) {
       if (res.data.paymentInfo === "free") {
-        let { pollCount, quizCount } = res.data;
-        setPlanStatus("free");
-        console.log(res.data);
-        console.log(trackResourceDeployment);
-        setTrackResourceDeployment({ pollCount, quizCount });
+        let { pollCount, quizCount, resourceCount } = res.data;
+
+        setResourceCount({ pollCount, quizCount, resourceCount });
       } else {
       }
     }
   };
+
+  useEffect(() => {
+    socket.on("request audio", (studentSocketId) => {
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === studentSocketId
+      );
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === studentSocketId
+      );
+      console.log(foundStudent, foundStudentIndex);
+      if (foundStudentIndex !== -1) {
+        setAudioRequests((prevAudioRequests) => [
+          ...prevAudioRequests,
+          foundStudentIndex,
+        ]);
+      } else {
+        // Student not found
+        console.log(`Student with socketId ${studentSocketId} not found.`);
+      }
+    });
+    return () => {
+      socket.off("request audio");
+    };
+  });
+  useEffect(() => {
+    socket.on("student stream", (peerId) => {
+      console.log(peerId, "student stream");
+      const receiveSudentPeer = new Peer();
+      receiveSudentPeer.on("open", () => {
+        navigator.mediaDevices
+          .getUserMedia({ video: false, audio: true })
+          .then((newStream) => {
+            let call = receiveSudentPeer.call(peerId, newStream);
+            call?.on("stream", (remoteStream) => {
+              if (audioRef.current) {
+                console.log("audioRef");
+                audioRef.current.srcObject = remoteStream;
+                audioRef.current.onloadedmetadata = () => {
+                  // Media has loaded, you can now play it
+                  audioRef.current
+                    .play()
+                    .then(() => {
+                      console.log("Audio playback started successfully");
+                    })
+                    .catch((error) => {
+                      console.error("Audio playback error:", error);
+                    });
+                };
+                audioRef.current.oncanplay = () => {
+                  // Media can be played, but it may not have fully loaded yet
+                };
+
+                // Add an event listener to handle interruptions
+                audioRef.current.onabort = () => {
+                  console.error("Audio load request was interrupted");
+                };
+
+                // Listen for audio activity
+              } else {
+                console.log("error");
+                console.log(audioRef.current);
+              }
+            });
+          });
+      });
+      console.log(receiveSudentPeer);
+    });
+    return () => {
+      socket.off("student stream");
+    };
+  });
+  useEffect(() => {
+    socket.on("watcher", (socketId, peerId, userName, watcherAvatar) => {
+      setAttendanceList((prevAttendanceList) => [
+        ...prevAttendanceList,
+        { socketId, peerId, userName, watcherAvatar },
+      ]);
+    });
+  }, [roomid]);
   const createResourceDeployment = async (type) => {
     try {
       await axios.post(
@@ -929,6 +1010,27 @@ export default function Stream() {
   };
 
   useEffect(() => {
+    socket.on("speaking_status", (status, studentSocketId) => {
+      console.log(status, studentSocketId);
+      console.log(attendanceList);
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === studentSocketId
+      );
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === studentSocketId
+      );
+      console.log(foundStudent);
+      if (foundStudentIndex !== -1) {
+        console.log("here");
+        setStudentSpeaking({ foundStudent, status });
+      }
+    });
+
+    return () => {
+      socket.off("speaking_status");
+    };
+  }, [roomid, attendanceList]);
+  useEffect(() => {
     socket.on("roomTimerStarted", (roomTimer) => {
       setTimeLeft(roomTimer);
     });
@@ -1124,7 +1226,16 @@ export default function Stream() {
       localStorage.setItem(roomid, endTime);
     }
   };
+  const grantStudentAudio = (studentInfo) => {
+    const { peerId, socketId } = studentInfo;
+    console.log(peerId, socketId);
 
+    socket.emit("grant student access", roomid, socketId);
+    // emit granting student audio,
+    // emit to student to trigger their own call
+    //
+    // disable the current stream
+  };
   const initializePeer = async () => {
     getResourceDeploymentCount();
     const peerInstance = new Peer();
@@ -2239,7 +2350,35 @@ export default function Stream() {
                           {attendanceCount}
                           {")"}
                         </strong>
+                        {studentSpeaking.status && (
+                          <div>
+                            <p className="live-button">
+                              {studentSpeaking.foundStudent.userName} is
+                              speaking
+                            </p>
+                          </div>
+                        )}
                       </span>
+                    </div>
+                    <div>
+                      {attendanceList.map((item, index) => {
+                        return (
+                          <div className="attendance-list-item">
+                            <p>{item.userName}</p>
+                            {audioRequests.includes(index) && (
+                              <p
+                                onClick={() => {
+                                  grantStudentAudio(item);
+                                }}
+                                className="action"
+                              >
+                                Grant Access
+                              </p>
+                            )}
+                            <p className="action">Block</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                   <div
@@ -3351,6 +3490,7 @@ export default function Stream() {
                   </div>
                 </Card>
               </div>
+              <audio ref={audioRef} />
             </div>
           </Col>
         </Row>

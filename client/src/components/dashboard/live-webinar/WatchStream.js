@@ -33,12 +33,16 @@ function WatchStream({ schoolname }) {
   let history = useHistory();
   let [currentPeer, setCurrentPeer] = useState(null);
   let [submitQuizModal, setSubmitQuizModal] = useState(false);
-
+  let [studentMic, setStudentMic] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const audioRef = useRef(null);
   let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
   let [screenSharing, setScreenSharing] = useState(false);
   const myVideoRef = useRef();
   const videoRef = useRef(null);
   const secondVideoRef = useRef(null);
+  const videoStreamRef = useRef(null);
+  const studentStream = useRef();
 
   const screenRef = useRef(null);
   const screenPeerRef = useRef(null);
@@ -47,6 +51,7 @@ function WatchStream({ schoolname }) {
   const peerRef = useRef(null);
   const chatInterfaceRef = useRef(null);
   const [title, setTitle] = useState("");
+
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
 
@@ -94,15 +99,19 @@ function WatchStream({ schoolname }) {
   };
   const handleAddStream = (stream, audioStat) => {
     const pop = videoRef.current;
-
+    console.log("first");
     if (pop) {
+      console.log("second");
+
       if (!playerRef.current) {
+        console.log("third");
+
         const videoElement = document.createElement("video-js");
         videoElement.setAttribute("playsinline", true);
         videoElement.classList.add("vjs-big-play-centered");
         videoElement.srcObject = stream;
 
-        if (!audioStat.audio) {
+        if (!audioStat?.audio) {
           videoElement.muted = true; // Mute the video if audio is false
         }
         videoRef.current.appendChild(videoElement);
@@ -137,7 +146,7 @@ function WatchStream({ schoolname }) {
         videoElement.classList.add("vjs-big-play-centered");
 
         videoElement.srcObject = stream;
-        if (!audioStat.audio) {
+        if (!audioStat?.audio) {
           videoElement.muted = true; // Mute the video if audio is false
         }
 
@@ -206,8 +215,12 @@ function WatchStream({ schoolname }) {
   const getUserName = async () => {
     try {
       let res = await axios.get("/api/v1/livewebinar/studentdetails/");
-      setWatcherUsername(res.data.username);
-      setWatcherAvatar(res.data.avatar);
+      if (res) {
+        setWatcherUsername(res.data.username);
+        console.log(res.data);
+        localStorage.setItem(roomid, res.data.id);
+        setWatcherAvatar(res.data.avatar);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -375,6 +388,190 @@ function WatchStream({ schoolname }) {
     setSubmitted(true);
   };
 
+  const handleStartStudentAudio = () => {
+    socket.emit("request audio", roomid);
+  };
+  const handleStopStudentAudio = () => {};
+  useEffect(() => {
+    socket.on("start streaming", () => {
+      const studentSharePeer = new Peer();
+
+      studentSharePeer.on("open", (peerId) => {
+        socket.emit("student stream", roomid, peerId, audioVisuals);
+
+        // socket.emit("audiovisuals", roomid, audioVisuals);
+      });
+      setStudentMic(true);
+
+      navigator.mediaDevices
+        .getUserMedia({ video: false, audio: true })
+        .then((stream) => {
+          studentStream.current = stream;
+          console.log(watcherUsername);
+          // const audioContext = new AudioContext();
+          // const analyser = audioContext.createAnalyser();
+          // const microphone = audioContext.createMediaStreamSource(stream);
+          // microphone.connect(analyser);
+          // analyser.connect(audioContext.destination);
+          // analyser.fftSize = 256;
+
+          // const bufferLength = analyser.frequencyBinCount;
+          // const dataArray = new Uint8Array(bufferLength);
+
+          // const checkAudioActivity = () => {
+          //   analyser.getByteFrequencyData(dataArray);
+          //   const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+          //   const isSpeakingNow = average > 10; // Adjust this threshold as needed
+          //   console.log(isSpeakingNow);
+          //   requestAnimationFrame(checkAudioActivity);
+          // };
+          // checkAudioActivity();
+          const audioContext = new AudioContext();
+          const analyser = audioContext.createAnalyser();
+          const microphone = audioContext.createMediaStreamSource(stream);
+          microphone.connect(analyser);
+          analyser.fftSize = 256;
+
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+          let previousSpeakingStatus = false;
+          const checkAudioActivity = () => {
+            analyser.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+            const isSpeakingNow = average > 10; // Adjust this threshold as needed
+            if (isSpeakingNow !== previousSpeakingStatus) {
+              console.log(isSpeakingNow);
+              previousSpeakingStatus = isSpeakingNow;
+              console.log(isSpeakingNow, 1);
+
+              console.log(roomid, isSpeakingNow, watcherUsername);
+              socket.emit(
+                "speaking_status",
+                roomid,
+                isSpeakingNow,
+    
+              );
+              if (isSpeakingNow) {
+                setIsSpeaking(true);
+              } else {
+                setIsSpeaking(false);
+              }
+            }
+
+            // if (isSpeakingNow !== previousSpeakingStatus) {
+            //   previousSpeakingStatus = isSpeakingNow;
+
+            // if (isSpeakingNow) {
+            //   setIsSpeaking(true);
+            // } else {
+            //   setIsSpeaking(false);
+            // }
+
+            //   socket.emit("speaking_status", {
+            //     roomid,
+            //     speaking: isSpeakingNow,
+            //     watcherUsername,
+            //   });
+            // }
+
+            requestAnimationFrame(checkAudioActivity);
+          };
+          checkAudioActivity();
+        })
+        .catch((error) => console.error(error));
+      studentSharePeer.on("call", (call) => {
+        call.answer(studentStream.current);
+
+        call.on("close", () => {
+          console.log("ewe");
+        });
+      });
+    });
+    return () => {
+      if (audioRef.current) {
+        const stream = audioRef.current.srcObject;
+        if (stream) {
+          stream.getTracks()[0].stop();
+        }
+      }
+    };
+  }, [roomid]);
+  // useEffect(() => {
+  //   socket.on("start streaming", () => {
+  //     const studentSharePeer = new Peer();
+
+  //     studentSharePeer.on("open", (peerId) => {
+  //       socket.emit("student stream", roomid, peerId, audioVisuals);
+
+  //       // socket.emit("audiovisuals", roomid, audioVisuals);
+  //     });
+  //     setStudentMic(true);
+
+  //     navigator.mediaDevices
+  //       .getUserMedia(audioVisuals)
+
+  //       .then((stream) => {
+  //         studentStream.current = stream;
+
+  //         const audioContext = new AudioContext();
+  //         const analyser = audioContext.createAnalyser();
+  //         const microphone = audioContext.createMediaStreamSource(stream);
+  //         microphone.connect(analyser);
+  //         analyser.connect(audioContext.destination);
+  //         analyser.fftSize = 256;
+
+  //         const bufferLength = analyser.frequencyBinCount;
+  //         const dataArray = new Uint8Array(bufferLength);
+
+  //         const checkAudioActivity = () => {
+  //           analyser.getByteFrequencyData(dataArray);
+  //           const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
+  //           const isSpeakingNow = average > 10; // Adjust this threshold as needed
+
+  //           if (isSpeakingNow) {
+  //             setIsSpeaking(true);
+  //             socket.emit("speaking_status", {
+  //               roomid,
+  //               speaking: true,
+  //               watcherUsername,
+  //             });
+  //           } else {
+  //             setIsSpeaking(false);
+  //             socket.emit("speaking_status", {
+  //               roomid,
+  //               speaking: false,
+  //               watcherUsername,
+  //             });
+  //           }
+
+  //           requestAnimationFrame(checkAudioActivity);
+  //         };
+
+  //         checkAudioActivity();
+  //       })
+  //       .catch((error) => console.error(error));
+
+  //     studentSharePeer.on("call", (call) => {
+  //       call.answer(studentStream.current);
+
+  //       call.on("close", () => {
+  //         console.log("ewe");
+  //       });
+  //     });
+  //     // screenPlayerRef?.current.dispose();  // Dispose of the videojs player
+  //     // screenPlayerRef.current = null;
+
+  //     // handleCreateStudentAudio();
+  //   });
+  //   return () => {
+  //     if (audioRef.current) {
+  //       const stream = audioRef.current.srcObject;
+  //       if (stream) {
+  //         stream.getTracks()[0].stop();
+  //       }
+  //     }
+  //   };
+  // }, [roomid]);
   useEffect(() => {
     if (playerRef.current && audioVisuals) {
       playerRef.current.muted(!audioVisuals.audio);
@@ -397,10 +594,22 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
-    peerInstance.on("open", (user) => {
-      socket.emit("watcher", roomid, user, getUserId(roomid));
-    });
+
+    if (watcherUsername !== "") {
+      peerInstance.on("open", (user) => {
+        socket.emit(
+          "watcher",
+          roomid,
+          user,
+          getUserId(roomid),
+          watcherUsername,
+          watcherAvatar
+        );
+      });
+    }
+
     const startClass = (peerId, stat, audioStat) => {
+      console.log(stat);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
@@ -437,7 +646,161 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect]);
+  }, [roomid, waiting, disconnect, watcherUsername]);
+
+  useEffect(() => {
+    socket.on("student stream", (peerId) => {
+      const receiveSudentPeer = new Peer();
+      receiveSudentPeer.on("open", () => {
+        console.log("ssdsd");
+        navigator.mediaDevices
+          .getUserMedia({ video: false, audio: true })
+          .then((newStream) => {
+            let call = receiveSudentPeer.call(peerId, newStream);
+            // const call = peerInstance.call(peerId, fast);
+            call?.on("stream", (remoteStream) => {
+              console.log("incoming student audio");
+              if (audioRef.current) {
+                console.log("audioRef");
+                audioRef.current.srcObject = remoteStream;
+                audioRef.current.onloadedmetadata = () => {
+                  // Media has loaded, you can now play it
+                  audioRef.current
+                    .play()
+                    .then(() => {
+                      console.log("Audio playback started successfully");
+                    })
+                    .catch((error) => {
+                      console.error("Audio playback error:", error);
+                    });
+                };
+                audioRef.current.oncanplay = () => {
+                  // Media can be played, but it may not have fully loaded yet
+                };
+
+                // Add an event listener to handle interruptions
+                audioRef.current.onabort = () => {
+                  console.error("Audio load request was interrupted");
+                };
+                const audioContext = new AudioContext();
+                const source =
+                  audioContext.createMediaStreamSource(remoteStream);
+
+                source.connect(audioContext.destination);
+
+                // Define a threshold for sound activity (adjust as needed)
+                const soundThreshold = 0.05;
+
+                // Listen for audio activity
+                source.onaudioprocess = (event) => {
+                  const audioBuffer = event.inputBuffer.getChannelData(0);
+                  const rms = calculateRMS(audioBuffer);
+
+                  if (rms > soundThreshold) {
+                    console.log("student Sound is being inputted");
+                  }
+                };
+
+                // Listen for audio activity
+              } else {
+                console.log("error");
+                console.log(audioRef.current);
+              }
+              function calculateRMS(buffer) {
+                let sum = 0;
+                for (let i = 0; i < buffer.length; i++) {
+                  sum += buffer[i] * buffer[i];
+                }
+                return Math.sqrt(sum / buffer.length);
+              }
+            });
+            call?.on("error", (error) => {
+              console.error("Call error:", error);
+            });
+            // });
+          });
+      });
+    });
+
+    return () => {};
+  }, [roomid]);
+
+  useEffect(() => {
+    socket.on("active student stream", (peerId) => {
+      const receiveSudentPeer = new Peer();
+      receiveSudentPeer.on("open", () => {
+        console.log("ssdsd");
+        navigator.mediaDevices
+          .getUserMedia({ video: false, audio: true })
+          .then((newStream) => {
+            let call = receiveSudentPeer.call(peerId, newStream);
+            // const call = peerInstance.call(peerId, fast);
+            call?.on("stream", (remoteStream) => {
+              console.log("incoming student audio");
+              if (audioRef.current) {
+                console.log("audioRef");
+                audioRef.current.srcObject = remoteStream;
+                audioRef.current.onloadedmetadata = () => {
+                  // Media has loaded, you can now play it
+                  audioRef.current
+                    .play()
+                    .then(() => {
+                      console.log("Audio playback started successfully");
+                    })
+                    .catch((error) => {
+                      console.error("Audio playback error:", error);
+                    });
+                };
+                audioRef.current.oncanplay = () => {
+                  // Media can be played, but it may not have fully loaded yet
+                };
+
+                // Add an event listener to handle interruptions
+                audioRef.current.onabort = () => {
+                  console.error("Audio load request was interrupted");
+                };
+                const audioContext = new AudioContext();
+                const source =
+                  audioContext.createMediaStreamSource(remoteStream);
+
+                source.connect(audioContext.destination);
+
+                // Define a threshold for sound activity (adjust as needed)
+                const soundThreshold = 0.05;
+
+                // Listen for audio activity
+                source.onaudioprocess = (event) => {
+                  const audioBuffer = event.inputBuffer.getChannelData(0);
+                  const rms = calculateRMS(audioBuffer);
+
+                  if (rms > soundThreshold) {
+                    console.log("student Sound is being inputted");
+                  }
+                };
+
+                // Listen for audio activity
+              } else {
+                console.log("error");
+                console.log(audioRef.current);
+              }
+              function calculateRMS(buffer) {
+                let sum = 0;
+                for (let i = 0; i < buffer.length; i++) {
+                  sum += buffer[i] * buffer[i];
+                }
+                return Math.sqrt(sum / buffer.length);
+              }
+            });
+            call?.on("error", (error) => {
+              console.error("Call error:", error);
+            });
+            // });
+          });
+      });
+    });
+
+    return () => {};
+  }, [roomid]);
 
   const attendanceCount = attendance || 1;
 
@@ -613,8 +976,8 @@ function WatchStream({ schoolname }) {
 
   useEffect(() => {
     socket.on("broadcaster-disconnected", () => {
-      setDisconnect(true);
-      setWaiting(false);
+      // setDisconnect(true);
+      // setWaiting(false);
       playerRef.current = null;
       setScreenSharing(false);
 
@@ -674,7 +1037,7 @@ function WatchStream({ schoolname }) {
       <Modal isOpen={submitQuizModal}>
         <ModalHeader>
           <p style={{ textAlign: "center", margin: 0 }}>
-           Are you sure you want to submit this quiz 
+            Are you sure you want to submit this quiz
           </p>
         </ModalHeader>
 
@@ -889,15 +1252,45 @@ function WatchStream({ schoolname }) {
                       {disconnect || waiting ? (
                         <></>
                       ) : (
-                        <div
-                          className="student-room-info desktop-control"
-                          style={{
-                            color: theme?.themestyles.navbartextcolor,
-                          }}
-                        >
-                          <span className="date-span">{formattedDate}</span>
-                          <span className="divider-span"></span>
-                          <span>Attendees ({attendanceCount})</span>
+                        <div className="student-room-info-parent desktop-control">
+                          <div
+                            className="student-room-info desktop-control"
+                            style={{
+                              color: theme?.themestyles.navbartextcolor,
+                            }}
+                          >
+                            <span className="date-span">{formattedDate}</span>
+                            <span className="divider-span"></span>
+                            <span>Attendees ({attendanceCount})</span>
+                          </div>
+                          <div
+                            className="audio-wrapper"
+                            onClick={
+                              studentMic
+                                ? handleStopStudentAudio
+                                : handleStartStudentAudio
+                            }
+                          >
+                            {studentMic ? (
+                              <i
+                                className="fa fa-microphone"
+                                aria-hidden="true"
+                              ></i>
+                            ) : (
+                              <i
+                                className="fa fa-microphone-slash"
+                                aria-hidden="true"
+                              ></i>
+                            )}
+
+                            <audio ref={audioRef} />
+
+                            {studentMic ? (
+                              <span>Turn mic off</span>
+                            ) : (
+                              <span>Turn mic on</span>
+                            )}
+                          </div>
                         </div>
                       )}
                     </>
