@@ -37,6 +37,8 @@ function WatchStream({ schoolname }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef(null);
   let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
+  let [studentMicControl, setStudentMicControl] = useState(false);
+
   let [screenSharing, setScreenSharing] = useState(false);
   const myVideoRef = useRef();
   const videoRef = useRef(null);
@@ -54,6 +56,8 @@ function WatchStream({ schoolname }) {
 
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
+  const [attendanceList, setAttendanceList] = useState([]);
+  const [studentSpeaking, setStudentSpeaking] = useState({});
 
   const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
@@ -71,6 +75,7 @@ function WatchStream({ schoolname }) {
   const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
   const [disableVideoStream, setDisableVideoStream] = useState(null);
   const [videoFill, setVideoFill] = useState(false);
+  const [registeredUser, setRegisteredUser] = useState(false);
 
   // "https://stream.mux.com/VZtzUzGRv02OhRnZCxcNg49OilvolTqdnFLEqBsTwaxU/low.mp4"
 
@@ -99,13 +104,8 @@ function WatchStream({ schoolname }) {
   };
   const handleAddStream = (stream, audioStat) => {
     const pop = videoRef.current;
-    console.log("first");
     if (pop) {
-      console.log("second");
-
       if (!playerRef.current) {
-        console.log("third");
-
         const videoElement = document.createElement("video-js");
         videoElement.setAttribute("playsinline", true);
         videoElement.classList.add("vjs-big-play-centered");
@@ -220,6 +220,7 @@ function WatchStream({ schoolname }) {
         console.log(res.data);
         localStorage.setItem(roomid, res.data.id);
         setWatcherAvatar(res.data.avatar);
+        setRegisteredUser(true);
       }
     } catch (error) {
       console.log(error);
@@ -392,12 +393,42 @@ function WatchStream({ schoolname }) {
     socket.emit("request audio", roomid);
   };
   const handleStopStudentAudio = () => {};
+  const handleTurnOnStudentAudio = () => {
+    setStudentMicControl(true);
+    socket.emit("on student audio", roomid);
+  };
+  const handleTurnOffStudentAudio = () => {
+    setStudentMicControl(false);
+    socket.emit("off student audio", roomid);
+  };
+
+  useEffect(() => {
+    socket.on("speaking_status", (status, studentSocketId) => {
+      console.log(status, studentSocketId);
+      console.log(attendanceList);
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === studentSocketId
+      );
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === studentSocketId
+      );
+      console.log(foundStudent);
+      if (foundStudentIndex !== -1) {
+        console.log("here");
+        setStudentSpeaking({ foundStudent, status });
+      }
+    });
+
+    return () => {
+      socket.off("speaking_status");
+    };
+  }, [roomid, attendanceList]);
   useEffect(() => {
     socket.on("start streaming", () => {
       const studentSharePeer = new Peer();
 
       studentSharePeer.on("open", (peerId) => {
-        socket.emit("student stream", roomid, peerId, audioVisuals);
+        socket.emit("student stream", roomid, peerId, studentMicControl);
 
         // socket.emit("audiovisuals", roomid, audioVisuals);
       });
@@ -445,12 +476,7 @@ function WatchStream({ schoolname }) {
               console.log(isSpeakingNow, 1);
 
               console.log(roomid, isSpeakingNow, watcherUsername);
-              socket.emit(
-                "speaking_status",
-                roomid,
-                isSpeakingNow,
-    
-              );
+              socket.emit("speaking_status", roomid, isSpeakingNow);
               if (isSpeakingNow) {
                 setIsSpeaking(true);
               } else {
@@ -603,7 +629,8 @@ function WatchStream({ schoolname }) {
           user,
           getUserId(roomid),
           watcherUsername,
-          watcherAvatar
+          watcherAvatar,
+          registeredUser
         );
       });
     }
@@ -646,7 +673,7 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect, watcherUsername]);
+  }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
 
   useEffect(() => {
     socket.on("student stream", (peerId) => {
@@ -1005,11 +1032,22 @@ function WatchStream({ schoolname }) {
   }, [schoolname]);
 
   useEffect(() => {
-    socket.on("watcher", (userId, roomSize) => {});
+    socket.on("watcher", (socketId, peerId, userName, watcherAvatar) => {
+      setAttendanceList((prevAttendanceList) => [
+        ...prevAttendanceList,
+        { socketId, peerId, userName, watcherAvatar },
+      ]);
+    });
+  }, [roomid]);
+  useEffect(() => {
+    socket.on("student audio stat", (audioStat) => {
+      audioRef.current.muted = !audioStat;
+    });
+
     return () => {
-      socket.off("watcher");
+      socket.off("student audio stat");
     };
-  });
+  }, [roomid]);
   useEffect(() => {
     socket.on("disablevideo", (status) => {
       setDisableVideoStream(status);
@@ -1263,11 +1301,47 @@ function WatchStream({ schoolname }) {
                             <span className="divider-span"></span>
                             <span>Attendees ({attendanceCount})</span>
                           </div>
+                          {studentSpeaking.status && (
+                            <div>
+                              <div>
+                                <div
+                                  className="pulse-circle"
+                                  style={{
+                                    animationDelay: "0s",
+                                  }}
+                                ></div>
+                                <div
+                                  className="pulse-circle"
+                                  style={{
+                                    animationDelay: "1s",
+                                  }}
+                                ></div>
+                                <div
+                                  className="pulse-circle"
+                                  style={{
+                                    animationDelay: "2s",
+                                  }}
+                                ></div>
+                                <div
+                                  className="pulse-circle"
+                                  style={{
+                                    animationDelay: "3s",
+                                  }}
+                                ></div>
+                              </div>
+                              <p className="live-button">
+                                {studentSpeaking.foundStudent.userName} is
+                                speaking
+                              </p>
+                            </div>
+                          )}
                           <div
                             className="audio-wrapper"
                             onClick={
                               studentMic
-                                ? handleStopStudentAudio
+                                ? studentMicControl
+                                  ? handleTurnOffStudentAudio
+                                  : handleTurnOnStudentAudio
                                 : handleStartStudentAudio
                             }
                           >
@@ -1286,9 +1360,13 @@ function WatchStream({ schoolname }) {
                             <audio ref={audioRef} />
 
                             {studentMic ? (
-                              <span>Turn mic off</span>
+                              studentMicControl ? (
+                                <span>Turn mic off</span>
+                              ) : (
+                                <span>Turn mic On</span>
+                              )
                             ) : (
-                              <span>Turn mic on</span>
+                              <span>Ask to speak</span>
                             )}
                           </div>
                         </div>
