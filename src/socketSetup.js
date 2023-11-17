@@ -119,7 +119,7 @@ const setupSocketIO = (app) => {
         console.log(roomId);
         console.log(blockedList[roomId]);
         let blockChecK = blockedList[roomId]?.includes(attendanceId.toString());
-        console.log(a);
+      
         if (!blockChecK) {
           // get the id from webinar
           // get the list of blocked student
