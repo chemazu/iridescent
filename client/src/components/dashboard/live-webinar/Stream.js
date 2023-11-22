@@ -134,7 +134,6 @@ export default function Stream() {
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
     let { studentId, registeredUser } = info;
-    console.log(registeredUser, studentId);
 
     let body = {
       studentId: registeredUser ? studentId : null,
@@ -148,6 +147,7 @@ export default function Stream() {
       body
     );
     if (res) {
+      socket.emit("block-user", { ...info, roomId: roomid });
     } else {
     }
 
@@ -157,9 +157,12 @@ export default function Stream() {
     // remove the student from the chat and peerjs
     dispatch(stopLoading());
   };
-  const showBlockOptions = () => {
-    setBlockOptions(true);
+  const handleMuteStudent = () => {
+    audioRef.current.muted = true;
+
+    socket.emit("off student audio", roomid);
   };
+
   const getBlockedStudents = async () => {
     let res = await axios.get("/api/v1/blockedstudents/blocked-students");
     if (res) {
@@ -318,29 +321,69 @@ export default function Stream() {
       const foundStudent = attendanceList.find(
         (student) => student.socketId === studentSocketId
       );
-      const foundStudentIndex = attendanceList.findIndex(
+      const foundStudentIndex = audioRequests.findIndex(
         (student) => student.socketId === studentSocketId
       );
-      console.log(foundStudent, foundStudentIndex);
+
       if (foundStudentIndex !== -1) {
+        // Check if the existing entry is declined, and update it accordingly
+        if (audioRequests[foundStudentIndex].declined) {
+          const updatedAudioRequests = [...audioRequests];
+          updatedAudioRequests[foundStudentIndex] = {
+            ...foundStudent,
+            selected: false,
+            declined: false, // Reset declined to false
+          };
+          setAudioRequests(updatedAudioRequests);
+          setAudioRequestModal(true);
+        } else {
+          // Entry already exists and is not declined
+          console.log(
+            `Student with socketId ${studentSocketId} already in audioRequests.`
+          );
+        }
+      } else {
+        // Add the new entry to audioRequests
         setAudioRequests((prevAudioRequests) => [
           ...prevAudioRequests,
-          foundStudent,
+          { ...foundStudent, selected: false, declined: false },
         ]);
         setAudioRequestModal(true);
-      } else {
-        // Student not found
-        console.log(`Student with socketId ${studentSocketId} not found.`);
       }
     });
+
     return () => {
       socket.off("request audio");
     };
-  });
+  }, [attendanceList, audioRequests, socket]);
+
+  // useEffect(() => {
+  //   socket.on("request audio", (studentSocketId) => {
+  //     const foundStudent = attendanceList.find(
+  //       (student) => student.socketId === studentSocketId
+  //     );
+  //     const foundStudentIndex = attendanceList.findIndex(
+  //       (student) => student.socketId === studentSocketId
+  //     );
+  //     console.log(foundStudent, foundStudentIndex);
+  //     if (foundStudentIndex !== -1) {
+  //       setAudioRequests((prevAudioRequests) => [
+  //         ...prevAudioRequests,
+  //         { ...foundStudent, selected: false },
+  //       ]);
+  //       setAudioRequestModal(true);
+  //     } else {
+  //       // Student not found
+  //       console.log(`Student with socketId ${studentSocketId} not found.`);
+  //     }
+  //   });
+  //   return () => {
+  //     socket.off("request audio");
+  //   };
+  // });
 
   useEffect(() => {
     socket.on("student stream", (peerId, audioStat) => {
-      console.log(peerId, "student stream");
       const receiveSudentPeer = new Peer();
       receiveSudentPeer.on("open", () => {
         navigator.mediaDevices
@@ -1009,10 +1052,6 @@ export default function Stream() {
   };
   const hanlePollQuizTimeOut = () => {
     setSpecialChat((prevSpecialChat) => {
-      // console.lof(reset the poll array)
-      // setPollStatus(false);
-      // setPollDuration(true);
-      // setPollResultHolder([]);
       const updatedChat = {
         ...prevSpecialChat[0],
         submissionStatus: true,
@@ -1309,13 +1348,53 @@ export default function Stream() {
   const grantStudentAudio = (studentInfo) => {
     const { peerId, socketId } = studentInfo;
 
+    // Update the selected property for the chosen item
+    const updatedAudioRequests = audioRequests.map((item) => {
+      if (item.peerId === peerId && item.socketId === socketId) {
+        return {
+          ...item,
+          selected: true,
+        };
+      } else {
+        return item;
+      }
+    });
+
+    // Emit the socket event and update the state
     socket.emit("grant student access", roomid, socketId);
-    setAudioRequestModal(false);
+    setAudioRequests(updatedAudioRequests);
+    if (
+      updatedAudioRequests.filter((item) => !item.selected && !item.declined)
+        .length < 1
+    ) {
+      setAudioRequestModal(false);
+    }
   };
+
   const rejectStudentAudio = (studentInfo) => {
     const { peerId, socketId } = studentInfo;
 
-    socket.emit("grant student access", roomid, socketId);
+    // Update the selected property for the chosen item and set declined to true
+    const updatedAudioRequests = audioRequests.map((item) => {
+      if (item.peerId === peerId && item.socketId === socketId) {
+        return {
+          ...item,
+          declined: true,
+        };
+      } else {
+        return item;
+      }
+    });
+
+    // Emit the socket event and update the state
+    socket.emit("reject student access", roomid, socketId);
+    setAudioRequests(updatedAudioRequests);
+    if (
+      updatedAudioRequests.filter((item) => !item.selected && !item.declined)
+        .length < 1
+    ) {
+      setAudioRequestModal(false);
+    }
   };
 
   const initializePeer = async () => {
@@ -1668,6 +1747,10 @@ export default function Stream() {
     freeTimerStatus,
     handleExitStreamModal,
   };
+  let filteredAudioRequests = audioRequests.filter(
+    (item) => !item.selected && !item.declined
+  );
+
   return (
     <div className="dashboard-layout">
       <Container fluid>
@@ -1682,11 +1765,17 @@ export default function Stream() {
                   isOpen={audioRequestModal}
                   className="audio-request-modal"
                 >
-                  {audioRequests.length === 1 ? (
+                  <i
+                    className="fa fa-times close-icon"
+                    onClick={() => {
+                      setAudioRequestModal(false);
+                    }}
+                  ></i>
+
+                  {filteredAudioRequests.length === 1 ? (
                     <>
                       {" "}
-                      {audioRequests.map((item, index) => {
-                        console.log(item);
+                      {filteredAudioRequests.map((item, index) => {
                         return (
                           <div className="single-speaking-request" key={index}>
                             <p>{item.userName} is requesting to speak</p>
@@ -1723,11 +1812,16 @@ export default function Stream() {
                         }}
                       >
                         <strong>
-                          {audioRequests.length}{" "}
-                          {audioRequests.length > 1 ? "People" : "Person"}
+                          {filteredAudioRequests.length}{" "}
+                          {filteredAudioRequests.length > 1
+                            ? "People"
+                            : "Person"}
                         </strong>
                         &nbsp;
-                        <span> {audioRequests.length > 1 ? "are" : "is"}</span>
+                        <span>
+                          {" "}
+                          {filteredAudioRequests.length > 1 ? "are" : "is"}
+                        </span>
                         &nbsp;
                         <span> requesting to speak</span>
                         <i
@@ -1743,7 +1837,7 @@ export default function Stream() {
                       </div>
                       {showSpeakingRequest && (
                         <div className="multiple-request-permission-wrapper">
-                          {audioRequests.map((item, index) => {
+                          {filteredAudioRequests.map((item, index) => {
                             return (
                               <div
                                 className="multiple-speaking-request"
@@ -2829,7 +2923,13 @@ export default function Stream() {
                             >
                               Block User
                             </p>
-                            <p>Mute User</p>
+                            <p
+                              onClick={() => {
+                                handleMuteStudent();
+                              }}
+                            >
+                              Mute User
+                            </p>
                           </div>
                         </div>
                       )}

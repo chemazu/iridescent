@@ -28,6 +28,7 @@ const setupSocketIO = (app) => {
   io.on("connection", (socket) => {
     // broadcaster
     socket.on("broadcaster", async (roomId, peerId, audioStat) => {
+      console.log("broadcaster")
       broadcasterHolder[roomId] = { peerId, socketId: socket.id };
       audioStatus[roomId] = audioStat;
       socket.join(roomId);
@@ -61,6 +62,11 @@ const setupSocketIO = (app) => {
         .to(broadcasterHolder[roomId].socketId)
         .emit("request audio", currentSocketId);
     });
+    socket.on("block-user", (info) => {
+      console.log(info, "blk");
+      socket.to(info.socketId).emit("blocked");
+    });
+
     socket.on("student stream", (roomId, peerId, audioStat) => {
       // to handle multiple student make this an array
       broadcasterHolder[roomId].studentStream = {
@@ -73,15 +79,11 @@ const setupSocketIO = (app) => {
     });
     socket.on("speaking_status", (roomId, status) => {
       console.log(roomId, status, socket.id);
-
+      let streamingStudent =
+        broadcasterHolder[roomId]?.studentStream?.audioStat || 0;
       socket.broadcast
         .to(roomId)
-        .emit(
-          "speaking_status",
-          status,
-          socket.id,
-          broadcasterHolder[roomId].studentStream?.audioStat
-        );
+        .emit("speaking_status", status, socket.id, streamingStudent);
     });
     socket.on("on student audio", (roomid) => {
       console.log(broadcasterHolder[roomid].studentStream);
@@ -103,6 +105,8 @@ const setupSocketIO = (app) => {
         // Count the number of people in the room after the user exits
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
       }
+      // check of the user is a speaking user
+      // broadcast that the speaking student is disconencted
     });
 
     socket.on(
@@ -115,11 +119,12 @@ const setupSocketIO = (app) => {
         watcherAvatar,
         registeredUser
       ) => {
+        console.log("watcher");
         console.log(blockedList, attendanceId);
         console.log(roomId);
         console.log(blockedList[roomId]);
         let blockChecK = blockedList[roomId]?.includes(attendanceId.toString());
-      
+
         if (!blockChecK) {
           // get the id from webinar
           // get the list of blocked student
@@ -260,6 +265,7 @@ const setupSocketIO = (app) => {
       audioStatus[roomId] = updated;
     });
     socket.on("message", (message, roomId) => {
+      console.log("message",socket.id);
       socket.broadcast.to(roomId).emit("message", { ...message });
       if (message.type === "quiz" || message.type === "poll") {
         if (!pollQuizHolder[roomId]) {

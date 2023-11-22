@@ -1875,6 +1875,12 @@
   margin-top: 25dvh;
   padding: 0.5rem;
 }
+.audio-request-modal i {
+  align-self: flex-end;
+  padding-right: 20px;
+  padding-top: 6px;
+  font-size: 1.6rem;
+}
 .speaking-request {
   width: 100%;
   display: flex;
@@ -1936,16 +1942,13 @@
   background-color: rgb(35, 200, 255);
   border-radius: 50%;
 }
-.pulse-indicatior-2 .speaking-icon{
+.pulse-indicatior-2 .speaking-icon {
   background-color: deepskyblue;
-
 }
 .pulse-indicatior-2 p {
   color: transparent;
   margin: 0;
   background-color: rgb(35, 200, 255);
-
-
 }
 
 .student-speaking-indicator p {
@@ -1964,8 +1967,35 @@
   align-items: center;
   justify-content: center;
 }
+.mobile-audio-wrapper {
+  display: none;
+  align-items: center;
+  border: 1px solid #000;
+
+  padding: 5px 10px;
+  border-radius: 15px;
+
+  margin: 0 1%;
+  box-sizing: border-box;
+  font-size: 18px;
+}
+.mobile-audio-wrapper i {
+  font-size: 18px;
+}
+.audio-inactive {
+  background-color: #000;
+  color: #fff;
+}
+.audio-active {
+  color: #000;
+  background-color: #fff;
+  border: 1px solid #000;
+}
 
 @media screen and (max-width: 812px) {
+  .mobile-audio-wrapper {
+    display: flex;
+  }
   .watcher-chat-box .inchat-poll {
     margin-bottom: 2.5%;
   }

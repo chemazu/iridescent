@@ -58,6 +58,8 @@ function WatchStream({ schoolname }) {
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
   const [attendanceList, setAttendanceList] = useState([]);
   const [studentSpeaking, setStudentSpeaking] = useState({});
+  const [studentSpeakingAudioStat, setStudentSpeakingAudioStat] =
+    useState(true);
 
   const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
@@ -214,7 +216,7 @@ function WatchStream({ schoolname }) {
 
   const getUserName = async () => {
     try {
-      let res = await axios.get("/api/v1/livewebinar/studentdetails/");
+      let res = await axios.get("/api/v1/livewebinar/studentdetails");
       if (res) {
         setWatcherUsername(res.data.username);
         console.log(res.data);
@@ -392,7 +394,11 @@ function WatchStream({ schoolname }) {
   const handleStartStudentAudio = () => {
     socket.emit("request audio", roomid);
   };
-  const handleStopStudentAudio = () => {};
+  const handleStopStudentAudio = () => {
+    // emit stop audio
+    // delete the peer
+    // toggle audio
+  };
   const handleTurnOnStudentAudio = () => {
     setStudentMicControl(true);
     socket.emit("on student audio", roomid);
@@ -439,24 +445,7 @@ function WatchStream({ schoolname }) {
         .then((stream) => {
           studentStream.current = stream;
           console.log(watcherUsername);
-          // const audioContext = new AudioContext();
-          // const analyser = audioContext.createAnalyser();
-          // const microphone = audioContext.createMediaStreamSource(stream);
-          // microphone.connect(analyser);
-          // analyser.connect(audioContext.destination);
-          // analyser.fftSize = 256;
 
-          // const bufferLength = analyser.frequencyBinCount;
-          // const dataArray = new Uint8Array(bufferLength);
-
-          // const checkAudioActivity = () => {
-          //   analyser.getByteFrequencyData(dataArray);
-          //   const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
-          //   const isSpeakingNow = average > 10; // Adjust this threshold as needed
-          //   console.log(isSpeakingNow);
-          //   requestAnimationFrame(checkAudioActivity);
-          // };
-          // checkAudioActivity();
           const audioContext = new AudioContext();
           const analyser = audioContext.createAnalyser();
           const microphone = audioContext.createMediaStreamSource(stream);
@@ -484,22 +473,6 @@ function WatchStream({ schoolname }) {
               }
             }
 
-            // if (isSpeakingNow !== previousSpeakingStatus) {
-            //   previousSpeakingStatus = isSpeakingNow;
-
-            // if (isSpeakingNow) {
-            //   setIsSpeaking(true);
-            // } else {
-            //   setIsSpeaking(false);
-            // }
-
-            //   socket.emit("speaking_status", {
-            //     roomid,
-            //     speaking: isSpeakingNow,
-            //     watcherUsername,
-            //   });
-            // }
-
             requestAnimationFrame(checkAudioActivity);
           };
           checkAudioActivity();
@@ -522,82 +495,7 @@ function WatchStream({ schoolname }) {
       }
     };
   }, [roomid]);
-  // useEffect(() => {
-  //   socket.on("start streaming", () => {
-  //     const studentSharePeer = new Peer();
 
-  //     studentSharePeer.on("open", (peerId) => {
-  //       socket.emit("student stream", roomid, peerId, audioVisuals);
-
-  //       // socket.emit("audiovisuals", roomid, audioVisuals);
-  //     });
-  //     setStudentMic(true);
-
-  //     navigator.mediaDevices
-  //       .getUserMedia(audioVisuals)
-
-  //       .then((stream) => {
-  //         studentStream.current = stream;
-
-  //         const audioContext = new AudioContext();
-  //         const analyser = audioContext.createAnalyser();
-  //         const microphone = audioContext.createMediaStreamSource(stream);
-  //         microphone.connect(analyser);
-  //         analyser.connect(audioContext.destination);
-  //         analyser.fftSize = 256;
-
-  //         const bufferLength = analyser.frequencyBinCount;
-  //         const dataArray = new Uint8Array(bufferLength);
-
-  //         const checkAudioActivity = () => {
-  //           analyser.getByteFrequencyData(dataArray);
-  //           const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
-  //           const isSpeakingNow = average > 10; // Adjust this threshold as needed
-
-  //           if (isSpeakingNow) {
-  //             setIsSpeaking(true);
-  //             socket.emit("speaking_status", {
-  //               roomid,
-  //               speaking: true,
-  //               watcherUsername,
-  //             });
-  //           } else {
-  //             setIsSpeaking(false);
-  //             socket.emit("speaking_status", {
-  //               roomid,
-  //               speaking: false,
-  //               watcherUsername,
-  //             });
-  //           }
-
-  //           requestAnimationFrame(checkAudioActivity);
-  //         };
-
-  //         checkAudioActivity();
-  //       })
-  //       .catch((error) => console.error(error));
-
-  //     studentSharePeer.on("call", (call) => {
-  //       call.answer(studentStream.current);
-
-  //       call.on("close", () => {
-  //         console.log("ewe");
-  //       });
-  //     });
-  //     // screenPlayerRef?.current.dispose();  // Dispose of the videojs player
-  //     // screenPlayerRef.current = null;
-
-  //     // handleCreateStudentAudio();
-  //   });
-  //   return () => {
-  //     if (audioRef.current) {
-  //       const stream = audioRef.current.srcObject;
-  //       if (stream) {
-  //         stream.getTracks()[0].stop();
-  //       }
-  //     }
-  //   };
-  // }, [roomid]);
   useEffect(() => {
     if (playerRef.current && audioVisuals) {
       playerRef.current.muted(!audioVisuals.audio);
@@ -620,9 +518,11 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
+    console.log(watcherUsername, peerInstance);
 
     if (watcherUsername !== "") {
       peerInstance.on("open", (user) => {
+        console.log("watcher");
         socket.emit(
           "watcher",
           roomid,
@@ -634,7 +534,10 @@ function WatchStream({ schoolname }) {
         );
       });
     }
-
+    const handleBlockStudent = () => {
+      peerInstance.disconnect();
+      handleExitStream();
+    };
     const startClass = (peerId, stat, audioStat) => {
       console.log(stat);
       navigator.mediaDevices
@@ -656,12 +559,17 @@ function WatchStream({ schoolname }) {
     };
 
     socket.on("audio status", () => {});
+
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
       setAudioVisuals(roomStatus);
       startClass(peerId, "join", roomStatus);
       setWaiting(false);
       setDisconnect(false);
     });
+    socket.on("blocked", () => {
+      handleBlockStudent();
+    });
+
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
       setWaiting(false);
@@ -676,10 +584,10 @@ function WatchStream({ schoolname }) {
   }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
 
   useEffect(() => {
-    socket.on("student stream", (peerId) => {
+    socket.on("student stream", (peerId, audioStat) => {
+      console.log(audioStat);
       const receiveSudentPeer = new Peer();
       receiveSudentPeer.on("open", () => {
-        console.log("ssdsd");
         navigator.mediaDevices
           .getUserMedia({ video: false, audio: true })
           .then((newStream) => {
@@ -688,8 +596,8 @@ function WatchStream({ schoolname }) {
             call?.on("stream", (remoteStream) => {
               console.log("incoming student audio");
               if (audioRef.current) {
-                console.log("audioRef");
                 audioRef.current.srcObject = remoteStream;
+                audioRef.current.muted = !audioStat;
                 audioRef.current.onloadedmetadata = () => {
                   // Media has loaded, you can now play it
                   audioRef.current
@@ -709,24 +617,24 @@ function WatchStream({ schoolname }) {
                 audioRef.current.onabort = () => {
                   console.error("Audio load request was interrupted");
                 };
-                const audioContext = new AudioContext();
-                const source =
-                  audioContext.createMediaStreamSource(remoteStream);
+                // const audioContext = new AudioContext();
+                // const source =
+                //   audioContext.createMediaStreamSource(remoteStream);
 
-                source.connect(audioContext.destination);
+                // source.connect(audioContext.destination);
 
-                // Define a threshold for sound activity (adjust as needed)
-                const soundThreshold = 0.05;
+                // // Define a threshold for sound activity (adjust as needed)
+                // const soundThreshold = 0.05;
 
-                // Listen for audio activity
-                source.onaudioprocess = (event) => {
-                  const audioBuffer = event.inputBuffer.getChannelData(0);
-                  const rms = calculateRMS(audioBuffer);
+                // // Listen for audio activity
+                // source.onaudioprocess = (event) => {
+                //   const audioBuffer = event.inputBuffer.getChannelData(0);
+                //   const rms = calculateRMS(audioBuffer);
 
-                  if (rms > soundThreshold) {
-                    console.log("student Sound is being inputted");
-                  }
-                };
+                //   if (rms > soundThreshold) {
+                //     console.log("student Sound is being inputted");
+                //   }
+                // };
 
                 // Listen for audio activity
               } else {
@@ -1039,6 +947,7 @@ function WatchStream({ schoolname }) {
       ]);
     });
   }, [roomid]);
+
   useEffect(() => {
     socket.on("student audio stat", (audioStat) => {
       audioRef.current.muted = !audioStat;
@@ -1069,9 +978,9 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     scrollToBottom();
   }, [defaultChat]);
-
   return (
     <div className="dashboard-layout">
+      <audio ref={audioRef} />
       <Modal isOpen={submitQuizModal}>
         <ModalHeader>
           <p style={{ textAlign: "center", margin: 0 }}>
@@ -1356,8 +1265,6 @@ function WatchStream({ schoolname }) {
                                 aria-hidden="true"
                               ></i>
                             )}
-
-                            <audio ref={audioRef} />
 
                             {studentMic ? (
                               studentMicControl ? (
@@ -2047,6 +1954,56 @@ function WatchStream({ schoolname }) {
                               height={height}
                               setHeight={setHeight}
                             />
+
+                            {/* 
+                            <div
+                              className="mobile-audio-wrapper"
+                              onClick={
+                                studentMic
+                                  ? studentMicControl
+                                    ? handleTurnOffStudentAudio
+                                    : handleTurnOnStudentAudio
+                                  : handleStartStudentAudio
+                              }
+                            > */}
+                            {studentMic ? (
+                              studentMicControl ? (
+                                <div
+                                  className="mobile-audio-wrapper mobile-control audio-active"
+                                  onClick={handleTurnOffStudentAudio}
+                                >
+                                  {" "}
+                                  <i
+                                    className="fa fa-microphone"
+                                    aria-hidden="true"
+                                  ></i>
+                                </div>
+                              ) : (
+                                <div
+                                  className="mobile-audio-wrapper mobile-control  audio-active"
+                                  onClick={handleTurnOnStudentAudio}
+                                >
+                                  {" "}
+                                  <i
+                                    className="fa fa-microphone-slash"
+                                    // className="fa fa-microphone"
+                                    aria-hidden="true"
+                                  ></i>
+                                </div>
+                              )
+                            ) : (
+                              <div
+                                className="mobile-audio-wrapper mobile-control  audio-inactive"
+                                onClick={handleStartStudentAudio}
+                              >
+                                {" "}
+                                <i
+                                  className="fa fa-microphone"
+                                  aria-hidden="true"
+                                ></i>
+                              </div>
+                            )}
+                            {/* </div> */}
                             <div
                               className="expand-wrapper"
                               onClick={() => {
@@ -2059,6 +2016,7 @@ function WatchStream({ schoolname }) {
                                 style={{ color: "#ccc" }}
                               ></i>
                             </div>
+
                             <Button
                               onClick={() => {
                                 sendMessage();
