@@ -246,6 +246,9 @@ const setupSocketIO = (app) => {
         }
       }
     }, heartbeatTimeout);
+
+
+
     socket.on("startScreenSharing", (roomId, peerId) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
       io.in(roomId).emit("startScreenSharing", peerId);
@@ -377,6 +380,8 @@ const setupSocketIO = (app) => {
       );
     });
     socket.on("disconnect", async () => {
+
+      
       // Check if the socket is a broadcaster
       const socketId = socket.id;
       for (const roomId in roomsHolder) {
@@ -392,7 +397,14 @@ const setupSocketIO = (app) => {
 
       Object.entries(broadcasterHolder).forEach(
         async ([roomId, broadcaster]) => {
+          if(broadcasterHolder[roomId].studentStream.socketId===socketId){
+            console.log("speaking student has left")
+            socket.emeit
+            io.in(roomId).emit("speaking student has left",socketId);
+
+          }
           if (broadcaster.socketId === socketId) {
+            
             // The disconnected socket was a broadcaster
             delete broadcasterHolder[roomId];
             delete broadcasterScreen[roomId];

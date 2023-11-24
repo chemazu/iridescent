@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import Peer from "peerjs";
 import axios from "axios";
@@ -100,6 +100,7 @@ export default function Stream() {
   const [deleteModal, setDeleteModal] = useState(false);
   const [saveResource, setSaveResource] = useState(false);
   const [showSpeakingRequest, setShowSpeakingRequest] = useState(false);
+  const [activeSpeaker, setActiveSpeaker] = useState(false);
 
   const [exitModal, setExitModal] = useState(false);
   const [resourceId, setResourceId] = useState("");
@@ -1126,11 +1127,32 @@ export default function Stream() {
       if (foundStudentIndex !== -1) {
         console.log("here");
         setStudentSpeaking({ foundStudent, status, audioStatus });
+        setActiveSpeaker(true);
       }
+    });
+    socket.on("speaking student has left", (socketId) => {
+      console.log(attendanceList);
+      let newAttendanceList = audioRequests.filter(
+        (item) => item.socketId !== socketId
+      );
+      setAttendanceList(newAttendanceList);
+      console.log(studentSpeaking);
+      if (
+        studentSpeaking.foundStudent &&
+        studentSpeaking.foundStudent.socketId === socketId
+      ) {
+        console.log({});
+        // setStudentSpeaking({});
+      }
+      let newAudioRequests = audioRequests.filter(
+        (item) => item.socketId !== socketId
+      );
+      setAudioRequests(newAudioRequests);
     });
 
     return () => {
       socket.off("speaking_status");
+      socket.off("speaking student has left");
     };
   }, [roomid, attendanceList]);
 
@@ -1323,6 +1345,86 @@ export default function Stream() {
       socket.off("message");
     };
   });
+  // useEffect(() => {
+  //   socket.on("speaking student has left", (socketId) => {
+  //     console.log("speaking student has left");
+  //     console.log(attendanceList);
+  //     console.log(socketId);
+  //     console.log(studentSpeaking);
+  //     console.log(audioRequests);
+  //     console.log(activeSpeaker);
+
+  //     // remove from attendance list
+  //     // console.log(attendanceList);
+  //     // let newAttendanceList = audioRequests.filter(
+  //     //   (item) => item.socketId !== socketId
+  //     // );
+  //     // console.log(newAttendanceList);
+  //     // // remove from studentSpeaking
+  //     // // setActiveSpeaker(false)
+  //     // console.log(studentSpeaking);
+  //     // if (studentSpeaking.foundStudent.socketId === socketId) {
+  //     //   console.log({});
+  //     //   // setStudentSpeaking({});
+  //     // }
+  //     // // remove from audiorequest
+  //     // let newAudioRequests = audioRequests.filter(
+  //     //   (item) => item.socketId !== socketId
+  //     // );
+  //     // console.log(newAudioRequests);
+  //   });
+
+  //   return () => {
+  //     socket.off("speaking student has left");
+  //   };
+  //   // }, [roomid, activeSpeaker,audioRequestModal,]);
+  // }, [roomid, activeSpeaker]);
+
+  // const handleStudentLeave = (
+  //   (socketId) => {
+  //     console.log("speaking student has left");
+  //     console.log(attendanceList);
+  //     console.log(socketId);
+  //     console.log(studentSpeaking);
+  //     console.log(audioRequests);
+  //     console.log(activeSpeaker);
+
+  //     // Your logic here
+  //     // remove from attendance list
+  //     console.log(attendanceList);
+  //     let newAttendanceList = audioRequests.filter(
+  //       (item) => item.socketId !== socketId
+  //     );
+  //     console.log(newAttendanceList,"newal");
+  //     // remove from studentSpeaking
+  //     // setActiveSpeaker(false)
+  //     console.log(studentSpeaking);
+  //     if (studentSpeaking.foundStudent.socketId === socketId) {
+  //       console.log({});
+  //       // setStudentSpeaking({});
+  //     }
+  //     // remove from audiorequest
+  //     let newAudioRequests = audioRequests.filter(
+  //       (item) => item.socketId !== socketId
+  //     );
+  //     console.log(newAudioRequests,"newAr");
+  //   },
+  //   [
+  //     attendanceList,
+  //     studentSpeaking,
+  //     audioRequests,
+  //     activeSpeaker,
+  //     audioRequestModal,
+  //   ]
+  // );
+
+  // useEffect(() => {
+  //   socket.on("speaking student has left", handleStudentLeave);
+
+  //   return () => {
+  //     socket.off("speaking student has left", handleStudentLeave);
+  //   };
+  // }, [roomid, activeSpeaker, audioRequestModal, handleStudentLeave]);
 
   useEffect(() => {
     scrollToBottom();
@@ -2861,52 +2963,71 @@ export default function Stream() {
                           </div>
                         )}
                       </div> */}
-                      {studentSpeaking.status && (
+                      {activeSpeaker && (
                         <div className="student-speaking-indicator">
-                          <div className="pulse-indicatior">
-                            {" "}
-                            <p className="speaking-icon">CC</p>
-                          </div>
-                          <div
-                            className="pulse-indicatior-2"
-                            style={{
-                              animationDelay: "0s",
-                            }}
-                          >
-                            <p className="speaking-icon">&nbsp;</p>
-                          </div>
-                          <div
-                            className="pulse-indicatior-2"
-                            style={{
-                              animationDelay: "1s",
-                            }}
-                          >
-                            <p className="speaking-icon">&nbsp;</p>
-                          </div>
-                          <div
-                            className="pulse-indicatior-2"
-                            style={{
-                              animationDelay: "2s",
-                            }}
-                          >
-                            <p className="speaking-icon">&nbsp;</p>
-                          </div>
-                          <div
-                            className="pulse-indicatior-2"
-                            style={{
-                              animationDelay: "3s",
-                            }}
-                          >
-                            <p className="speaking-icon">&nbsp;</p>
-                          </div>
-                          <div
-                            className="pulse-indicatior-2"
-                            style={{
-                              animationDelay: "4s",
-                            }}
-                          >
-                            <p className="speaking-icon">&nbsp;</p>
-                          </div>
+                          {studentSpeaking.status ? (
+                            <>
+                              {" "}
+                              <div className="pulse-indicatior">
+                                {" "}
+                                <p className="speaking-icon">
+                                  {studentSpeaking.foundStudent.userName.charAt(
+                                    0
+                                  )}
+                                </p>
+                              </div>
+                              <div
+                                className="pulse-indicatior-2"
+                                style={{
+                                  animationDelay: "0s",
+                                }}
+                              >
+                                <p className="speaking-icon">&nbsp;</p>
+                              </div>
+                              <div
+                                className="pulse-indicatior-2"
+                                style={{
+                                  animationDelay: "1s",
+                                }}
+                              >
+                                <p className="speaking-icon">&nbsp;</p>
+                              </div>
+                              <div
+                                className="pulse-indicatior-2"
+                                style={{
+                                  animationDelay: "2s",
+                                }}
+                              >
+                                <p className="speaking-icon">&nbsp;</p>
+                              </div>
+                              <div
+                                className="pulse-indicatior-2"
+                                style={{
+                                  animationDelay: "3s",
+                                }}
+                              >
+                                <p className="speaking-icon">&nbsp;</p>
+                              </div>
+                              <div
+                                className="pulse-indicatior-2"
+                                style={{
+                                  animationDelay: "4s",
+                                }}
+                              >
+                                <p className="speaking-icon">&nbsp;</p>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="pulse-indicatior">
+                              {" "}
+                              <p className="speaking-icon">
+                                {/* {studentSpeaking.userName.charAt(0)} */}
+                                {studentSpeaking.foundStudent.userName.charAt(
+                                  0
+                                )}
+                              </p>
+                            </div>
+                          )}
 
                           <p>
                             {studentSpeaking.foundStudent.userName} is speaking

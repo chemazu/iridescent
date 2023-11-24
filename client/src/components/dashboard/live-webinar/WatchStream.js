@@ -958,6 +958,16 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid]);
   useEffect(() => {
+    socket.on("speaking student has left", () => {
+      console.log("speaking student has left");
+    });
+
+    return () => {
+      socket.off("speaking student has left");
+    };
+  }, [roomid]);
+
+  useEffect(() => {
     socket.on("disablevideo", (status) => {
       setDisableVideoStream(status);
     });
