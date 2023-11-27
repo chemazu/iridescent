@@ -51,6 +51,8 @@ function WatchStream({ schoolname }) {
   const secondScreenPlayer = useRef(null);
 
   const peerRef = useRef(null);
+  const studentSharePeerRef = useRef(null);
+
   const chatInterfaceRef = useRef(null);
   const [title, setTitle] = useState("");
 
@@ -397,6 +399,10 @@ function WatchStream({ schoolname }) {
   const handleStopStudentAudio = () => {
     // emit stop audio
     // delete the peer
+    console.log(studentSharePeerRef.current);
+
+    studentSharePeerRef.current.destroy();
+
     // toggle audio
   };
   const handleTurnOnStudentAudio = () => {
@@ -408,6 +414,16 @@ function WatchStream({ schoolname }) {
     socket.emit("off student audio", roomid);
   };
 
+  useEffect(() => {
+    socket.on("stop student speaking", () => {
+      console.log("stop student speaking");
+      handleStopStudentAudio();
+    });
+
+    return () => {
+      socket.off("stop student speaking");
+    };
+  }, [roomid, attendanceList]);
   useEffect(() => {
     socket.on("speaking_status", (status, studentSocketId) => {
       console.log(status, studentSocketId);
@@ -432,8 +448,9 @@ function WatchStream({ schoolname }) {
   useEffect(() => {
     socket.on("start streaming", () => {
       const studentSharePeer = new Peer();
+      studentSharePeerRef.current = studentSharePeer;
 
-      studentSharePeer.on("open", (peerId) => {
+      studentSharePeerRef.current.on("open", (peerId) => {
         socket.emit("student stream", roomid, peerId, studentMicControl);
 
         // socket.emit("audiovisuals", roomid, audioVisuals);
@@ -485,6 +502,10 @@ function WatchStream({ schoolname }) {
           console.log("ewe");
         });
       });
+    });
+    socket.on("stop student speaking", () => {
+      console.log("stop student speaking");
+      handleStopStudentAudio();
     });
     return () => {
       if (audioRef.current) {
@@ -1146,7 +1167,6 @@ function WatchStream({ schoolname }) {
                                 ></i>
                               </div>
                             </div>
-
                             <div
                               style={{
                                 position: "relative",
@@ -1156,6 +1176,15 @@ function WatchStream({ schoolname }) {
                                 borderRadius: "10px",
                               }}
                             >
+                              {studentMic &&
+                                (studentMicControl ? (
+                                  <p>Your mic is on, speak now</p>
+                                ) : (
+                                  <p className="watcher-speaking-status">
+                                    Request granted, turn mic on to speak
+                                  </p>
+                                ))}
+                             
                               <div>
                                 <div
                                   ref={videoRef}
@@ -1220,40 +1249,7 @@ function WatchStream({ schoolname }) {
                             <span className="divider-span"></span>
                             <span>Attendees ({attendanceCount})</span>
                           </div>
-                          {studentSpeaking.status && (
-                            <div>
-                              <div>
-                                <div
-                                  className="pulse-circle"
-                                  style={{
-                                    animationDelay: "0s",
-                                  }}
-                                ></div>
-                                <div
-                                  className="pulse-circle"
-                                  style={{
-                                    animationDelay: "1s",
-                                  }}
-                                ></div>
-                                <div
-                                  className="pulse-circle"
-                                  style={{
-                                    animationDelay: "2s",
-                                  }}
-                                ></div>
-                                <div
-                                  className="pulse-circle"
-                                  style={{
-                                    animationDelay: "3s",
-                                  }}
-                                ></div>
-                              </div>
-                              <p className="live-button">
-                                {studentSpeaking.foundStudent.userName} is
-                                speaking
-                              </p>
-                            </div>
-                          )}
+                          <div>{studentMic && <p>End Speaking</p>}</div>
                           <div
                             className="audio-wrapper"
                             onClick={

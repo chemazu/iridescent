@@ -100,6 +100,8 @@ export default function Stream() {
   const [deleteModal, setDeleteModal] = useState(false);
   const [saveResource, setSaveResource] = useState(false);
   const [showSpeakingRequest, setShowSpeakingRequest] = useState(false);
+  const [muteDelete, setMuteDelete] = useState(false);
+
   const [activeSpeaker, setActiveSpeaker] = useState(false);
 
   const [exitModal, setExitModal] = useState(false);
@@ -151,17 +153,16 @@ export default function Stream() {
       socket.emit("block-user", { ...info, roomId: roomid });
     } else {
     }
-
-    // console.log(type, info);
-    // make a post call to save the block
-    // update the respective block state
-    // remove the student from the chat and peerjs
     dispatch(stopLoading());
   };
   const handleMuteStudent = () => {
     audioRef.current.muted = true;
 
     socket.emit("off student audio", roomid);
+  };
+  const handleStopStudentSpeaking = () => {
+    socket.emit("stop student speaking", roomid);
+    setActiveSpeaker(false);
   };
 
   const getBlockedStudents = async () => {
@@ -1115,8 +1116,8 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("speaking_status", (status, studentSocketId, audioStatus) => {
-      console.log(status, studentSocketId);
-      console.log(attendanceList);
+      console.log(studentSocketId);
+
       const foundStudent = attendanceList.find(
         (student) => student.socketId === studentSocketId
       );
@@ -1125,37 +1126,39 @@ export default function Stream() {
       );
       console.log(foundStudent);
       if (foundStudentIndex !== -1) {
-        console.log("here");
-        setStudentSpeaking({ foundStudent, status, audioStatus });
+        setStudentSpeaking({ ...foundStudent, status, audioStatus });
         setActiveSpeaker(true);
       }
-    });
-    socket.on("speaking student has left", (socketId) => {
-      console.log(attendanceList);
-      let newAttendanceList = audioRequests.filter(
-        (item) => item.socketId !== socketId
-      );
-      setAttendanceList(newAttendanceList);
-      console.log(studentSpeaking);
-      if (
-        studentSpeaking.foundStudent &&
-        studentSpeaking.foundStudent.socketId === socketId
-      ) {
-        console.log({});
-        // setStudentSpeaking({});
-      }
-      let newAudioRequests = audioRequests.filter(
-        (item) => item.socketId !== socketId
-      );
-      setAudioRequests(newAudioRequests);
     });
 
     return () => {
       socket.off("speaking_status");
-      socket.off("speaking student has left");
     };
   }, [roomid, attendanceList]);
 
+  useEffect(() => {
+    socket.on("speaking student has left", (socketId) => {
+      console.log(socketId);
+
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === socketId
+      );
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === socketId
+      );
+      console.log(foundStudent);
+      if (foundStudentIndex !== -1) {
+        console.log(studentSpeaking);
+        setActiveSpeaker(false);
+
+        setStudentSpeaking({});
+      }
+    });
+
+    return () => {
+      socket.off("speaking student has left");
+    };
+  }, [roomid, attendanceList, studentSpeaking]);
   useEffect(() => {
     socket.on("student audio stat", (audioStat) => {
       audioRef.current.muted = !audioStat;
@@ -2955,7 +2958,7 @@ export default function Stream() {
                               ></div>
                             </div>
                             <p className="live-button">
-                              {studentSpeaking.foundStudent.userName}
+                              {studentSpeaking.userName.}
                               Paul
                                is
                               speaking
@@ -2964,16 +2967,24 @@ export default function Stream() {
                         )}
                       </div> */}
                       {activeSpeaker && (
-                        <div className="student-speaking-indicator">
+                        <div
+                          className="student-speaking-indicator"
+                          style={{
+                            marginBottom: mobileChat && 0,
+                            // marginRight:mobileChat && 0,
+
+                            bottom: mobileChat && 0,
+                          }}
+                        >
                           {studentSpeaking.status ? (
                             <>
                               {" "}
                               <div className="pulse-indicatior">
                                 {" "}
                                 <p className="speaking-icon">
-                                  {studentSpeaking.foundStudent.userName.charAt(
-                                    0
-                                  )}
+                                  {studentSpeaking.userName
+                                    .charAt(0)
+                                    .toUpperCase()}
                                 </p>
                               </div>
                               <div
@@ -3022,18 +3033,51 @@ export default function Stream() {
                               {" "}
                               <p className="speaking-icon">
                                 {/* {studentSpeaking.userName.charAt(0)} */}
-                                {studentSpeaking.foundStudent.userName.charAt(
-                                  0
-                                )}
+                                {studentSpeaking.userName
+                                  .charAt(0)
+                                  .toUpperCase()}
+                              </p>
+                            </div>
+                          )}
+                          <p>{studentSpeaking.userName} is speaking</p>
+
+                          <i
+                            className="fa fa-ellipsis-v vertical-icon hover"
+                            onClick={() => {
+                              setMuteDelete(!muteDelete);
+                            }}
+                          ></i>
+                          <i
+                            className="fa fa-times close-icon hover"
+                            onClick={() => {
+                              handleStopStudentSpeaking();
+                            }}
+                          ></i>
+
+                          {muteDelete && (
+                            <div className="mute-delete">
+                              <p
+                                className="hover"
+                                onClick={() => {
+                                  handleBlockStudent(
+                                    "class",
+                                    studentSpeaking.foundStudent
+                                  );
+                                }}
+                              >
+                                Block
+                              </p>
+                              <p
+                                onClick={() => {
+                                  handleMuteStudent();
+                                }}
+                              >
+                                Mute User
                               </p>
                             </div>
                           )}
 
-                          <p>
-                            {studentSpeaking.foundStudent.userName} is speaking
-                          </p>
-                          <i className="fa fa-times close-icon"></i>
-                          <div>
+                          {/* <div>
                             <p
                               onClick={() => {
                                 handleBlockStudent(
@@ -3051,7 +3095,7 @@ export default function Stream() {
                             >
                               Mute User
                             </p>
-                          </div>
+                          </div> */}
                         </div>
                       )}
                     </div>

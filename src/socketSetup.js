@@ -28,7 +28,7 @@ const setupSocketIO = (app) => {
   io.on("connection", (socket) => {
     // broadcaster
     socket.on("broadcaster", async (roomId, peerId, audioStat) => {
-      console.log("broadcaster")
+      console.log("broadcaster");
       broadcasterHolder[roomId] = { peerId, socketId: socket.id };
       audioStatus[roomId] = audioStat;
       socket.join(roomId);
@@ -104,6 +104,10 @@ const setupSocketIO = (app) => {
 
         // Count the number of people in the room after the user exits
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
+      }
+      console.log("watcher exit");
+      if (broadcasterHolder[roomId].studentStream.socketId === socket.id) {
+        io.in(roomId).emit("speaking student has left", socket.id);
       }
       // check of the user is a speaking user
       // broadcast that the speaking student is disconencted
@@ -247,8 +251,6 @@ const setupSocketIO = (app) => {
       }
     }, heartbeatTimeout);
 
-
-
     socket.on("startScreenSharing", (roomId, peerId) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
       io.in(roomId).emit("startScreenSharing", peerId);
@@ -268,7 +270,7 @@ const setupSocketIO = (app) => {
       audioStatus[roomId] = updated;
     });
     socket.on("message", (message, roomId) => {
-      console.log("message",socket.id);
+      console.log("message", socket.id);
       socket.broadcast.to(roomId).emit("message", { ...message });
       if (message.type === "quiz" || message.type === "poll") {
         if (!pollQuizHolder[roomId]) {
@@ -340,6 +342,13 @@ const setupSocketIO = (app) => {
       io.in(roomid).emit("updatedPollResult", updatedResults);
     });
 
+    socket.on("stop student speaking", (roomId) => {
+      if (broadcasterHolder[roomId].studentStream) {
+        let { socketId } = broadcasterHolder[roomId].studentStream;
+        io.to(socketId).emit("stop student speaking");
+      }
+    });
+
     socket.on("endstream", async (roomid) => {
       // Check if the socket is a broadcaster
       const socketId = socket.id;
@@ -380,8 +389,6 @@ const setupSocketIO = (app) => {
       );
     });
     socket.on("disconnect", async () => {
-
-      
       // Check if the socket is a broadcaster
       const socketId = socket.id;
       for (const roomId in roomsHolder) {
@@ -397,14 +404,15 @@ const setupSocketIO = (app) => {
 
       Object.entries(broadcasterHolder).forEach(
         async ([roomId, broadcaster]) => {
-          if(broadcasterHolder[roomId].studentStream.socketId===socketId){
-            console.log("speaking student has left")
-            socket.emeit
-            io.in(roomId).emit("speaking student has left",socketId);
+          if (
+            broadcasterHolder[roomId].studentStream &&
+            broadcasterHolder[roomId].studentStream.socketId === socketId
+          ) {
+            console.log("speaking student has left");
 
+            io.in(roomId).emit("speaking student has left", socketId);
           }
           if (broadcaster.socketId === socketId) {
-            
             // The disconnected socket was a broadcaster
             delete broadcasterHolder[roomId];
             delete broadcasterScreen[roomId];
