@@ -59,10 +59,10 @@ function WatchStream({ schoolname }) {
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
   const [attendanceList, setAttendanceList] = useState([]);
-  const [studentSpeaking, setStudentSpeaking] = useState({});
-  const [studentSpeakingAudioStat, setStudentSpeakingAudioStat] =
-    useState(true);
+  const [studentIp, setStudentIp] = useState("");
 
+  const [studentSpeaking, setStudentSpeaking] = useState({});
+   
   const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -338,6 +338,7 @@ function WatchStream({ schoolname }) {
 
         setPresenterName(`${res.data.firstname} ${res.data.lastname}`);
         setPresenterAvatar(res.data.avatar);
+        setStudentIp(res.data.studentIp);
       }
     } catch (error) {
       console.log(error.message);
@@ -397,12 +398,8 @@ function WatchStream({ schoolname }) {
     socket.emit("request audio", roomid);
   };
   const handleStopStudentAudio = () => {
-    // emit stop audio
-    // delete the peer
-    console.log(studentSharePeerRef.current);
-
     studentSharePeerRef.current.destroy();
-
+    socket.emit("student audio over", roomid);
     // toggle audio
   };
   const handleTurnOnStudentAudio = () => {
@@ -551,7 +548,8 @@ function WatchStream({ schoolname }) {
           getUserId(roomid),
           watcherUsername,
           watcherAvatar,
-          registeredUser
+          registeredUser,
+          studentIp
         );
       });
     }
@@ -1178,13 +1176,15 @@ function WatchStream({ schoolname }) {
                             >
                               {studentMic &&
                                 (studentMicControl ? (
-                                  <p>Your mic is on, speak now</p>
+                                  <p className="watcher-speaking-status">
+                                    Your mic is on, speak now
+                                  </p>
                                 ) : (
                                   <p className="watcher-speaking-status">
                                     Request granted, turn mic on to speak
                                   </p>
                                 ))}
-                             
+
                               <div>
                                 <div
                                   ref={videoRef}
@@ -1206,6 +1206,17 @@ function WatchStream({ schoolname }) {
                                             width: "15%",
                                           }}
                                         />
+                                        {studentMic &&
+                                          (studentMicControl ? (
+                                            <p className="watcher-speaking-status">
+                                              Your mic is on, speak now
+                                            </p>
+                                          ) : (
+                                            <p className="watcher-speaking-status">
+                                              Request granted, turn mic on to
+                                              speak
+                                            </p>
+                                          ))}
                                       </div>
                                     )}
                                   </>
@@ -1249,7 +1260,18 @@ function WatchStream({ schoolname }) {
                             <span className="divider-span"></span>
                             <span>Attendees ({attendanceCount})</span>
                           </div>
-                          <div>{studentMic && <p>End Speaking</p>}</div>
+                          <div>
+                            {studentMic && (
+                              <span
+                                className="end-speaking hover"
+                                onClick={() => {
+                                  handleStopStudentAudio();
+                                }}
+                              >
+                                Stop Speaking
+                              </span>
+                            )}
+                          </div>
                           <div
                             className="audio-wrapper"
                             onClick={
@@ -1261,10 +1283,17 @@ function WatchStream({ schoolname }) {
                             }
                           >
                             {studentMic ? (
-                              <i
-                                className="fa fa-microphone"
-                                aria-hidden="true"
-                              ></i>
+                              studentMicControl ? (
+                                <i
+                                  className="fa fa-microphone"
+                                  aria-hidden="true"
+                                ></i>
+                              ) : (
+                                <i
+                                  className="fa fa-microphone-slash"
+                                  aria-hidden="true"
+                                ></i>
+                              )
                             ) : (
                               <i
                                 className="fa fa-microphone-slash"

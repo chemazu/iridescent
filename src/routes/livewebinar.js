@@ -15,6 +15,7 @@ import PaymentPlans from "../models/PaymentPlans";
 import dataUri from "../utilities/dataUri";
 import StudentWebinar from "../models/StudentWebinar";
 import AddResource from "../models/AdditonalResource";
+import BlockedStudent from "../models/BlockedStudent";
 
 const router = Router();
 const storageDest = memoryStorage();
@@ -395,31 +396,59 @@ router.get("/validate/:streamKey", auth, async (req, res) => {
 });
 router.get("/watch/:streamKey", async (req, res) => {
   const { streamKey } = req.params;
+  const { ip } = req;
+  console.log(ip);
   let studentId;
   try {
     const livestream = await LiveWebinar.findOne({ streamKey })
       .populate("creator")
       .populate("school");
-    if (livestream) {
-      const planName = await PaymentPlans.findOne({
-        _id: livestream.creator.selectedplan,
-      });
-      if (livestream.fee > 0) {
-        const token = req.header("x-auth-token");
 
-        if (!token) {
-          return res.status(401).json({
-            msg: "No Token. Authorization Denied",
-          });
-        }
-        const decoded = jwt.verify(token, process.env.STUDENTTOKENSECRET);
-        studentId = decoded.student.id;
-        const payment = await StudentWebinar.findOne({
-          student: studentId,
-          webinarBought: livestream._id,
-          boughtfrom: livestream.school._id,
+    if (livestream) {
+      const blockedStudent = await BlockedStudent.find({
+        blockedBy: livestream.creator,
+        studentIp: ip,
+      });
+   
+
+      if (blockedStudent.length>=1) {
+        res.status(400).json({ error: "Stream not found" });
+      } else {
+        const planName = await PaymentPlans.findOne({
+          _id: livestream.creator.selectedplan,
         });
-        if (payment) {
+        if (livestream.fee > 0) {
+          const token = req.header("x-auth-token");
+
+          if (!token) {
+            return res.status(401).json({
+              msg: "No Token. Authorization Denied",
+            });
+          }
+          const decoded = jwt.verify(token, process.env.STUDENTTOKENSECRET);
+          studentId = decoded.student.id;
+          const payment = await StudentWebinar.findOne({
+            student: studentId,
+            webinarBought: livestream._id,
+            boughtfrom: livestream.school._id,
+          });
+          if (payment) {
+            res.json({
+              title: livestream.title,
+              streamkey: livestream.streamKey,
+              isLive: livestream.isLive,
+              firstname: livestream.creator.firstname,
+              lastname: livestream.creator.lastname,
+              username: livestream.creator.username,
+              school: livestream.school.name,
+              planname: planName.planname,
+              timeLeft: livestream.timeleft,
+              avatar: livestream.creator.avatar,
+            });
+          } else {
+            res.status(400).json({ error: "Payment not found" });
+          }
+        } else {
           res.json({
             title: livestream.title,
             streamkey: livestream.streamKey,
@@ -431,23 +460,9 @@ router.get("/watch/:streamKey", async (req, res) => {
             planname: planName.planname,
             timeLeft: livestream.timeleft,
             avatar: livestream.creator.avatar,
+            studentIp: ip,
           });
-        } else {
-          res.status(400).json({ error: "Payment not found" });
         }
-      } else {
-        res.json({
-          title: livestream.title,
-          streamkey: livestream.streamKey,
-          isLive: livestream.isLive,
-          firstname: livestream.creator.firstname,
-          lastname: livestream.creator.lastname,
-          username: livestream.creator.username,
-          school: livestream.school.name,
-          planname: planName.planname,
-          timeLeft: livestream.timeleft,
-          avatar: livestream.creator.avatar,
-        });
       }
     } else {
       res.status(400).json({ error: "Stream not found" });

@@ -136,14 +136,17 @@ export default function Stream() {
 
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
-    let { studentId, registeredUser } = info;
+    
+    let {  studentIp } = info;
+ 
 
     let body = {
-      studentId: registeredUser ? studentId : null,
+      studentIp ,
       blockType: type,
       roomId: roomid,
-      visitorID: registeredUser ? null : studentId,
+ 
     };
+    console.log(body);
 
     let res = await axios.post(
       "/api/v1/blockedstudents/blocked-students",
@@ -151,6 +154,7 @@ export default function Stream() {
     );
     if (res) {
       socket.emit("block-user", { ...info, roomId: roomid });
+
     } else {
     }
     dispatch(stopLoading());
@@ -440,7 +444,8 @@ export default function Stream() {
         userName,
         watcherAvatar,
         studentId,
-        registeredUser
+        registeredUser,
+        studentIp
       ) => {
         setAttendanceList((prevAttendanceList) => [
           ...prevAttendanceList,
@@ -451,6 +456,7 @@ export default function Stream() {
             watcherAvatar,
             studentId,
             registeredUser,
+            studentIp
           },
         ]);
       }
@@ -3059,20 +3065,18 @@ export default function Stream() {
                               <p
                                 className="hover"
                                 onClick={() => {
-                                  handleBlockStudent(
-                                    "class",
-                                    studentSpeaking.foundStudent
-                                  );
+                                  handleBlockStudent("class", studentSpeaking);
                                 }}
                               >
                                 Block
                               </p>
                               <p
+                                className="hover"
                                 onClick={() => {
                                   handleMuteStudent();
                                 }}
                               >
-                                Mute User
+                                Mute
                               </p>
                             </div>
                           )}

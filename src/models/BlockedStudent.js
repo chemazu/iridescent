@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
 
 const blockedStudentSchema = new mongoose.Schema({
-  studentId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "student",
+  studentIp: {
+    type: String,
+
     required: true,
   },
   blockedBy: {
@@ -14,9 +14,6 @@ const blockedStudentSchema = new mongoose.Schema({
   blockType: {
     type: String,
     required: true,
-  },
-  visitorID: {
-    type: String,
   },
   roomId: {
     type: String,

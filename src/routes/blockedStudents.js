@@ -7,13 +7,13 @@ router.post("/blocked-students", [auth], async (req, res) => {
   try {
     console.log(req.body);
 
-    const { studentId, blockType, visitorID, roomId } = req.body;
+    const { studentIp, blockType,  roomId } = req.body;
     const blockedBy = req.user.id;
     const blockedStudent = new BlockedStudent({
-      studentId,
+      studentIp,
       blockedBy,
       blockType,
-      visitorID,
+ 
       roomId,
     });
 
