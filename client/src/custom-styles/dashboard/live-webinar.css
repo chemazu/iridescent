@@ -1025,7 +1025,6 @@
   width: 100%;
   display: flex;
   justify-content: space-between;
- 
 }
 .audio-wrapper {
   display: flex;
@@ -2037,6 +2036,9 @@
   border-radius: 15px;
 }
 @media screen and (max-width: 812px) {
+  .speaking-request * {
+    font-size: 14px;
+  }
   .vertical-icon {
     margin: 0 5px;
   }

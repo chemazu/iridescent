@@ -167,7 +167,7 @@ const setupSocketIO = (app) => {
           );
           if (broadcasterHolder[roomId].studentStream) {
             io.to(socket.id).emit(
-              "active student stream",
+              "student stream",
               broadcasterHolder[roomId].studentStream.peerId
             );
           }
@@ -419,6 +419,16 @@ const setupSocketIO = (app) => {
             delete broadcasterHolder[roomId];
             delete broadcasterScreen[roomId];
             socket.broadcast.to(roomId).emit("broadcaster-disconnected");
+            if (broadcasterHolder[roomId].studentStream) {
+              io.in(roomId).emit(
+                "speaking student has left",
+                broadcasterHolder[roomId].studentStream.socketId
+              );
+
+              io.to(broadcasterHolder[roomId].studentStream.socketId).emit(
+                "stop student speaking"
+              );
+            }
             if (freeTimers[roomId]) {
               let liveWebinar = await LiveWebinar.findOne({
                 streamKey: roomId,

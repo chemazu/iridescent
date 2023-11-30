@@ -136,15 +136,13 @@ export default function Stream() {
 
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
-    
-    let {  studentIp } = info;
- 
+
+    let { studentIp } = info;
 
     let body = {
-      studentIp ,
+      studentIp,
       blockType: type,
       roomId: roomid,
- 
     };
     console.log(body);
 
@@ -154,7 +152,6 @@ export default function Stream() {
     );
     if (res) {
       socket.emit("block-user", { ...info, roomId: roomid });
-
     } else {
     }
     dispatch(stopLoading());
@@ -432,9 +429,9 @@ export default function Stream() {
       console.log(receiveSudentPeer);
     });
     return () => {
-      socket.off("student stream");
+      // socket.off("student stream");
     };
-  });
+  },[roomid]);;
   useEffect(() => {
     socket.on(
       "watcher",
@@ -456,7 +453,7 @@ export default function Stream() {
             watcherAvatar,
             studentId,
             registeredUser,
-            studentIp
+            studentIp,
           },
         ]);
       }
@@ -1864,6 +1861,8 @@ export default function Stream() {
 
   return (
     <div className="dashboard-layout">
+      <audio ref={audioRef} />
+
       <Container fluid>
         <Row>
           <DashboardNavbar />
@@ -4052,7 +4051,6 @@ export default function Stream() {
                   </div>
                 </Card>
               </div>
-              <audio ref={audioRef} />
             </div>
           </Col>
         </Row>

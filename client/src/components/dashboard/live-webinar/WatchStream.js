@@ -62,7 +62,7 @@ function WatchStream({ schoolname }) {
   const [studentIp, setStudentIp] = useState("");
 
   const [studentSpeaking, setStudentSpeaking] = useState({});
-   
+
   const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -555,7 +555,6 @@ function WatchStream({ schoolname }) {
     }
     const handleBlockStudent = () => {
       peerInstance.disconnect();
-      handleExitStream();
     };
     const startClass = (peerId, stat, audioStat) => {
       console.log(stat);
@@ -604,7 +603,7 @@ function WatchStream({ schoolname }) {
 
   useEffect(() => {
     socket.on("student stream", (peerId, audioStat) => {
-      console.log(audioStat);
+      console.log(audioStat, peerId);
       const receiveSudentPeer = new Peer();
       receiveSudentPeer.on("open", () => {
         navigator.mediaDevices
@@ -613,7 +612,6 @@ function WatchStream({ schoolname }) {
             let call = receiveSudentPeer.call(peerId, newStream);
             // const call = peerInstance.call(peerId, fast);
             call?.on("stream", (remoteStream) => {
-              console.log("incoming student audio");
               if (audioRef.current) {
                 audioRef.current.srcObject = remoteStream;
                 audioRef.current.muted = !audioStat;
@@ -679,82 +677,82 @@ function WatchStream({ schoolname }) {
     return () => {};
   }, [roomid]);
 
-  useEffect(() => {
-    socket.on("active student stream", (peerId) => {
-      const receiveSudentPeer = new Peer();
-      receiveSudentPeer.on("open", () => {
-        console.log("ssdsd");
-        navigator.mediaDevices
-          .getUserMedia({ video: false, audio: true })
-          .then((newStream) => {
-            let call = receiveSudentPeer.call(peerId, newStream);
-            // const call = peerInstance.call(peerId, fast);
-            call?.on("stream", (remoteStream) => {
-              console.log("incoming student audio");
-              if (audioRef.current) {
-                console.log("audioRef");
-                audioRef.current.srcObject = remoteStream;
-                audioRef.current.onloadedmetadata = () => {
-                  // Media has loaded, you can now play it
-                  audioRef.current
-                    .play()
-                    .then(() => {
-                      console.log("Audio playback started successfully");
-                    })
-                    .catch((error) => {
-                      console.error("Audio playback error:", error);
-                    });
-                };
-                audioRef.current.oncanplay = () => {
-                  // Media can be played, but it may not have fully loaded yet
-                };
+  // useEffect(() => {
+  //   socket.on("active student stream", (peerId) => {
+  //     const receiveSudentPeer = new Peer();
+  //     receiveSudentPeer.on("open", () => {
+  //       console.log("ssdsd");
+  //       navigator.mediaDevices
+  //         .getUserMedia({ video: false, audio: true })
+  //         .then((newStream) => {
+  //           let call = receiveSudentPeer.call(peerId, newStream);
+  //           // const call = peerInstance.call(peerId, fast);
+  //           call?.on("stream", (remoteStream) => {
+  //             console.log("incoming student audio");
+  //             if (audioRef.current) {
+  //               console.log("audioRef");
+  //               audioRef.current.srcObject = remoteStream;
+  //               audioRef.current.onloadedmetadata = () => {
+  //                 // Media has loaded, you can now play it
+  //                 audioRef.current
+  //                   .play()
+  //                   .then(() => {
+  //                     console.log("Audio playback started successfully");
+  //                   })
+  //                   .catch((error) => {
+  //                     console.error("Audio playback error:", error);
+  //                   });
+  //               };
+  //               audioRef.current.oncanplay = () => {
+  //                 // Media can be played, but it may not have fully loaded yet
+  //               };
 
-                // Add an event listener to handle interruptions
-                audioRef.current.onabort = () => {
-                  console.error("Audio load request was interrupted");
-                };
-                const audioContext = new AudioContext();
-                const source =
-                  audioContext.createMediaStreamSource(remoteStream);
+  //               // Add an event listener to handle interruptions
+  //               audioRef.current.onabort = () => {
+  //                 console.error("Audio load request was interrupted");
+  //               };
+  //               const audioContext = new AudioContext();
+  //               const source =
+  //                 audioContext.createMediaStreamSource(remoteStream);
 
-                source.connect(audioContext.destination);
+  //               source.connect(audioContext.destination);
 
-                // Define a threshold for sound activity (adjust as needed)
-                const soundThreshold = 0.05;
+  //               // Define a threshold for sound activity (adjust as needed)
+  //               const soundThreshold = 0.05;
 
-                // Listen for audio activity
-                source.onaudioprocess = (event) => {
-                  const audioBuffer = event.inputBuffer.getChannelData(0);
-                  const rms = calculateRMS(audioBuffer);
+  //               // Listen for audio activity
+  //               source.onaudioprocess = (event) => {
+  //                 const audioBuffer = event.inputBuffer.getChannelData(0);
+  //                 const rms = calculateRMS(audioBuffer);
 
-                  if (rms > soundThreshold) {
-                    console.log("student Sound is being inputted");
-                  }
-                };
+  //                 if (rms > soundThreshold) {
+  //                   console.log("student Sound is being inputted");
+  //                 }
+  //               };
 
-                // Listen for audio activity
-              } else {
-                console.log("error");
-                console.log(audioRef.current);
-              }
-              function calculateRMS(buffer) {
-                let sum = 0;
-                for (let i = 0; i < buffer.length; i++) {
-                  sum += buffer[i] * buffer[i];
-                }
-                return Math.sqrt(sum / buffer.length);
-              }
-            });
-            call?.on("error", (error) => {
-              console.error("Call error:", error);
-            });
-            // });
-          });
-      });
-    });
+  //               // Listen for audio activity
+  //             } else {
+  //               console.log("error");
+  //               console.log(audioRef.current);
+  //             }
+  //             function calculateRMS(buffer) {
+  //               let sum = 0;
+  //               for (let i = 0; i < buffer.length; i++) {
+  //                 sum += buffer[i] * buffer[i];
+  //               }
+  //               return Math.sqrt(sum / buffer.length);
+  //             }
+  //           });
+  //           call?.on("error", (error) => {
+  //             console.error("Call error:", error);
+  //           });
+  //           // });
+  //         });
+  //     });
+  //   });
 
-    return () => {};
-  }, [roomid]);
+  //   return () => {};
+  // }, [roomid]);
 
   const attendanceCount = attendance || 1;
 
