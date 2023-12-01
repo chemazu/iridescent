@@ -18,6 +18,7 @@ import {
   TUTOR_LOGOUT,
 } from "../../../actions/types";
 // import CountdownTimer from "./CountDownTimer";
+import CountdownTimer from "./CountdownTimer";
 
 import classnames from "classnames";
 
