@@ -21,7 +21,7 @@ const PresenterValidation = ({ school }) => {
     const validateWebinar = async () => {
       setIsLoading(true);
       let now = Date.now();
-      console.log(localStorage)
+      console.log(localStorage);
       if (localStorage.getItem("token")) {
         setAuthToken(localStorage.getItem("token"));
         try {
@@ -58,11 +58,10 @@ const PresenterValidation = ({ school }) => {
           setIsLoading(false);
         }
       }
-    
     };
 
     validateWebinar();
-  }, []);
+  }, [roomid]);
 
   if (isLoading) {
     return (

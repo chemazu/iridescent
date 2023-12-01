@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Button } from "reactstrap";
 import { Link } from "react-router-dom";
 
-import noticeSectionImage from "../../images/home-page-images/notice-image__section.png";
+import noticeSectionImage from "../../images/home-page-images/notice-image__section.svg";
 
 const Notification = () => {
   return (
@@ -15,7 +15,7 @@ const Notification = () => {
           </Col>
           <Col xs="12" sm="12" md="6" lg="6">
             <div className="notice-section-cta__container">
-              <p className="text-right">
+              <p>
                 Host your courses and products on Tuturly and get the chance to
                 be post on the explore page where your product can be discovered
                 by a new audience every single day

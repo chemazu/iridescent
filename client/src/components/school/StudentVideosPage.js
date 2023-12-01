@@ -133,7 +133,7 @@ const StudentVideosPage = ({ match }) => {
       return null;
     }
   };
-  console.log(purchasedWebinar)
+  console.log(purchasedWebinar);
 
   const getSchoolThemeBySchoolId = async (schoolId) => {
     try {
@@ -157,7 +157,7 @@ const StudentVideosPage = ({ match }) => {
       await getPurchasedCourses();
       await getPurchasedProducts();
       await getSavedCourses();
-      await getPurchasedWebinars()
+      await getPurchasedWebinars();
     }
     setPageLoading(false);
   };
@@ -389,10 +389,11 @@ const StudentVideosPage = ({ match }) => {
                                     schoolname={schoolname}
                                     key={webinarItem._id}
                                     course={webinarItem.webinarBought}
-                                    idToLinkTo={webinarItem.webinarBought.streamKey}
+                                    idToLinkTo={
+                                      webinarItem.webinarBought.streamKey
+                                    }
                                     theme={theme}
                                   />
-                         
                                 ))}
                               </>
                             )}

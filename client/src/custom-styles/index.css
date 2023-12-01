@@ -66,8 +66,9 @@
 
 .home-hero-section .site-heading {
   color: #3d3c3c;
-  font-weight: 800;
+  font-weight: 900;
   font-size: 3rem;
+  width: 65%;
 }
 
 .home-hero-section .site-paragraph {
@@ -75,7 +76,7 @@
   font-weight: 400;
   font-size: 16px;
   margin-bottom: 50px;
-  width: 90%;
+  width: 55%;
 }
 
 .home-hero-section .site-paragraph span {
@@ -85,11 +86,11 @@
 .home-hero-section .hero-btn-container {
   display: flex;
   align-items: center;
-  border: 0.00078rem solid var(--site-dark-color);
-  border-radius: 18px;
   justify-content: space-between;
   width: 70%;
   background-color: var(--site-background-color);
+  border: 0.00078rem solid var(--site-dark-color);
+  border-radius: 18px;
   padding: 0.5rem 0.6rem;
 }
 
@@ -133,12 +134,16 @@
 
 .partners-section {
   width: 100%;
-  padding: 5vh 5vw;
+  padding: 2.5vh 1vw;
   background-color: #f1f1f1;
 }
 
 .partners-container {
   width: 80%;
+}
+
+.partners-container img {
+  width: 80px;
 }
 
 .why-tuturly {
@@ -147,7 +152,7 @@
   padding-bottom: 2rem;
   padding-left: 1vw;
   padding-right: 1vw;
-  background-color: var(--site-white-color);
+  background-color: #f9fafd;
 }
 
 .why-tuturly__container {
@@ -219,7 +224,8 @@
 }
 
 .why-tuturly-logo img {
-  width: 145px;
+  margin-top: 0.4rem;
+  width: 310px;
 }
 
 .special-section {
@@ -256,10 +262,13 @@
   margin-top: 1.3rem;
 }
 
+.special-section-cta__container p {
+  text-align: right;
+}
+
 .special-section-container .sign-up-btn,
 .special-section-container .sign-up-btn:hover,
 .special-section-container .sign-up-btn:active {
-  z-index: 1000;
   background-color: var(--site-cta-color) !important;
   color: var(--site-white-color) !important;
   border-radius: 20px;
@@ -297,6 +306,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   margin-top: 1.8rem;
+  text-align: left;
 }
 
 .custom-landing-page-section {
@@ -320,6 +330,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   margin-top: 1rem;
+  text-align: right;
 }
 
 .payments-section {
@@ -344,6 +355,7 @@
   font-size: 1.2rem;
   font-weight: 600;
   margin-top: 1.8rem;
+  text-align: left;
 }
 
 .notice-section {
@@ -371,6 +383,10 @@
   justify-content: space-between;
   height: 255px;
   margin-top: 1.3rem;
+}
+
+.notice-section-cta__container p {
+  text-align: right;
 }
 
 .notice-section-container .sign-up-btn,
@@ -789,7 +805,7 @@
 
 .audience-section {
   width: 100%;
-  padding: 8vh 3vw;
+  padding: 4vh 3vw;
   position: relative;
 }
 
@@ -804,7 +820,6 @@
 }
 
 .audience-text-container {
-  height: 390px;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1145,14 +1160,16 @@
 
   .home-hero-section .site-heading {
     color: #3d3c3c;
-    font-weight: 600;
+    font-weight: 900;
     font-size: 3rem;
+    width: 100%;
   }
 
   .home-hero-section .site-paragraph {
     color: #3d3c3c;
     font-weight: 400;
     font-size: 18px;
+    width: 100%;
   }
 
   .tools-section h2 {
@@ -1166,44 +1183,120 @@
   .tools-illustration-image {
     display: none;
   }
+
+  .audience-row {
+    flex-direction: column-reverse;
+  }
 }
 
 @media (max-width: 650px) {
+  .home-hero-section .site-paragraph {
+    color: #3d3c3c;
+    font-weight: 300;
+    font-size: 18px;
+    margin-bottom: 1rem;
+  }
+
   .home-hero-section .img-container {
     display: none;
   }
 
-  .home-hero-section .custom-shape-divider-bottom-1624685117 {
-    display: none;
+  .home-hero-section .hero-btn-container {
+    flex-direction: column;
+    border: 0;
+  }
+
+  .home-hero-section .hero-btn-container .email-input {
+    font-size: 0.875rem;
+    width: 100%;
+    outline-width: 0;
+    background-color: var(--site-background-color);
+    border: 0.00078rem solid var(--site-dark-color);
+    border-radius: 18px;
+    padding: 1rem 1.3rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .home-hero-section .hero-btn-container .sign-up-btn,
+  .home-hero-section .hero-btn-container .sign-up-btn:hover,
+  .home-hero-section .hero-btn-container .sign-up-btn:active {
+    z-index: 1000;
+    background-color: var(--site-cta-color) !important;
+    color: var(--site-white-color) !important;
+    border-radius: 20px;
+    border: none;
+    text-transform: capitalize;
+    padding: 1rem 10px;
   }
 
   .usage-item {
     border-radius: 0;
+    width: 100%;
   }
 
   .home-hero-section .hero-text {
     margin-top: 3vh;
   }
 
-  .home-hero-section .site-heading {
-    color: #3d3c3c;
-    font-weight: 600;
-    font-size: 2.3rem;
+  .partners-section .partners-section-row {
+    justify-content: center;
   }
 
-  .home-hero-section .site-paragraph {
-    color: #3d3c3c;
-    font-weight: 300;
-    font-size: 14px;
+  .special-section-cta__container {
+    align-items: center;
+    height: fit-content;
   }
 
-  .usage-item {
-    width: 100%;
+  .special-section-cta__container p {
+    text-align: center;
   }
 
   .audience-section .audience-section-img {
     margin-left: 0;
     width: 100%;
+  }
+
+  .tuturly-tracking-row {
+    flex-direction: column-reverse;
+  }
+  .tuturly-tracking-section__container p {
+    text-align: center;
+  }
+
+  .custom-landing-page-section__container p {
+    text-align: center;
+  }
+
+  .payments-section-row {
+    flex-direction: column-reverse;
+  }
+
+  .payments-section__container p {
+    text-align: center;
+  }
+
+  .notice-section-cta__container {
+    align-items: center;
+  }
+
+  .notice-section-cta__container p {
+    text-align: center;
+  }
+
+  .audience-text-container {
+    margin-bottom: 1rem;
+  }
+
+  .testimonial-section__container h2 {
+    font-size: 1.7rem;
+  }
+
+  .testimonial-navigator-item {
+    display: none;
+  }
+
+  .faq-section .header-1 {
+    font-size: 1.7rem;
   }
 }
 

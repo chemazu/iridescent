@@ -2,14 +2,14 @@ import React from "react";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Row, Col, Container } from "reactstrap";
 
-import whoIsTuturlyFor from "../../images/home-page-images/who-is-tuturly-for.png";
+import whoIsTuturlyFor from "../../images/home-page-images/who-is-tuturly-for.svg";
 
 const Audience = () => {
   return (
     <>
       <section className="audience-section">
         <Container className="audience-section__container">
-          <Row className="align-items-center">
+          <Row className="align-items-center audience-row">
             <Col className="d-flex" xs="12" sm="12" md="6" lg="6">
               <LazyLoadImage
                 src={whoIsTuturlyFor}

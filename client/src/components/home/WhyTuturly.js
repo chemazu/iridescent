@@ -1,12 +1,12 @@
 import React from "react";
 import { Col, Container, Row } from "reactstrap";
 
-import teachable from "../../images/home-page-images/competitors/teachable.png";
-import selar from "../../images/home-page-images/competitors/selar.png";
-import paypal from "../../images/home-page-images/competitors/paypal.png";
-import zoom from "../../images/home-page-images/competitors/zoom.png";
-import calendly from "../../images/home-page-images/competitors/calendly.png";
-import telegram from "../../images/home-page-images/competitors/telegram.png";
+import teachable from "../../images/home-page-images/competitors/teachable.svg";
+import selar from "../../images/home-page-images/competitors/selar.svg";
+import paypal from "../../images/home-page-images/competitors/paypal.svg";
+import zoom from "../../images/home-page-images/competitors/zoom.svg";
+import calendly from "../../images/home-page-images/competitors/calendly.svg";
+import telegram from "../../images/home-page-images/competitors/telegram.svg";
 import plusIcon from "../../images/home-page-images/plus-icon.png";
 import logo from "../../images/tuturlySvgLogo.svg";
 
@@ -102,7 +102,7 @@ const WhyTuturly = () => {
             </Row>
             <div className="why-tuturly-logo">
               <h4>Now all you need is</h4>
-              <img src={logo} className="img-fluid" alt="..." />
+              <img src={logo} alt="..." />
             </div>
           </div>
         </Container>

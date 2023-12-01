@@ -28,8 +28,7 @@ const StreamValidation = ({ schoolname, user, getLoggedInUser }) => {
 
     try {
       let res = await axios.get(`/api/v1/livewebinar/watch/${roomid}`);
-      // get the ip of the user and manage block here
-      // send the ip 
+
       if (res) {
         if (res.data.school === schoolname && res.data.timeLeft > 0) {
           // if (res.data.school === schoolname) {

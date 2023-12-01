@@ -4,7 +4,7 @@ import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Container, Button, Row, Col } from "reactstrap";
 import { useAlert } from "react-alert";
 
-import heroImage from "../../images/home-page-images/tuthero.png";
+import heroImage from "../../images/home-page-images/tuthero.svg";
 
 import HomepageNavbar from "../layout/HomepageNavbar";
 
@@ -31,13 +31,11 @@ const Header = () => {
               <Col data-aos="fade-right" xs="12" sm="12" md="12" lg="7" xl="7">
                 <div className="hero-text">
                   <h1 className="site-heading">
-                    The Best Tool <br />
-                    for Experts to <br /> Sell Knowledge
+                    The Best Tool for Experts to Sell Knowledge
                   </h1>
                   <p className="site-paragraph">
                     <span>Tuturly</span> gives you a unique platform to own your{" "}
-                    <br />
-                    website and sell your knowledge in different formats <br />
+                    website and sell your knowledge in different formats
                     including LIVE! sessions.
                   </p>
                   <div className="hero-btn-container">

@@ -1,7 +1,7 @@
 import React from "react";
 import { Container, Row, Col } from "reactstrap";
 
-import customLandingPageSectionImage from "../../images/home-page-images/custom-landing-page-image__section.png";
+import customLandingPageSectionImage from "../../images/home-page-images/custom-landing-page-image__section.svg";
 
 const CustomLandingPage = () => {
   return (
@@ -17,7 +17,7 @@ const CustomLandingPage = () => {
             />
           </Col>
           <Col xs="12" sm="12" md="6" lg="6">
-            <p className="text-right">
+            <p>
               Create your own webpage, customize it, upload your Knowledge
               (Course videos, Digital products or Live classes) and share your
               link.

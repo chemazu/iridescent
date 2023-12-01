@@ -169,6 +169,7 @@
 
   .user-plans {
     height: fit-content;
+    padding-bottom: 1rem;
   }
 
   .user-plans h3 {
@@ -180,6 +181,7 @@
   .user-plans .payment-plan__item {
     width: 100%;
     margin-bottom: 2rem;
+    height: fit-content;
   }
 
   .user-plans .payment-plan__item .item-header {

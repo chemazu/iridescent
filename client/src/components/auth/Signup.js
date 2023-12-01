@@ -31,7 +31,8 @@ const Signup = () => {
 
   const [formData, setFormData] = useState({
     email:
-      localStorage.getItem("userEmail").length > 0
+      localStorage.getItem("userEmail") !== null &&
+      localStorage.getItem("userEmail")?.length > 0
         ? localStorage.getItem("userEmail")
         : "",
     password: "",

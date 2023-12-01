@@ -1,7 +1,6 @@
 import { Server } from "socket.io";
 import http from "http";
 import LiveWebinar from "./models/Livewebinar";
-import BlockedStudent from "./models/BlockedStudent";
 
 const setupSocketIO = (app) => {
   const server = http.createServer(app);
@@ -14,7 +13,6 @@ const setupSocketIO = (app) => {
   const timerControl = {};
   const roomStatus = {};
   const broadcasterHolder = {};
-
   const freeTimers = {};
   let pollQuizHolder = {};
   let broadcasterScreen = {};
@@ -23,79 +21,21 @@ const setupSocketIO = (app) => {
   const userHeartbeats = {}; // Initialize an object to track heartbeats
   const userRooms = {}; // Initialize an object to track which room each user is in
   const heartbeatTimeout = 10000;
-  const blockedList = {};
 
   io.on("connection", (socket) => {
     // broadcaster
     socket.on("broadcaster", async (roomId, peerId, audioStat) => {
-      console.log("broadcaster");
       broadcasterHolder[roomId] = { peerId, socketId: socket.id };
       audioStatus[roomId] = audioStat;
       socket.join(roomId);
-
       socket.broadcast
         .to(roomId)
         .emit("broadcaster", broadcasterHolder[roomId].peerId);
       let currentWebinar = await LiveWebinar.findOne({ streamKey: roomId });
-
       currentWebinar.isLive = true;
       await currentWebinar.save();
-      const blockedStudents = await BlockedStudent.find({
-        blockedBy: currentWebinar.creator,
-        roomId: roomId,
-      });
-      console.log(blockedStudents);
-      blockedStudents.forEach((item) => {
-        // Use the conditional operator to choose either studentId or visitorId
-        const id = item.studentId ? item.studentId : item.visitorId;
-
-        if (!blockedList[item.roomId]) {
-          blockedList[item.roomId] = [];
-        }
-
-        blockedList[item.roomId].push(id.toString());
-      });
-    });
-    socket.on("request audio", (roomId) => {
-      const currentSocketId = socket.id;
-      socket
-        .to(broadcasterHolder[roomId].socketId)
-        .emit("request audio", currentSocketId);
-    });
-    socket.on("block-user", (info) => {
-      console.log(info, "blk");
-      socket.to(info.socketId).emit("blocked");
     });
 
-    socket.on("student stream", (roomId, peerId, audioStat) => {
-      // to handle multiple student make this an array
-      broadcasterHolder[roomId].studentStream = {
-        peerId,
-        audioStat,
-        socketId: socket.id,
-      };
-
-      socket.broadcast.to(roomId).emit("student stream", peerId, audioStat);
-    });
-    socket.on("speaking_status", (roomId, status) => {
-      console.log(roomId, status, socket.id);
-      let streamingStudent =
-        broadcasterHolder[roomId]?.studentStream?.audioStat || 0;
-      socket.broadcast
-        .to(roomId)
-        .emit("speaking_status", status, socket.id, streamingStudent);
-    });
-    socket.on("on student audio", (roomid) => {
-      console.log(broadcasterHolder[roomid].studentStream);
-      broadcasterHolder[roomid].studentStream.audioStat = true;
-
-      socket.broadcast.to(roomid).emit("student audio stat", true);
-    });
-    socket.on("off student audio", (roomid) => {
-      broadcasterHolder[roomid].studentStream.audioStat = false;
-
-      socket.broadcast.to(roomid).emit("student audio stat", false);
-    });
     socket.on("watcher-exit", (roomId, attendanceId) => {
       // Check if the room exists in roomsHolder
       if (roomsHolder[roomId]) {
@@ -105,99 +45,59 @@ const setupSocketIO = (app) => {
         // Count the number of people in the room after the user exits
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
       }
-      console.log("watcher exit");
-      if (broadcasterHolder[roomId].studentStream.socketId === socket.id) {
-        io.in(roomId).emit("speaking student has left", socket.id);
-      }
-      // check of the user is a speaking user
-      // broadcast that the speaking student is disconencted
     });
 
-    socket.on(
-      "watcher",
-      async (
-        roomId,
-        peerId,
-        attendanceId,
-        userName,
-        watcherAvatar,
-        registeredUser,
-        studentIp
-      ) => {
-        console.log("watcher", studentIp);
-
-        // get the id from webinar
-        // get the list of blocked student
-        // once a person enters  check if the user is blocked via the attendanceId
-        // find a way to get the id from localstorage
-
-        socket.join(roomId);
-        let numberOfPeopleInRoom;
-        if (!roomsHolder[roomId]) {
-          roomsHolder[roomId] = new Set();
-        }
-        if (!roomsHolder[roomId].has(attendanceId)) {
-          // If it's not in the set, add it
-          roomsHolder[roomId].add(attendanceId);
-
-          // Count the number of people in the room
-          numberOfPeopleInRoom = roomsHolder[roomId].size;
-          io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
-        }
-        const room = io.sockets.adapter.rooms.get(roomId);
-        let roomSize = room ? room.size : 1;
-        // check screensharing
-
-        if (broadcasterHolder[roomId]) {
-          if (broadcasterScreen[roomId]) {
-            io.to(socket.id).emit(
-              "join screen stream",
-              broadcasterScreen[roomId].peerId
-            );
-          }
-          if (audioStatus[roomId]) {
-            io.to(socket.id).emit("audio status", audioStatus[roomId]);
-          }
-
-          io.to(socket.id).emit(
-            "join stream",
-            numberOfPeopleInRoom,
-            broadcasterHolder[roomId].peerId,
-            audioStatus[roomId]
-          );
-          if (broadcasterHolder[roomId].studentStream) {
-            io.to(socket.id).emit(
-              "student stream",
-              broadcasterHolder[roomId].studentStream.peerId
-            );
-          }
-
-          io.in(roomId).emit(
-            "watcher",
-            socket.id,
-            peerId,
-            userName,
-            watcherAvatar,
-
-            attendanceId,
-            registeredUser,
-            studentIp
-          );
-          let roomTimer = null;
-          if (freeTimers[roomId]) {
-            roomTimer = freeTimers[roomId];
-          }
-          io.to(socket.id).emit(
-            "currentStatus",
-            roomSize,
-            roomTimer,
-            pollQuizHolder[roomId]
-          );
-        } else {
-          io.to(socket.id).emit("no stream");
-        }
+    socket.on("watcher", async (roomId, userId, attendanceId) => {
+      socket.join(roomId);
+      let numberOfPeopleInRoom;
+      if (!roomsHolder[roomId]) {
+        roomsHolder[roomId] = new Set();
       }
-    );
+      if (!roomsHolder[roomId].has(attendanceId)) {
+        // If it's not in the set, add it
+        roomsHolder[roomId].add(attendanceId);
+
+        // Count the number of people in the room
+        numberOfPeopleInRoom = roomsHolder[roomId].size;
+        io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
+      }
+      const room = io.sockets.adapter.rooms.get(roomId);
+      let roomSize = room ? room.size : 1;
+      // check screensharing
+
+      if (broadcasterHolder[roomId]) {
+        if (broadcasterScreen[roomId]) {
+          io.to(socket.id).emit(
+            "join screen stream",
+            broadcasterScreen[roomId].peerId
+          );
+        }
+        if (audioStatus[roomId]) {
+          io.to(socket.id).emit("audio status", audioStatus[roomId]);
+        }
+
+        io.to(socket.id).emit(
+          "join stream",
+          numberOfPeopleInRoom,
+          broadcasterHolder[roomId].peerId,
+          audioStatus[roomId]
+        );
+
+        io.in(roomId).emit("watcher", socket.id, numberOfPeopleInRoom);
+        let roomTimer = null;
+        if (freeTimers[roomId]) {
+          roomTimer = freeTimers[roomId];
+        }
+        io.to(socket.id).emit(
+          "currentStatus",
+          roomSize,
+          roomTimer,
+          pollQuizHolder[roomId]
+        );
+      } else {
+        io.to(socket.id).emit("no stream");
+      }
+    });
     // Handle heartbeat events
     socket.on("heartbeat", (userId, roomId) => {
       // Update the last received heartbeat for the user
@@ -243,14 +143,11 @@ const setupSocketIO = (app) => {
         }
       }
     }, heartbeatTimeout);
-
     socket.on("startScreenSharing", (roomId, peerId) => {
       broadcasterScreen[roomId] = { peerId, socketId: socket.id };
       io.in(roomId).emit("startScreenSharing", peerId);
     });
-    socket.on("grant student access", (roomid, studentSocketId) => {
-      io.to(studentSocketId).emit("start streaming");
-    });
+
     socket.on("stopScreenSharing", (roomId) => {
       io.in(roomId).emit("stopScreenSharing");
 
@@ -263,7 +160,6 @@ const setupSocketIO = (app) => {
       audioStatus[roomId] = updated;
     });
     socket.on("message", (message, roomId) => {
-      console.log("message", socket.id);
       socket.broadcast.to(roomId).emit("message", { ...message });
       if (message.type === "quiz" || message.type === "poll") {
         if (!pollQuizHolder[roomId]) {
@@ -335,20 +231,36 @@ const setupSocketIO = (app) => {
       io.in(roomid).emit("updatedPollResult", updatedResults);
     });
 
-    socket.on("stop student speaking", (roomId) => {
-      if (broadcasterHolder[roomId].studentStream) {
-        let { socketId } = broadcasterHolder[roomId].studentStream;
-        io.to(socketId).emit("stop student speaking");
-      }
+    // student audio request algorithm
+
+    socket.on("request audio", (roomId) => {
+      const currentSocketId = socket.id;
+      socket
+        .to(broadcasterHolder[roomId].socketId)
+        .emit("request audio", currentSocketId);
     });
-    socket.on("student audio over", (roomId) => {
-      if (
-        broadcasterHolder[roomId].studentStream &&
-        broadcasterHolder[roomId].studentStream.socketId === socketId
-      ) {
-        delete broadcasterHolder[roomId].studentStream;
-        io.in(roomId).emit("speaking student has left", socketId);
+
+    socket.on("grant student access", (roomid, studentSocketId) => {
+      socket.to(studentSocketId).emit("start streaming");
+    });
+
+    socket.on("student stream", (roomId, peerId, audioStat) => {
+      // to handle multiple student make this an array
+      if (broadcasterHolder[roomId]) {
+        broadcasterHolder[roomId].studentStream = {
+          peerId,
+          audioStat,
+          socketId: socket.id,
+        };
       }
+
+      socket.broadcast.to(roomId).emit("student stream", peerId, audioStat);
+    });
+    socket.on("on student audio", (roomid) => {
+      console.log(broadcasterHolder[roomid].studentStream);
+      broadcasterHolder[roomid].studentStream.audioStat = true;
+
+      socket.broadcast.to(roomid).emit("student audio stat", true);
     });
 
     socket.on("endstream", async (roomid) => {
@@ -406,29 +318,11 @@ const setupSocketIO = (app) => {
 
       Object.entries(broadcasterHolder).forEach(
         async ([roomId, broadcaster]) => {
-          if (
-            broadcasterHolder[roomId].studentStream &&
-            broadcasterHolder[roomId].studentStream.socketId === socketId
-          ) {
-            delete broadcasterHolder[roomId].studentStream;
-
-            io.in(roomId).emit("speaking student has left", socketId);
-          }
           if (broadcaster.socketId === socketId) {
             // The disconnected socket was a broadcaster
             delete broadcasterHolder[roomId];
             delete broadcasterScreen[roomId];
             socket.broadcast.to(roomId).emit("broadcaster-disconnected");
-            if (broadcasterHolder[roomId].studentStream) {
-              io.in(roomId).emit(
-                "speaking student has left",
-                broadcasterHolder[roomId].studentStream.socketId
-              );
-
-              io.to(broadcasterHolder[roomId].studentStream.socketId).emit(
-                "stop student speaking"
-              );
-            }
             if (freeTimers[roomId]) {
               let liveWebinar = await LiveWebinar.findOne({
                 streamKey: roomId,

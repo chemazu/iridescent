@@ -2,7 +2,7 @@ import React from "react";
 import { Container, Row, Col, Button } from "reactstrap";
 import { Link } from "react-router-dom";
 
-import specialSectionImage from "../../images/home-page-images/special-image__section.png";
+import specialSectionImage from "../../images/home-page-images/special-image__section.svg";
 
 const Special = () => {
   return (
@@ -16,7 +16,7 @@ const Special = () => {
           </Col>
           <Col xs="12" sm="12" md="6" lg="6">
             <div className="special-section-cta__container">
-              <p className="text-right">
+              <p>
                 Host live classes for your audience with the New Tuturly Class
                 feature. On Tuturly class, you can set polls and quiz for your
                 audience to make the class more interactive.

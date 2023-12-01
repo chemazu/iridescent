@@ -9,39 +9,32 @@ import {
   CarouselIndicators,
 } from "reactstrap";
 
-import testtimonial1 from "../../images/home-page-images/testimonial/testimonial1.png";
+import testtimonial1 from "../../images/home-page-images/testimonial/kagan.svg";
+import testtimonial2 from "../../images/home-page-images/testimonial/david.svg";
+import testtimonial3 from "../../images/home-page-images/testimonial/ebube.svg";
 
 const items = [
   {
     id: 1,
     username: "KaganTech",
-    role: "Content creator",
-    testimony: "Tuturly is really great, they helped me pay my house rent.",
+    role: "Content Creator",
+    testimony: "Tuturly is really great they helped me pay my house rent.",
     img: testtimonial1,
   },
   {
     id: 2,
-    username: "Deba",
-    role: "Cheif Technology Officer",
-    testimony:
-      "Speechless! Speechless!!. Thats how it makes me feel.. When i use it, i fall in love",
-    img: testtimonial1,
+    username: "David",
+    role: "Content Creator",
+    testimony: "The website is user-friendly and very secure, too.",
+    img: testtimonial2,
   },
   {
     id: 3,
-    username: "Benedict",
-    role: "Podcaster",
+    username: "Ebube",
+    role: "Content Creator",
     testimony:
-      "A platform, unlike any other... A platform, unlike any other... A platform, unlike any other...",
-    img: testtimonial1,
-  },
-  {
-    id: 4,
-    username: "Kolawole",
-    role: "Developer",
-    testimony:
-      "WoW!!! A platform, unlike any other... A platform, unlike any other...",
-    img: testtimonial1,
+      "I have been able to improve my course thanks to the data segment, I can see students completion rate and know how to improve",
+    img: testtimonial3,
   },
 ];
 
@@ -102,7 +95,7 @@ const Testimonial = () => {
           by sharing their knowledge!
         </h2>
         <Row className="mt-3 align-items-center">
-          <Col onClick={previous} className="testimonial-navigator-item" md="2">
+          <Col md="1" onClick={previous} className="testimonial-navigator-item">
             <div className="testimonial-navigator">
               <i className="fas fa-chevron-left"></i>
             </div>
@@ -134,7 +127,7 @@ const Testimonial = () => {
               </Carousel>
             </div>
           </Col>
-          <Col onClick={next} className="testimonial-navigator-item" md="2">
+          <Col md="2" onClick={next} className="testimonial-navigator-item">
             <div className="testimonial-navigator">
               <i class="fas fa-chevron-right"></i>
             </div>

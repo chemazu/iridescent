@@ -17,13 +17,13 @@ import {
   UPDATE_DASHBOARD_PAGE_COUNTER_TO_DEFAULT,
   TUTOR_LOGOUT,
 } from "../../../actions/types";
+import CountdownTimer from "./CountDownTimer";
 
 import classnames from "classnames";
 
 import logo2 from "../../../images/tuturlySvgLogo.svg";
 
 import "../../../custom-styles/dashboard/notificationbar.css";
-import CountdownTimer from "./CountdownTimer"
 
 const LiveWebinarMobileNav = ({ currentPage, parent }) => {
   let {
