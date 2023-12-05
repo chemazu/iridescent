@@ -27,6 +27,7 @@ import Poll from "./Poll";
 import { useStore } from "react-redux";
 import videojs from "video.js";
 import CustomTextArea from "./CustomTextArea";
+import classroomAudio from "./audioEmitter";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
@@ -65,6 +66,7 @@ function WatchStream({ schoolname }) {
   const [defaultChat, setDefaultChat] = useState([]);
   const [watcherUsername, setWatcherUsername] = useState("");
   const [watcherAvatar, setWatcherAvatar] = useState(null);
+  const [studentIp, setStudentIp] = useState("");
 
   const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
   const [disableVideoStream, setDisableVideoStream] = useState(null);
@@ -86,6 +88,8 @@ function WatchStream({ schoolname }) {
   let [studentMic, setStudentMic] = useState(false);
   let [studentMicControl, setStudentMicControl] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [registeredUser, setRegisteredUser] = useState(false);
+  const audioRefs = useRef({});
 
   const handleStartStudentAudio = () => {
     socket.emit("request audio", roomid);
@@ -97,6 +101,7 @@ function WatchStream({ schoolname }) {
   };
   const handleTurnOnStudentAudio = () => {
     setStudentMicControl(true);
+
     socket.emit("on student audio", roomid);
   };
   const handleTurnOffStudentAudio = () => {
@@ -228,9 +233,14 @@ function WatchStream({ schoolname }) {
 
   const getUserName = async () => {
     try {
-      let res = await axios.get("/api/v1/livewebinar/studentdetails/");
-      setWatcherUsername(res.data.username);
-      setWatcherAvatar(res.data.avatar);
+      let res = await axios.get("/api/v1/livewebinar/studentdetails");
+      if (res) {
+        setWatcherUsername(res.data.username);
+        console.log(res.data);
+        localStorage.setItem(roomid, res.data.id);
+        setWatcherAvatar(res.data.avatar);
+        setRegisteredUser(true);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -343,6 +353,7 @@ function WatchStream({ schoolname }) {
 
         setPresenterName(`${res.data.firstname} ${res.data.lastname}`);
         setPresenterAvatar(res.data.avatar);
+        setStudentIp(res.data.studentIp);
       }
     } catch (error) {
       console.log(error.message);
@@ -417,13 +428,76 @@ function WatchStream({ schoolname }) {
     const stream = canvas.captureStream();
     return stream;
   }
+  // useEffect(() => {
+  //   const peerInstance = new Peer();
+  //   peerRef.current = peerInstance;
+  //   peerInstance.on("open", (user) => {
+  //     socket.emit("watcher", roomid, user, getUserId(roomid));
+  //   });
+  //   const startClass = (peerId, stat, audioStat) => {
+  //     navigator.mediaDevices
+  //       .getUserMedia({ video: true, audio: true })
+  //       .then((newStream) => {
+  //         let call = peerInstance.call(peerId, newStream);
+  //         // const call = peerInstance.call(peerId, fast);
+  //         call?.on("stream", (remoteStream) => {
+  //           handleAddStream(remoteStream, audioStat);
+
+  //           setWaiting(false);
+  //           secondHandleAddStream(remoteStream, audioStat);
+  //         });
+  //         call?.on("error", (error) => {
+  //           console.error("Call error:", error);
+  //         });
+  //         // });
+  //       });
+  //   };
+
+  //   socket.on("audio status", () => {});
+  //   socket.on("join stream", (roomSize, peerId, roomStatus) => {
+  //     setAudioVisuals(roomStatus);
+  //     startClass(peerId, "join", roomStatus);
+  //     setWaiting(false);
+  //     setDisconnect(false);
+  //   });
+  //   socket.on("broadcaster", (peerId, roomStatus) => {
+  //     startClass(peerId, "broadcaster");
+  //     setWaiting(false);
+  //     setDisconnect(false);
+  //   });
+
+  //   return () => {
+  //     peerInstance.destroy();
+  //     socket.off("join stream");
+  //     socket.off("broadcaster");
+  //   };
+  // }, [roomid, waiting, disconnect]);
+
   useEffect(() => {
     const peerInstance = new Peer();
     peerRef.current = peerInstance;
-    peerInstance.on("open", (user) => {
-      socket.emit("watcher", roomid, user, getUserId(roomid));
-    });
+    console.log(watcherUsername, peerInstance);
+
+    if (watcherUsername !== "") {
+      peerInstance.on("open", (user) => {
+        console.log("watcher");
+        socket.emit(
+          "watcher",
+          roomid,
+          user,
+          getUserId(roomid),
+          watcherUsername,
+          watcherAvatar,
+          registeredUser,
+          studentIp
+        );
+      });
+    }
+    const handleBlockStudent = () => {
+      peerInstance.disconnect();
+    };
     const startClass = (peerId, stat, audioStat) => {
+      console.log(stat);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
@@ -443,12 +517,17 @@ function WatchStream({ schoolname }) {
     };
 
     socket.on("audio status", () => {});
+
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
       setAudioVisuals(roomStatus);
       startClass(peerId, "join", roomStatus);
       setWaiting(false);
       setDisconnect(false);
     });
+    socket.on("blocked", () => {
+      handleBlockStudent();
+    });
+
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
       setWaiting(false);
@@ -460,8 +539,7 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect]);
-
+  }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
   const attendanceCount = attendance || 1;
 
   const revertHandleAddScreenStream = () => {
@@ -640,6 +718,7 @@ function WatchStream({ schoolname }) {
       setWaiting(false);
       playerRef.current = null;
       setScreenSharing(false);
+      studentSharePeerRef.current.destroy()
 
       setSpecialChat([]);
       // removeStream();
@@ -665,11 +744,14 @@ function WatchStream({ schoolname }) {
   }, [schoolname]);
 
   useEffect(() => {
-    socket.on("watcher", (userId, roomSize) => {});
+    socket.on("watcher", (userId, roomSize) => {
+      classroomAudio("joins room");
+    });
+
     return () => {
       socket.off("watcher");
     };
-  });
+  }, [roomid]);
   useEffect(() => {
     socket.on("disablevideo", (status) => {
       setDisableVideoStream(status);
@@ -846,23 +928,85 @@ function WatchStream({ schoolname }) {
       socket.off("student audio stat");
     };
   }, [roomid]);
+  // useEffect(() => {
+  //   socket.on("welcome student speaking", (speakingArray) => {
+  //     console.log(speakingArray)
+  //   });
+
+  //   return () => {
+  //     socket.off("welcome student speaking");
+  //   };
+  // }, [roomid]);
+
+  useEffect(() => {
+    socket.on("welcome student speaking", (speakingArray) => {
+      console.log("Welcome students speaking:", speakingArray);
+
+      // Connect to each speaking student in the array
+      speakingArray.forEach(({ peerId, audioStat }) => {
+        const receiveStudentPeer = new Peer();
+
+        receiveStudentPeer.on("open", () => {
+          navigator.mediaDevices
+            .getUserMedia({ video: false, audio: true })
+            .then((newStream) => {
+              const call = receiveStudentPeer.call(peerId, newStream);
+
+              call?.on("stream", (remoteStream) => {
+                if (audioRef.current) {
+                  audioRef.current.srcObject = remoteStream;
+                  audioRef.current.muted = !audioStat;
+
+                  audioRef.current.onloadedmetadata = () => {
+                    // Media has loaded, you can now play it
+                    audioRef.current
+                      .play()
+                      .then(() => {
+                        console.log("Audio playback started successfully");
+                      })
+                      .catch((error) => {
+                        console.error("Audio playback error:", error);
+                      });
+                  };
+
+                  // Add an event listener to handle interruptions
+                  audioRef.current.onabort = () => {
+                    console.error("Audio load request was interrupted");
+                  };
+                } else {
+                  console.log("Error: Audio ref not available");
+                }
+              });
+            });
+        });
+      });
+    });
+
+    return () => {
+      socket.off("welcome student speaking");
+    };
+  }, [audioRef, socket]);
 
   useEffect(() => {
     const peers = {}; // Store peers for each speaker
-  
-    socket.on("student stream", (peerId, audioStat) => {
+
+    socket.on("student stream", (peerId, audioStat, socketId) => {
       const receiveStudentPeer = new Peer();
       receiveStudentPeer.on("open", () => {
-        navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+        navigator.mediaDevices
+          .getUserMedia({ video: false, audio: true })
           .then((newStream) => {
             const call = receiveStudentPeer.call(peerId, newStream);
-  
+
             call?.on("stream", (remoteStream) => {
               const newAudioRef = createAudioRef(); // Implement your logic to create an audio element
               newAudioRef.srcObject = remoteStream;
-              // newAudioRef.muted = !audioStat;
+              newAudioRef.muted = !audioStat;
+              audioRefs.current[socketId] = newAudioRef;
+
               newAudioRef.onloadedmetadata = () => {
-                newAudioRef.play()
+                newAudioRef
+                  .play()
                   .then(() => {
                     console.log("Audio playback started successfully");
                   })
@@ -870,14 +1014,17 @@ function WatchStream({ schoolname }) {
                     console.error("Audio playback error:", error);
                   });
               };
-  
+
               // Store the peer and audio reference
-              peers[peerId] = { peer: receiveStudentPeer, audioRef: newAudioRef };
+              peers[peerId] = {
+                peer: receiveStudentPeer,
+                audioRef: newAudioRef,
+              };
             });
           });
       });
     });
-  
+
     return () => {
       socket.off("student stream");
       // Clean up peers when the component is unmounted
@@ -886,12 +1033,37 @@ function WatchStream({ schoolname }) {
       });
     };
   }, []);
-    // Helper function to create an audio element
-    const createAudioRef = () => {
-      const audioElement = document.createElement("audio");
-      document.body.appendChild(audioElement); // Append to the body or another container as needed
-      return audioElement;
+
+  useEffect(() => {
+    socket.on("student audio stat", (audioStat, socketId) => {
+      console.log("Audio Stat:", audioStat, "Socket ID:", socketId);
+
+      // Mute or unmute the audio reference based on socketId
+      if (audioRefs.current[socketId]) {
+        console.log(audioRefs.current[socketId]);
+
+        audioRefs.current[socketId].muted = !audioStat;
+        // Update the state if needed
+        // setSpeakingPeers((prevSpeakingPeers) => ({
+        //   ...prevSpeakingPeers,
+        //   [socketId]: {
+        //     ...prevSpeakingPeers[socketId],
+        //     audioStatus: audioStat,
+        //   },
+        // }));
+      }
+    });
+
+    return () => {
+      socket.off("student audio stat");
     };
+  }, []);
+  // Helper function to create an audio element
+  const createAudioRef = () => {
+    const audioElement = document.createElement("audio");
+    document.body.appendChild(audioElement); // Append to the body or another container as needed
+    return audioElement;
+  };
 
   return (
     <div className="dashboard-layout">
@@ -1062,6 +1234,16 @@ function WatchStream({ schoolname }) {
                                 borderRadius: "10px",
                               }}
                             >
+                              {studentMic &&
+                                (studentMicControl ? (
+                                  <p className="watcher-speaking-status">
+                                    Your mic is on, speak now
+                                  </p>
+                                ) : (
+                                  <p className="watcher-speaking-status">
+                                    Request granted, turn mic on to speak
+                                  </p>
+                                ))}
                               <div>
                                 <div
                                   ref={videoRef}
@@ -1083,6 +1265,17 @@ function WatchStream({ schoolname }) {
                                             width: "15%",
                                           }}
                                         />
+                                        {studentMic &&
+                                          (studentMicControl ? (
+                                            <p className="watcher-speaking-status">
+                                              Your mic is on, speak now
+                                            </p>
+                                          ) : (
+                                            <p className="watcher-speaking-status">
+                                              Request granted, turn mic on to
+                                              speak
+                                            </p>
+                                          ))}
                                       </div>
                                     )}
                                   </>

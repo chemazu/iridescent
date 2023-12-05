@@ -29,14 +29,15 @@ import { useParams, useHistory } from "react-router-dom";
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-// import CountdownTimer from "./CountDownTimer";
-import CountdownTimer from "./CountdownTimer";
+import CountdownTimer from "./CountDownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
 import PaymentModal from "./PaymentModal";
 import LiveWebinarMobileNav from "./LiveWebinarMobileNav";
 import CustomTextArea from "./CustomTextArea";
+import classroomAudio from "./audioEmitter";
+
 // import TutorNotificationNavbar from "../tutorly-courses/TutorArea/TutorNotificationNavbar";
 
 export default function Stream() {
@@ -50,6 +51,7 @@ export default function Stream() {
   const peerRef = useRef();
   const screenPeerRef = useRef();
   const videoStreamRef = useRef(null);
+  const audioRefs = useRef({});
 
   const [reconnectLoading, setReconnectLoading] = useState(false);
   const [planStatus, setPlanStatus] = useState(null);
@@ -60,6 +62,8 @@ export default function Stream() {
   });
 
   const [selectedAudioDevice, setSelectedAudioDevice] = useState(null);
+  const [speakingPeers, setSpeakingPeers] = useState({});
+
   const [selectedVideoDevice, setSelectedVideoDevice] = useState(null);
   const [audioDevices, setAudioDevices] = useState([]);
   const [videoDevices, setVideoDevices] = useState([]);
@@ -123,7 +127,38 @@ export default function Stream() {
   const [attendanceList, setAttendanceList] = useState([]);
   const [audioRequests, setAudioRequests] = useState([]);
   const [audioRequestModal, setAudioRequestModal] = useState(false);
+  const [activeSpeaker, setActiveSpeaker] = useState(false);
+  const [studentSpeaking, setStudentSpeaking] = useState({});
+  const [showSpeakingRequest, setShowSpeakingRequest] = useState(false);
+  const [muteDelete, setMuteDelete] = useState(false);
 
+  const handleBlockStudent = async (type, info) => {
+    dispatch(startLoading());
+
+    let { studentIp } = info;
+
+    let body = {
+      studentIp,
+      blockType: type,
+      roomId: roomid,
+    };
+    console.log(body);
+
+    let res = await axios.post(
+      "/api/v1/blockedstudents/blocked-students",
+      body
+    );
+    if (res) {
+      socket.emit("block-user", { ...info, roomId: roomid });
+    } else {
+    }
+    dispatch(stopLoading());
+  };
+
+  const handleStopStudentSpeaking = () => {
+    socket.emit("stop student speaking", roomid);
+    setActiveSpeaker(false);
+  };
   /* eslint-disable react-hooks/exhaustive-deps */
   const toggleAudioVisuals = (type) => {
     switch (type) {
@@ -1157,6 +1192,12 @@ export default function Stream() {
       call.answer(videoStreamRef.current);
     });
   };
+  const handleMuteStudent = (studentSpeaking) => {
+    console.log(studentSpeaking);
+    audioRefs.current[studentSpeaking.socketId].muted = true;
+
+    socket.emit("disable student audio", roomid, studentSpeaking.socketId);
+  };
   const initializeScreenPeer = async () => {
     navigator.mediaDevices
       .getDisplayMedia({ video: true, audio: true })
@@ -1233,46 +1274,40 @@ export default function Stream() {
     getMediaDevices();
   }, []);
   useEffect(() => {
-    socket.on(
-      "request audio",
-      (studentSocketId) => {
-        socket.emit("grant student access", roomid, studentSocketId);
-      }
-      // {
-      //   const foundStudent = attendanceList.find(
-      //     (student) => student.socketId === studentSocketId
-      //   );
-      //   const foundStudentIndex = audioRequests.findIndex(
-      //     (student) => student.socketId === studentSocketId
-      //   );
+    socket.on("request audio", (studentSocketId) => {
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === studentSocketId
+      );
+      const foundStudentIndex = audioRequests.findIndex(
+        (student) => student.socketId === studentSocketId
+      );
 
-      //   if (foundStudentIndex !== -1) {
-      //     // Check if the existing entry is declined, and update it accordingly
-      //     if (audioRequests[foundStudentIndex].declined) {
-      //       const updatedAudioRequests = [...audioRequests];
-      //       updatedAudioRequests[foundStudentIndex] = {
-      //         ...foundStudent,
-      //         selected: false,
-      //         declined: false, // Reset declined to false
-      //       };
-      //       setAudioRequests(updatedAudioRequests);
-      //       setAudioRequestModal(true);
-      //     } else {
-      //       // Entry already exists and is not declined
-      //       console.log(
-      //         `Student with socketId ${studentSocketId} already in audioRequests.`
-      //       );
-      //     }
-      //   } else {
-      //     // Add the new entry to audioRequests
-      //     setAudioRequests((prevAudioRequests) => [
-      //       ...prevAudioRequests,
-      //       { ...foundStudent, selected: false, declined: false },
-      //     ]);
-      //     setAudioRequestModal(true);
-      //   }
-      // }
-    );
+      if (foundStudentIndex !== -1) {
+        // Check if the existing entry is declined, and update it accordingly
+        if (audioRequests[foundStudentIndex].declined) {
+          const updatedAudioRequests = [...audioRequests];
+          updatedAudioRequests[foundStudentIndex] = {
+            ...foundStudent,
+            selected: false,
+            declined: false, // Reset declined to false
+          };
+          setAudioRequests(updatedAudioRequests);
+          setAudioRequestModal(true);
+        } else {
+          // Entry already exists and is not declined
+          console.log(
+            `Student with socketId ${studentSocketId} already in audioRequests.`
+          );
+        }
+      } else {
+        // Add the new entry to audioRequests
+        setAudioRequests((prevAudioRequests) => [
+          ...prevAudioRequests,
+          { ...foundStudent, selected: false, declined: false },
+        ]);
+        setAudioRequestModal(true);
+      }
+    });
 
     return () => {
       socket.off("request audio");
@@ -1282,7 +1317,7 @@ export default function Stream() {
   // useEffect(() => {
   //   socket.on(
   //     "student stream",
-  //     (peerId, audioStat) =>  
+  //     (peerId, audioStat) =>
   //     {
   //       console.log(audioStat, peerId);
   //       const receiveSudentPeer = new Peer();
@@ -1360,20 +1395,23 @@ export default function Stream() {
   // }, [roomid]);
   useEffect(() => {
     const peers = {}; // Store peers for each speaker
-  
-    socket.on("student stream", (peerId, audioStat) => {
+
+    socket.on("student stream", (peerId, audioStat, socketId) => {
       const receiveStudentPeer = new Peer();
       receiveStudentPeer.on("open", () => {
-        navigator.mediaDevices.getUserMedia({ video: false, audio: true })
+        navigator.mediaDevices
+          .getUserMedia({ video: false, audio: true })
           .then((newStream) => {
             const call = receiveStudentPeer.call(peerId, newStream);
-  
+
             call?.on("stream", (remoteStream) => {
               const newAudioRef = createAudioRef(); // Implement your logic to create an audio element
               newAudioRef.srcObject = remoteStream;
-              // newAudioRef.muted = !audioStat;
+              newAudioRef.muted = !audioStat;
+              audioRefs.current[socketId] = newAudioRef;
               newAudioRef.onloadedmetadata = () => {
-                newAudioRef.play()
+                newAudioRef
+                  .play()
                   .then(() => {
                     console.log("Audio playback started successfully");
                   })
@@ -1381,14 +1419,47 @@ export default function Stream() {
                     console.error("Audio playback error:", error);
                   });
               };
-  
+
               // Store the peer and audio reference
-              peers[peerId] = { peer: receiveStudentPeer, audioRef: newAudioRef };
+              peers[peerId] = {
+                peer: receiveStudentPeer,
+                audioRef: newAudioRef,
+              };
+              console.log("rere");
+              const foundStudent = attendanceList.find(
+                (student) => student.socketId === socketId
+              );
+              const foundStudentIndex = attendanceList.findIndex(
+                (student) => student.socketId === socketId
+              );
+              console.log(foundStudent);
+              if (foundStudentIndex !== -1) {
+                setStudentSpeaking({
+                  ...foundStudent,
+                  status: false,
+                  audioStatus: audioStat,
+                });
+                setActiveSpeaker(true);
+              }
+              setSpeakingPeers((prevSpeakingPeers) => {
+                if (!prevSpeakingPeers.hasOwnProperty(peerId)) {
+                  return {
+                    ...prevSpeakingPeers,
+                    [socketId]: {
+                      peer: peerId,
+                      audioRef: newAudioRef,
+                      socket: socketId,
+                    },
+                  };
+                }
+
+                return prevSpeakingPeers;
+              });
             });
           });
       });
     });
-  
+
     return () => {
       socket.off("student stream");
       // Clean up peers when the component is unmounted
@@ -1397,28 +1468,133 @@ export default function Stream() {
       });
     };
   }, []);
-  
+
   // Helper function to create an audio element
   const createAudioRef = () => {
     const audioElement = document.createElement("audio");
     document.body.appendChild(audioElement); // Append to the body or another container as needed
     return audioElement;
   };
-  
-  useEffect(() => {
-    socket.on("student audio stat", (audioStat) => {
-      audioRef.current.muted = !audioStat;
 
-      // setStudentSpeaking((prevStudentSpeaking) => ({
-      //   ...prevStudentSpeaking,
-      //   audioStatus: audioStat,
-      // }));
+  useEffect(() => {
+    socket.on("student audio stat", (audioStat, socketId) => {
+      console.log("Audio Stat:", audioStat, "Socket ID:", socketId);
+
+      // Mute or unmute the audio reference based on socketId
+      if (Object.keys(studentSpeaking).length !== 0) {
+        setActiveSpeaker(true);
+      }
+      if (audioRefs.current[socketId]) {
+        console.log(audioRefs.current[socketId]);
+
+        audioRefs.current[socketId].muted = !audioStat;
+        // Update the state if needed
+        // setSpeakingPeers((prevSpeakingPeers) => ({
+        //   ...prevSpeakingPeers,
+        //   [socketId]: {
+        //     ...prevSpeakingPeers[socketId],
+        //     audioStatus: audioStat,
+        //   },
+        // }));
+      }
     });
 
     return () => {
       socket.off("student audio stat");
     };
+  }, []);
+
+  useEffect(() => {
+    socket.on("speaking_status", (status, studentSocketId, audioStatus) => {
+      console.log(studentSocketId);
+
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === studentSocketId
+      );
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === studentSocketId
+      );
+      console.log(foundStudent);
+      if (foundStudentIndex !== -1) {
+        setStudentSpeaking({ ...foundStudent, status, audioStatus });
+        setActiveSpeaker(true);
+      }
+    });
+
+    return () => {
+      socket.off("speaking_status");
+    };
+  }, [roomid, attendanceList]);
+
+  useEffect(() => {
+    socket.on(
+      "watcher",
+      (
+        socketId,
+        peerId,
+        userName,
+        watcherAvatar,
+        studentId,
+        registeredUser,
+        studentIp
+      ) => {
+        setAttendanceList((prevAttendanceList) => [
+          ...prevAttendanceList,
+          {
+            socketId,
+            peerId,
+            userName,
+            watcherAvatar,
+            studentId,
+            registeredUser,
+            studentIp,
+          },
+        ]);
+      }
+    );
   }, [roomid]);
+
+  useEffect(() => {
+    socket.on("speaking student has left", (socketId) => {
+      console.log(socketId);
+
+      const foundStudent = attendanceList.find(
+        (student) => student.socketId === socketId
+      );
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === socketId
+      );
+      console.log(foundStudent);
+      console.log(speakingPeers);
+      if (foundStudentIndex !== -1) {
+        console.log(studentSpeaking);
+        setActiveSpeaker(false);
+
+        // setStudentSpeaking({});
+
+        console.log(studentSpeaking);
+        if (
+          Object.keys(studentSpeaking).length !== 0 &&
+          studentSpeaking.socketId === socketId
+        ) {
+          setStudentSpeaking({});
+        }
+        if (speakingPeers[socketId]) {
+          setSpeakingPeers((prevSpeakingPeers) => {
+            const updatedSpeakingPeers = { ...prevSpeakingPeers };
+            delete updatedSpeakingPeers[socketId];
+            return updatedSpeakingPeers;
+          });
+        }
+
+        // console.log(speakingPeers);
+      }
+    });
+
+    return () => {
+      socket.off("speaking student has left");
+    };
+  }, [roomid, attendanceList, studentSpeaking]);
 
   const handleInitializePeer = () => {
     setStartController(true);
@@ -1668,6 +1844,60 @@ export default function Stream() {
     freeTimerStatus,
     handleExitStreamModal,
   };
+  const grantStudentAudio = (studentInfo) => {
+    const { peerId, socketId } = studentInfo;
+
+    // Update the selected property for the chosen item
+    const updatedAudioRequests = audioRequests.map((item) => {
+      if (item.peerId === peerId && item.socketId === socketId) {
+        return {
+          ...item,
+          selected: true,
+        };
+      } else {
+        return item;
+      }
+    });
+
+    // Emit the socket event and update the state
+    socket.emit("grant student access", roomid, socketId);
+    setAudioRequests(updatedAudioRequests);
+    if (
+      updatedAudioRequests.filter((item) => !item.selected && !item.declined)
+        .length < 1
+    ) {
+      setAudioRequestModal(false);
+    }
+  };
+
+  const rejectStudentAudio = (studentInfo) => {
+    const { peerId, socketId } = studentInfo;
+
+    // Update the selected property for the chosen item and set declined to true
+    const updatedAudioRequests = audioRequests.map((item) => {
+      if (item.peerId === peerId && item.socketId === socketId) {
+        return {
+          ...item,
+          declined: true,
+        };
+      } else {
+        return item;
+      }
+    });
+
+    // Emit the socket event and update the state
+    socket.emit("reject student access", roomid, socketId);
+    setAudioRequests(updatedAudioRequests);
+    if (
+      updatedAudioRequests.filter((item) => !item.selected && !item.declined)
+        .length < 1
+    ) {
+      setAudioRequestModal(false);
+    }
+  };
+  let filteredAudioRequests = audioRequests.filter(
+    (item) => !item.selected && !item.declined
+  );
   return (
     <div className="dashboard-layout">
       <audio ref={audioRef} />
@@ -1680,6 +1910,116 @@ export default function Stream() {
           <Col className="page-actions__col">
             <div className="live-webinar live-webinar-stream">
               <div className="stream-webinar-content">
+                <Modal
+                  isOpen={audioRequestModal}
+                  className="audio-request-modal"
+                >
+                  <i
+                    className="fa fa-times close-icon"
+                    onClick={() => {
+                      setAudioRequestModal(false);
+                    }}
+                  ></i>
+
+                  {filteredAudioRequests.length === 1 ? (
+                    <>
+                      {" "}
+                      {filteredAudioRequests.map((item, index) => {
+                        console.log(item);
+                        return (
+                          <div className="single-speaking-request" key={index}>
+                            <p>{item.userName} is requesting to speak</p>
+                            <div className="speaking-request-permissions">
+                              <p
+                                className="speaking-accept hover"
+                                onClick={() => {
+                                  grantStudentAudio(item);
+                                }}
+                              >
+                                Accept
+                              </p>
+                              <p
+                                className="speaking-decline hover"
+                                onClick={() => {
+                                  rejectStudentAudio(item);
+                                }}
+                              >
+                                Decline
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <div
+                        className="speaking-request"
+                        style={{
+                          borderBottom:
+                            showSpeakingRequest && "1px solid #3d3c3c",
+                          paddingBottom: showSpeakingRequest && "2.5%",
+                        }}
+                      >
+                        <strong>
+                          {filteredAudioRequests.length}{" "}
+                          {filteredAudioRequests.length > 1
+                            ? "People"
+                            : "Person"}
+                        </strong>
+                        &nbsp;
+                        <span>
+                          {" "}
+                          {filteredAudioRequests.length > 1 ? "are" : "is"}
+                        </span>
+                        &nbsp;
+                        <span> requesting to speak</span>
+                        <i
+                          className={`      hover ${
+                            showSpeakingRequest
+                              ? "fa fa-angle-up"
+                              : "fa fa-angle-down"
+                          }`}
+                          onClick={() =>
+                            setShowSpeakingRequest(!showSpeakingRequest)
+                          }
+                        ></i>
+                      </div>
+                      {showSpeakingRequest && (
+                        <div className="multiple-request-permission-wrapper">
+                          {filteredAudioRequests.map((item, index) => {
+                            return (
+                              <div
+                                className="multiple-speaking-request"
+                                key={index}
+                              >
+                                <p className="speaker-user">{item.userName} </p>
+                                <div className="speaking-request-permissions">
+                                  <p
+                                    className="speaking-accept hover"
+                                    onClick={() => {
+                                      grantStudentAudio(item);
+                                    }}
+                                  >
+                                    Accept
+                                  </p>
+                                  <p
+                                    className="speaking-decline hover"
+                                    onClick={() => {
+                                      rejectStudentAudio(item);
+                                    }}
+                                  >
+                                    Decline
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </Modal>
                 <Modal isOpen={exitModal}>
                   <ModalHeader>
                     <p style={{ textAlign: "center", margin: 0 }}>
@@ -2596,6 +2936,154 @@ export default function Stream() {
                           </div>
                         </>
                       )}
+                      {Object.keys(speakingPeers).length === 0
+                        ? ""
+                        : // activeSpeaker && (
+                          //     <div
+                          //       className="student-speaking-indicator"
+                          //       style={{
+                          //         marginBottom: mobileChat && 0,
+                          //         // marginRight:mobileChat && 0,
+
+                          //         bottom: mobileChat && 0,
+                          //       }}
+                          //     >
+                          //       jjjj
+                          //     </div>
+                          //   )
+                          activeSpeaker && (
+                            <div
+                              className="student-speaking-indicator"
+                              style={{
+                                marginBottom: mobileChat && 0,
+                                // marginRight:mobileChat && 0,
+
+                                bottom: mobileChat && 0,
+                              }}
+                            >
+                              {studentSpeaking.status ? (
+                                <>
+                                  {" "}
+                                  <div className="pulse-indicatior">
+                                    {" "}
+                                    <p className="speaking-icon">
+                                      {studentSpeaking.userName
+                                        .charAt(0)
+                                        .toUpperCase()}
+                                    </p>
+                                  </div>
+                                  <div
+                                    className="pulse-indicatior-2"
+                                    style={{
+                                      animationDelay: "0s",
+                                    }}
+                                  >
+                                    <p className="speaking-icon">&nbsp;</p>
+                                  </div>
+                                  <div
+                                    className="pulse-indicatior-2"
+                                    style={{
+                                      animationDelay: "1s",
+                                    }}
+                                  >
+                                    <p className="speaking-icon">&nbsp;</p>
+                                  </div>
+                                  <div
+                                    className="pulse-indicatior-2"
+                                    style={{
+                                      animationDelay: "2s",
+                                    }}
+                                  >
+                                    <p className="speaking-icon">&nbsp;</p>
+                                  </div>
+                                  <div
+                                    className="pulse-indicatior-2"
+                                    style={{
+                                      animationDelay: "3s",
+                                    }}
+                                  >
+                                    <p className="speaking-icon">&nbsp;</p>
+                                  </div>
+                                  <div
+                                    className="pulse-indicatior-2"
+                                    style={{
+                                      animationDelay: "4s",
+                                    }}
+                                  >
+                                    <p className="speaking-icon">&nbsp;</p>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="pulse-indicatior">
+                                  {" "}
+                                  <p className="speaking-icon">
+                                    {/* {studentSpeaking.userName.charAt(0)} */}
+                                    {studentSpeaking.userName
+                                      .charAt(0)
+                                      .toUpperCase()}
+                                  </p>
+                                </div>
+                              )}
+                              <p>{studentSpeaking.userName} is speaking</p>
+
+                              <i
+                                className="fa fa-ellipsis-v vertical-icon hover"
+                                onClick={() => {
+                                  setMuteDelete(!muteDelete);
+                                }}
+                              ></i>
+                              <i
+                                className="fa fa-times close-icon hover"
+                                onClick={() => {
+                                  handleStopStudentSpeaking();
+                                }}
+                              ></i>
+
+                              {muteDelete && (
+                                <div className="mute-delete">
+                                  <p
+                                    className="hover"
+                                    onClick={() => {
+                                      handleBlockStudent(
+                                        "class",
+                                        studentSpeaking
+                                      );
+                                    }}
+                                  >
+                                    Block
+                                  </p>
+                                  <p
+                                    className="hover"
+                                    onClick={() => {
+                                      handleMuteStudent(studentSpeaking);
+                                    }}
+                                  >
+                                    Mute
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* <div>
+                          <p
+                            onClick={() => {
+                              handleBlockStudent(
+                                "class",
+                                studentSpeaking.foundStudent
+                              );
+                            }}
+                          >
+                            Block User
+                          </p>
+                          <p
+                            onClick={() => {
+                              handleMuteStudent();
+                            }}
+                          >
+                            Mute User
+                          </p>
+                        </div> */}
+                            </div>
+                          )}
                     </div>
                     {startController ? (
                       <>
