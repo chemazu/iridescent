@@ -17,7 +17,7 @@ import {
   UPDATE_DASHBOARD_PAGE_COUNTER_TO_DEFAULT,
   TUTOR_LOGOUT,
 } from "../../../actions/types";
-import CountdownTimer from "./CountDownTimer";
+import CountdownTimer from "./dsd";
 
 import classnames from "classnames";
 
