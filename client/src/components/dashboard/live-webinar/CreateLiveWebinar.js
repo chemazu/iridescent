@@ -72,7 +72,6 @@ function CreateLiveWebinar({ school }) {
     const parts = host.split(".");
 
     const baseDomain = parts[0] === "www" ? parts[1] : parts[0];
-    
 
     return baseDomain.includes("localhost")
       ? `http://${schoolname}.${baseDomain}`
@@ -103,13 +102,13 @@ function CreateLiveWebinar({ school }) {
     // if (recurring) {
     //   recurringDateCheck(e);
     // } else {
-      if (date && selectedEndDate > date) {
-        setEndDate(selectedEndDate);
-      } else {
-        alert.show("End date must be after start date", {
-          type: "error",
-        });
-      }
+    if (date && selectedEndDate > date) {
+      setEndDate(selectedEndDate);
+    } else {
+      alert.show("End date must be after start date", {
+        type: "error",
+      });
+    }
     // }
   };
 
@@ -204,6 +203,7 @@ function CreateLiveWebinar({ school }) {
   const handleSubmit = async (e) => {
     if (
       title === "" ||
+      title.endsWith(" ") ||
       category === "" ||
       description === "" ||
       fee === "" ||
@@ -376,7 +376,7 @@ function CreateLiveWebinar({ school }) {
       });
     }
   };
- 
+
   useEffect(() => {
     getCategoryListing();
     dateCheck();

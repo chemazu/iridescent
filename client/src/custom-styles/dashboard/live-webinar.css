@@ -2035,6 +2035,106 @@
   height: 100%;
   border-radius: 15px;
 }
+.attendance-wrapper-parent {
+  background: #eaedf6;
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  border-radius: 10px;
+}
+
+.attendance-wrapper {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+
+  /* overflow-x: hidden; */
+  /* display: flex; */
+  overflow-y: scroll;
+  /* justify-content: space-between; */
+  padding: 7.5% 5%;
+  gap: 0.5rem;
+  /* flex-wrap: wrap; */
+
+  position: relative;
+  grid-row-gap: 0;
+  /* grid-column-gap: 2px; */
+
+  background: #eaedf6;
+  /* height: 100%; */
+  border-radius: 10px;
+  padding-bottom: 5rem;
+}
+.single-attendee {
+  border-radius: 10px;
+  border: 2px solid #fff;
+  padding: 4% 2.5%;
+  height: 100px;
+  /* width: 30%; */
+  position: relative;
+  margin: 2.5% 0;
+  /* max-height: 100px; */
+
+  display: flex;
+  flex-direction: column;
+  /* justify-content: space-between; */
+
+  border: 0.513px solid #c4c4c4;
+  background: #fff;
+  box-shadow: 0px 6.841px 16.075px 0px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10% 7.5%;
+  font-weight: bold;
+}
+.single-attendee .speaking-icon{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgb(255, 255, 255);
+ 
+  border-radius: 50%;
+  width: 35px;
+  font-size: 20px;
+  height: 50px;
+  text-align: center;
+  align-self: center;
+}
+.single-attendee p {
+  margin: 0;
+}
+.attendance-mute-delete {
+  position: absolute;
+
+  background: #fff;
+  padding: 2% 5%;
+  border-radius: 10px;
+  display: flex;
+  width: max-content;
+  flex-direction: column;
+
+  z-index: 100;
+
+  /* align-items: center; */
+}
+.firstColumn {
+  right: -10rem;
+  bottom: -3rem;
+}
+.secondColumn {
+  right: -7.5rem;
+  bottom: -3rem;
+}
+.thirdColumn {
+  right: 5rem;
+  bottom: -3rem;
+}
+.attendies-wrapper {
+  display: flex;
+  justify-content: space-between;
+  width: 29.5%;
+}
 @media screen and (max-width: 812px) {
   .speaking-request * {
     font-size: 14px;

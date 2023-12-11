@@ -28,15 +28,12 @@ import { useStore } from "react-redux";
 import videojs from "video.js";
 import CustomTextArea from "./CustomTextArea";
 import classroomAudio from "./audioEmitter";
+import peerConfig from "./peerConfig";
 
 function WatchStream({ schoolname }) {
   const { roomid } = useParams();
   let history = useHistory();
-  let [currentPeer, setCurrentPeer] = useState(null);
-  let [submitQuizModal, setSubmitQuizModal] = useState(false);
 
-  let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
-  let [screenSharing, setScreenSharing] = useState(false);
   const myVideoRef = useRef();
   const videoRef = useRef(null);
   const secondVideoRef = useRef(null);
@@ -47,13 +44,17 @@ function WatchStream({ schoolname }) {
   const secondScreenPlayer = useRef(null);
   const studentStream = useRef(null);
   const audioRef = useRef(null);
+  const audioRefs = useRef({});
 
   const peerRef = useRef(null);
   const chatInterfaceRef = useRef(null);
+  let [currentPeer, setCurrentPeer] = useState(null);
+  let [submitQuizModal, setSubmitQuizModal] = useState(false);
+  let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
+  let [screenSharing, setScreenSharing] = useState(false);
   const [title, setTitle] = useState("");
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
-
   const [attendance, setAttendance] = useState(1);
   const [presenterName, setPresenterName] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -67,17 +68,12 @@ function WatchStream({ schoolname }) {
   const [watcherUsername, setWatcherUsername] = useState("");
   const [watcherAvatar, setWatcherAvatar] = useState(null);
   const [studentIp, setStudentIp] = useState("");
-
   const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
   const [disableVideoStream, setDisableVideoStream] = useState(null);
   const [videoFill, setVideoFill] = useState(false);
-
-  // "https://stream.mux.com/VZtzUzGRv02OhRnZCxcNg49OilvolTqdnFLEqBsTwaxU/low.mp4"
-
   const [presenterAvatar, setPresenterAvatar] = useState(
     "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
   );
-
   const [theme, setTheme] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [specialChat, setSpecialChat] = useState([]);
@@ -89,7 +85,6 @@ function WatchStream({ schoolname }) {
   let [studentMicControl, setStudentMicControl] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [registeredUser, setRegisteredUser] = useState(false);
-  const audioRefs = useRef({});
 
   const handleStartStudentAudio = () => {
     socket.emit("request audio", roomid);
@@ -97,6 +92,8 @@ function WatchStream({ schoolname }) {
   const handleStopStudentAudio = () => {
     studentSharePeerRef.current.destroy();
     socket.emit("student audio over", roomid);
+    setStudentMic(false);
+    setStudentMicControl(false);
     // toggle audio
   };
   const handleTurnOnStudentAudio = () => {
@@ -297,6 +294,9 @@ function WatchStream({ schoolname }) {
       currentPeer.destroy();
       setCurrentPeer(null);
     }
+    if (studentSharePeerRef.current) {
+      studentSharePeerRef.current.destroy();
+    }
     if (peerRef) {
       peerRef.current.destroy();
     }
@@ -474,7 +474,19 @@ function WatchStream({ schoolname }) {
   // }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
-    const peerInstance = new Peer();
+    const peerInstance = new Peer(undefined, {
+      debug: 3,
+      config: {
+        iceServers: [
+          {
+            url: "turn:localhost:3478",
+            credential: "credentials",
+            username: "username",
+          },
+        ],
+      },
+    });
+
     peerRef.current = peerInstance;
     console.log(watcherUsername, peerInstance);
 
@@ -718,7 +730,12 @@ function WatchStream({ schoolname }) {
       setWaiting(false);
       playerRef.current = null;
       setScreenSharing(false);
-      studentSharePeerRef.current.destroy()
+      console.log(audioRefs.current);
+
+      if (studentSharePeerRef.current) {
+        console.log(" ");
+        handleStopStudentAudio();
+      }
 
       setSpecialChat([]);
       // removeStream();
@@ -919,15 +936,19 @@ function WatchStream({ schoolname }) {
 
     return () => {};
   }, [roomid]);
+
   useEffect(() => {
-    socket.on("student audio stat", (audioStat) => {
-      audioRef.current.muted = !audioStat;
+    socket.on("student audio stat", (audioStat, socketId) => {
+      if (audioRefs.current[socketId]) {
+        audioRefs.current[socketId].muted = !audioStat;
+      }
     });
 
     return () => {
       socket.off("student audio stat");
     };
   }, [roomid]);
+
   // useEffect(() => {
   //   socket.on("welcome student speaking", (speakingArray) => {
   //     console.log(speakingArray)
@@ -940,8 +961,6 @@ function WatchStream({ schoolname }) {
 
   useEffect(() => {
     socket.on("welcome student speaking", (speakingArray) => {
-      console.log("Welcome students speaking:", speakingArray);
-
       // Connect to each speaking student in the array
       speakingArray.forEach(({ peerId, audioStat }) => {
         const receiveStudentPeer = new Peer();
@@ -1056,6 +1075,17 @@ function WatchStream({ schoolname }) {
 
     return () => {
       socket.off("student audio stat");
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.on("disable student audio", (roomid, socketId) => {
+      // if your and the socket id matches the socket id , it should emit something,
+      //
+    });
+
+    return () => {
+      socket.off("disable student audio");
     };
   }, []);
   // Helper function to create an audio element

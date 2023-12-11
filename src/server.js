@@ -2,6 +2,7 @@ import path from "path";
 import express from "express";
 import connectDB from "./config/connection";
 import cloudinary from "cloudinary";
+import Turn from "node-turn";
 
 import { Server } from "socket.io";
 import http from "http";
@@ -66,6 +67,14 @@ const PORT = process.env.PORT || 5000;
 
 // const server = http.createServer(app);
 const server = setupSocketIO(app);
+var turnServer = new Turn({
+  // set options
+  authMech: 'long-term',
+  credentials: {
+    username: "password"
+  }
+});
+turnServer.start();
 
 // export const io = new Server(server, {
 //   cors: {
@@ -149,6 +158,11 @@ app.use("/api/v1/domain", domainRoute);
 app.use("/api/v1/blockedstudents", blockedStudentsRoute);
 
 const root = require("path").join(__dirname, "../client", "build");
+
+
+
+// Add middleware to handle TURN requests
+// app.use(turnServer.router);
 
 // block of code come's after application routes
 if (process.env.NODE_ENV === "production") {
