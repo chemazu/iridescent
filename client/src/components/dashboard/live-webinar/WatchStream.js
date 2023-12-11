@@ -479,7 +479,7 @@ function WatchStream({ schoolname }) {
       config: {
         iceServers: [
           {
-            url: "turn:localhost:3478",
+            url: "turn:tuturlybeta:3478",
             credential: "credentials",
             username: "username",
           },

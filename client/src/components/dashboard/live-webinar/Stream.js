@@ -30,7 +30,7 @@ import { useParams, useHistory } from "react-router-dom";
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import CountdownTimer from "./CountDownTimer";
+import CountdownTimer from "./TimerCountdown";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
@@ -1169,15 +1169,18 @@ export default function Stream() {
     // const peerInstance = new Peer(undefined, peerConfig);
     const peerInstance = new Peer(undefined, {
       debug: 3,
-      config: { 'iceServers': [
-        {
-            url: 'turn:localhost:3478',
-            credential: 'credentials',
-            username: 'username'
-        }
-      ]
-    }})
-    
+      config: {
+        iceServers: [
+          {
+            url: "turn:tuturlybeta:3478",
+
+            credential: "credentials",
+            username: "username",
+          },
+        ],
+      },
+    });
+
     peerRef.current = peerInstance;
 
     peerInstance.on("open", (peerId) => {
