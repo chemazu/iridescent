@@ -1168,17 +1168,18 @@ export default function Stream() {
     getResourceDeploymentCount();
     // const peerInstance = new Peer(undefined, peerConfig);
     const peerInstance = new Peer(undefined, {
-      debug: 3,
-      config: {
-        iceServers: [
-          {
-            url: "turn:tuturlybeta:3478",
+      host:"tuturlybeta.com"
+      // debug: 3,
+      // config: {
+      //   iceServers: [
+      //     {
+      //       url: "turn:tuturlybeta:3478",
 
-            credential: "credentials",
-            username: "password",
-          },
-        ],
-      },
+      //       credential: "credentials",
+      //       username: "password",
+      //     },
+      //   ],
+      // },
     });
 
     peerRef.current = peerInstance;

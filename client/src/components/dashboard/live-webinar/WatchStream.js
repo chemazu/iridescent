@@ -474,17 +474,31 @@ function WatchStream({ schoolname }) {
   // }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
+    // const peerInstance = new Peer(undefined, {
+    //   debug: 3,
+    //   config: {
+    //     iceServers: [
+    //       {
+    //         url: "turn:tuturlybeta:3478",
+    //         credential: "credentials",
+    //         username: "password",
+    //       },
+    //     ],
+    //   },
+    // });
     const peerInstance = new Peer(undefined, {
-      debug: 3,
-      config: {
-        iceServers: [
-          {
-            url: "turn:tuturlybeta:3478",
-            credential: "credentials",
-            username: "password",
-          },
-        ],
-      },
+      host: "tuturlybeta.com",
+      // debug: 3,
+      // config: {
+      //   iceServers: [
+      //     {
+      //       url: "turn:tuturlybeta:3478",
+
+      //       credential: "credentials",
+      //       username: "password",
+      //     },
+      //   ],
+      // },
     });
 
     peerRef.current = peerInstance;
