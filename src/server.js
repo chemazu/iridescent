@@ -4,6 +4,7 @@ import connectDB from "./config/connection";
 import cloudinary from "cloudinary";
 import Turn from "node-turn";
 
+import cors from "cors"
 import { Server } from "socket.io";
 import http from "http";
 
@@ -56,6 +57,7 @@ import domainRoute from "./routes/domain";
 
 import blockedStudentsRoute from "./routes/blockedStudents";
 
+
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -99,7 +101,7 @@ const excludedRoutes = [
   "/api/v1/webhooks/stripe",
   "/api/v1/webhooks/cloudflare/upload/success/notification",
 ];
-
+app.use(cors());
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
 // call database instance

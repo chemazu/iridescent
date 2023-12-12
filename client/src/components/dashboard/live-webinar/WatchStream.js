@@ -488,6 +488,9 @@ function WatchStream({ schoolname }) {
     // });
     const peerInstance = new Peer(undefined, {
       host: "tuturlybeta.com",
+      port: 443, // Specify the port for HTTPS, which is the default for PeerJS
+      path: "/peerjs", // Specify the path for PeerJS, which is the default
+      secure: true,
       // debug: 3,
       // config: {
       //   iceServers: [
