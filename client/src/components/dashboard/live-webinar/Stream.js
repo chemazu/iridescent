@@ -30,7 +30,7 @@ import { useParams, useHistory } from "react-router-dom";
 import Poll from "./Poll";
 import data from "@emoji-mart/data";
 import Picker from "@emoji-mart/react";
-import CountdownTimer from "./TimerCountdown";
+import CountdownTimer from "./CountDownTimer";
 import setAuthToken from "../../../utilities/setAuthToken";
 import { useDispatch } from "react-redux";
 import { startLoading, stopLoading } from "../../../actions/appLoading";
@@ -1167,19 +1167,29 @@ export default function Stream() {
   const initializePeer = async () => {
     getResourceDeploymentCount();
     // const peerInstance = new Peer(undefined, peerConfig);
-    const peerInstance = new Peer(undefined, {
-      host:"tuturlybeta.com"
-      // debug: 3,
-      // config: {
-      //   iceServers: [
-      //     {
-      //       url: "turn:tuturlybeta:3478",
+    // const peerInstance = new Peer(undefined, {
+    //   debug: 3,
+    //   config: {
+    //     iceServers: [
+    //       {
+    //         url: "turn:localhost:3478",
+    //         credential: "credentials",
+    //         username: "password",
+    //       },
+    //     ],
+    //   },
+    // });
+    // const peerInstance = new Peer(undefined, {
+    //   host: "localhost",
+    //   port: 5000,
+    //   path: "/peerjs",
+    // });
 
-      //       credential: "credentials",
-      //       username: "password",
-      //     },
-      //   ],
-      // },
+    const peerInstance = new Peer(undefined, {
+      host: 'tuturlybeta.com',
+      port: 443, // Assuming your server uses HTTPS
+      path: '/peerjs',
+      secure: true, // Use secure connection for deployment
     });
 
     peerRef.current = peerInstance;
@@ -1562,19 +1572,54 @@ export default function Stream() {
         registeredUser,
         studentIp
       ) => {
-        setAttendanceList((prevAttendanceList) => [
-          ...prevAttendanceList,
-          {
-            socketId,
-            peerId,
-            userName,
-            watcherAvatar,
-            studentId,
-            registeredUser,
-            studentIp,
-            speakingStatus: false,
-          },
-        ]);
+        setAttendanceList((prevAttendanceList) => {
+          const isUserAlreadyInList = prevAttendanceList.some(
+            (user) => user.socketId === socketId
+          );
+
+          if (!isUserAlreadyInList) {
+            return [
+              ...prevAttendanceList,
+              {
+                socketId,
+                peerId,
+                userName,
+                watcherAvatar,
+                studentId,
+                registeredUser,
+                studentIp,
+                speakingStatus: false,
+                menuActive: false,
+                tutorMuted: false,
+              },
+            ];
+          }
+
+          // If the user with the given socketId already exists, return the unchanged list
+          return prevAttendanceList;
+        });
+        const isUserAlreadyInList = attendanceList.some(
+          (user) => user.socketId === socketId
+        );
+
+        if (!isUserAlreadyInList) {
+          socket.emit("update-attendance",roomid, [
+            ...attendanceList,
+            {
+              socketId,
+              peerId,
+              userName,
+              watcherAvatar,
+              studentId,
+              registeredUser,
+              studentIp,
+              speakingStatus: false,
+              menuActive: false,
+              tutorMuted: false,
+            },
+          ]);
+        }
+
         setShowAttendance(showAttendance);
       }
     );
@@ -3283,7 +3328,34 @@ export default function Stream() {
                                   return (
                                     <div
                                       className="single-attendee hover"
-                                      onClick={() => {}}
+                                      key={i}
+                                      onClick={() => {
+                                        setAttendanceList(
+                                          (prevAttendanceList) => {
+                                            const updatedList =
+                                              prevAttendanceList.map(
+                                                (listItem, index) => {
+                                                  if (index === i) {
+                                                    // Clicked on the current item, toggle menuActive to true
+                                                    return {
+                                                      ...listItem,
+                                                      menuActive:
+                                                        !listItem.menuActive,
+                                                    };
+                                                  } else {
+                                                    // Clicked on another item, set menuActive to false
+                                                    return {
+                                                      ...listItem,
+                                                      menuActive: false,
+                                                    };
+                                                  }
+                                                }
+                                              );
+
+                                            return updatedList;
+                                          }
+                                        );
+                                      }}
                                     >
                                       <div>
                                         {item.speakingStatus ? (
@@ -3306,7 +3378,7 @@ export default function Stream() {
                                           .toUpperCase() || "T"}
                                       </p> */}
                                       <p>{item.userName || "Chadius"}</p>
-                                      {i === 4 && (
+                                      {item.menuActive && (
                                         <div
                                           className={`attendance-mute-delete${
                                             i === 0 || i % 3 === 0

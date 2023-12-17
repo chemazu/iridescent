@@ -45,6 +45,29 @@ const setupSocketIO = (app) => {
         // Count the number of people in the room after the user exits
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
       }
+
+      io.in(roomId).emit(
+        "watcher-exit",
+        socket.id 
+      );
+      
+      if (broadcasterHolder[roomId].studentStream) {
+        const students = broadcasterHolder[roomId]?.studentStream;
+        const studentIndex = students.findIndex(
+          (student) => student.socketId === socketId
+        );
+
+        if (studentIndex !== -1) {
+          // Remove the student from the array
+          const removedStudent = students.splice(studentIndex, 1)[0];
+
+          // Emit the event that the speaking student has left
+          io.in(roomId).emit(
+            "speaking student has left",
+            removedStudent.socketId
+          );
+        }
+      }
     });
 
     socket.on(
@@ -130,9 +153,13 @@ const setupSocketIO = (app) => {
         }
       }
     );
-
+    socket.on("update-attendance", (roomId,attendanceList) => {
+      
+      io.in(roomId).emit("update-attendance", attendanceList);
+    });
     // Handle heartbeat events
     socket.on("heartbeat", (userId, roomId) => {
+      console.log(userId, roomId);
       // Update the last received heartbeat for the user
       userHeartbeats[userId] = Date.now();
 
@@ -159,6 +186,8 @@ const setupSocketIO = (app) => {
               // Remove the user from the room
               if (roomsHolder[roomId]) {
                 roomsHolder[roomId].delete(userId);
+                console.log("delete the heart beat");
+                
               }
 
               // Update the room status as needed
@@ -384,7 +413,7 @@ const setupSocketIO = (app) => {
         }
       }
     });
-    socket.on("disable student audio", (roomId,studentSocketId) => {
+    socket.on("disable student audio", (roomId, studentSocketId) => {
       // Check if studentStream exists and is an array
       if (
         broadcasterHolder[roomId].studentStream &&
@@ -400,7 +429,7 @@ const setupSocketIO = (app) => {
 
           // Broadcast the updated student audio status to others in the room
           socket.broadcast
-            .to(roomId)
+            .to(studentSocketId)
             .emit("student audio stat", false, studentSocketId);
         }
       }
@@ -499,6 +528,13 @@ const setupSocketIO = (app) => {
               }
             }
             delete broadcasterHolder[roomId];
+          }
+          else{
+            console.log(socketId,"fish")
+            io.in(roomId).emit(
+              "watcher-exit",
+               socketId
+            );
           }
         }
       );

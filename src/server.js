@@ -3,8 +3,8 @@ import express from "express";
 import connectDB from "./config/connection";
 import cloudinary from "cloudinary";
 import Turn from "node-turn";
+import { ExpressPeerServer } from "peer";
 
-import cors from "cors"
 import { Server } from "socket.io";
 import http from "http";
 
@@ -57,7 +57,6 @@ import domainRoute from "./routes/domain";
 
 import blockedStudentsRoute from "./routes/blockedStudents";
 
-
 cloudinary.v2.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -67,16 +66,21 @@ cloudinary.v2.config({
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// const server = http.createServer(app);
 const server = setupSocketIO(app);
-var turnServer = new Turn({
-  // set options
-  authMech: 'long-term',
-  credentials: {
-    username: "password"
-  }
+
+const peerServer = ExpressPeerServer(server, {
+  debug: true,
+ 
 });
-turnServer.start();
+// const server = http.createServer(app);
+// var turnServer = new Turn({
+//   // set options
+//   authMech: "long-term",
+//   credentials: {
+//     username: "password",
+//   },
+// });
+// turnServer.start();
 
 // export const io = new Server(server, {
 //   cors: {
@@ -87,6 +91,18 @@ turnServer.start();
 
 // middle ware to exclude cloudflare webhooks endpoint path
 // from app.use(express.json()) middleware
+
+// const peerServer = ExpressPeerServer(app, {
+//   path: "/myapp",
+// });
+
+app.use("/peerjs", peerServer);
+
+peerServer.on("connection", (client) => {
+  console.log("dew");
+  console.log(client, "dwe");
+});
+
 const unless = function (paths, middleware) {
   return function (req, res, next) {
     if (paths.includes(req.path)) {
@@ -101,7 +117,7 @@ const excludedRoutes = [
   "/api/v1/webhooks/stripe",
   "/api/v1/webhooks/cloudflare/upload/success/notification",
 ];
-app.use(cors());
+
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
 // call database instance
@@ -160,8 +176,6 @@ app.use("/api/v1/domain", domainRoute);
 app.use("/api/v1/blockedstudents", blockedStudentsRoute);
 
 const root = require("path").join(__dirname, "../client", "build");
-
-
 
 // Add middleware to handle TURN requests
 // app.use(turnServer.router);
