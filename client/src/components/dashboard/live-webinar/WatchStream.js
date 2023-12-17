@@ -489,18 +489,18 @@ function WatchStream({ schoolname }) {
     //     ],
     //   },
     // });
-    // const peerInstance = new Peer(undefined, {
-    //   host: "localhost",
-    //   port: 5000,
-    //   path: "/peerjs",
-    // });
-
     const peerInstance = new Peer(undefined, {
-      host: 'tuturlybeta.com',
-      port: 443, // Assuming your server uses HTTPS
-      path: '/peerjs',
-      secure: true, // Use secure connection for deployment
+      host: "localhost",
+      port: 5000,
+      path: "/peerjs",
     });
+
+    // const peerInstance = new Peer(undefined, {
+    //   host: 'tuturlybeta.com',
+    //   port: 443, // Assuming your server uses HTTPS
+    //   path: '/peerjs',
+    //   secure: true, // Use secure connection for deployment
+    // });
 
     peerRef.current = peerInstance;
     console.log(watcherUsername, peerInstance);
