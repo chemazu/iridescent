@@ -1193,7 +1193,9 @@ export default function Stream() {
       key: 'peerjs',
       // Assuming your server uses HTTPS
     });
-    console.log(peerInstance);
+    console.log(peerInstance,"dsd")
+    console.log("dsd2");
+    ;
     peerInstance.on("error", (error) => {
       console.error("PeerJS error:", error);
     });
