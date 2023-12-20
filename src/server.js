@@ -121,7 +121,7 @@ const excludedRoutes = [
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
 // call database instance
-connectDB();
+connectDB()
 
 // app.get('/', (req, res) => {
 //   res.send("welcome to our api")

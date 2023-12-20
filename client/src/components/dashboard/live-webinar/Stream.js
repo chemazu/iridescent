@@ -1187,7 +1187,7 @@ export default function Stream() {
       port: 5000,
       key: "peerjs",
       // secure: true,
-      debug:3
+      debug: 3,
     });
 
     // const peerInstance = new Peer({
