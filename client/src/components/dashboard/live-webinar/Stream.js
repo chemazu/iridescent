@@ -1189,8 +1189,10 @@ export default function Stream() {
       host: "tuturlybeta.com",
       path: "/peerjs",
       secure: true,
+      port: 443,
+      // Assuming your server uses HTTPS
     });
-    
+    console.log(peerInstance);
     peerInstance.on("error", (error) => {
       console.error("PeerJS error:", error);
     });
@@ -1198,7 +1200,7 @@ export default function Stream() {
     peerRef.current = peerInstance;
 
     peerInstance.on("open", (peerId) => {
-      console.log(peerId,"id");
+      console.log(peerId, "id");
       socket.emit("broadcaster", roomid, peerId, audioVisuals);
 
       socket.emit("audiovisuals", roomid, audioVisuals);
