@@ -1179,7 +1179,7 @@ export default function Stream() {
     //     ],
     //   },
     // });
-    const peerInstance = new Peer(undefined, {
+    const peerInstance = new Peer({
       host: "tuturlybeta.com",
       port: 5000,
       path: "/peerjs",
@@ -1193,9 +1193,8 @@ export default function Stream() {
     //   key: 'peerjs',
     //   // Assuming your server uses HTTPS
     // });
-    console.log(peerInstance,"dsd")
+    console.log(peerInstance, "dsd");
     console.log("dsd2");
-    ;
     peerInstance.on("error", (error) => {
       console.error("PeerJS error:", error);
     });
@@ -1203,7 +1202,15 @@ export default function Stream() {
     peerRef.current = peerInstance;
 
     peerInstance.on("open", (peerId) => {
+      console.log("not Ref");
       console.log(peerId, "id");
+      socket.emit("broadcaster", roomid, peerId, audioVisuals);
+
+      socket.emit("audiovisuals", roomid, audioVisuals);
+    });
+    peerRef.current.on("open", (peerId) => {
+      console.log(peerId, "id");
+      console.log("resf");
       socket.emit("broadcaster", roomid, peerId, audioVisuals);
 
       socket.emit("audiovisuals", roomid, audioVisuals);
