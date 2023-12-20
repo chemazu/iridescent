@@ -498,6 +498,7 @@ function WatchStream({ schoolname }) {
     const peerInstance = new Peer(undefined, {
       host: 'tuturlybeta.com',
       // port: 443, // Assuming your server uses HTTPS
+      port: 5000,
       path: '/peerjs',
       // secure: true, // Use secure connection for deployment
     });
