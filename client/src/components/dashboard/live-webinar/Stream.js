@@ -1179,20 +1179,20 @@ export default function Stream() {
     //     ],
     //   },
     // });
-    // const peerInstance = new Peer(undefined, {
-    //   host: "localhost",
-    //   port: 5000,
-    //   path: "/peerjs",
-    // });
-
-    const peerInstance = new Peer({
+    const peerInstance = new Peer(undefined, {
       host: "tuturlybeta.com",
+      port: 5000,
       path: "/peerjs",
-      secure: true,
-      port: 443,
-      key: 'peerjs',
-      // Assuming your server uses HTTPS
     });
+
+    // const peerInstance = new Peer({
+    //   host: "tuturlybeta.com",
+    //   path: "/peerjs",
+    //   secure: true,
+    //   port: 443,
+    //   key: 'peerjs',
+    //   // Assuming your server uses HTTPS
+    // });
     console.log(peerInstance,"dsd")
     console.log("dsd2");
     ;

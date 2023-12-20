@@ -484,15 +484,20 @@ function WatchStream({ schoolname }) {
     //     path: '/',
     //     secure: true,
     // })
-    const peerInstance = new Peer({
-      host: "tuturlybeta.com",
-      // port: 443, // Assuming your server uses HTTPS
-      // port: 5000,
+    // const peerInstance = new Peer({
+    //   host: "tuturlybeta.com",
+    //   // port: 443, // Assuming your server uses HTTPS
+    //   // port: 5000,
 
+    //   path: "/peerjs",
+    //   secure: true,
+
+    //   // secure: true, // Use secure connection for deployment
+    // });
+    const peerInstance = new Peer(undefined, {
+      host: "localhost",
+      port: 5000,
       path: "/peerjs",
-      secure: true,
-
-      // secure: true, // Use secure connection for deployment
     });
     peerInstance.on("error", (error) => {
       console.error("PeerJS error:", error);
