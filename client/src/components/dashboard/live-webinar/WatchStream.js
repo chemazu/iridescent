@@ -477,32 +477,34 @@ function WatchStream({ schoolname }) {
   // }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
-
-
-  //   const peer = new Peer({
-  //     key: 'peerjs',
-  //     host: 'yourHerokuHostName.com',
-  //     port: 443,
-  //     path: '/',
-  //     secure: true,
-  // })
-    const peerInstance = new Peer( {
+    //   const peer = new Peer({
+    //     key: 'peerjs',
+    //     host: 'yourHerokuHostName.com',
+    //     port: 443,
+    //     path: '/',
+    //     secure: true,
+    // })
+    const peerInstance = new Peer({
       host: "tuturlybeta.com",
       // port: 443, // Assuming your server uses HTTPS
       // port: 5000,
- 
- 
+
       path: "/peerjs",
       secure: true,
 
       // secure: true, // Use secure connection for deployment
     });
+    peerInstance.on("error", (error) => {
+      console.error("PeerJS error:", error);
+    });
 
     peerRef.current = peerInstance;
     if (watcherUsername !== "") {
       console.log("wew");
-      peerInstance.on("open", () => {
+      peerInstance.on("open", (peerId) => {
         console.log("watcher");
+        console.log(peerId, "id");
+
         socket.emit(
           "watcher",
           roomid,
