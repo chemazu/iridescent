@@ -71,7 +71,7 @@ const server = setupSocketIO(app);
 const peerServer = ExpressPeerServer(app, {
   debug: true,
 });
-console.log(peerServer);
+ 
 // const server = http.createServer(app);
 // var turnServer = new Turn({
 //   // set options
