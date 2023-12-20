@@ -54,6 +54,7 @@ import livewebinarRoute from "./routes/livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
 import setupSocketIO from "./socketSetup";
 import domainRoute from "./routes/domain";
+import cors from "cors"
 
 import blockedStudentsRoute from "./routes/blockedStudents";
 
