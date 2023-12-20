@@ -1190,6 +1190,7 @@ export default function Stream() {
       path: "/peerjs",
       secure: true,
       port: 443,
+      key: 'peerjs',
       // Assuming your server uses HTTPS
     });
     console.log(peerInstance);
