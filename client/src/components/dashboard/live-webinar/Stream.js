@@ -1193,8 +1193,8 @@ export default function Stream() {
 
     const peerInstance = new Peer({
       host: "tuturlybeta.com/peerjs",
-      port: 443,
-      path: "/peerjs",
+      // port: 443,
+      // path: "/peerjs",
       secure: true,
       debug:3
     // key: 'peerjs',
