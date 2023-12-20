@@ -98,7 +98,6 @@ const peerServer = ExpressPeerServer(serverNew, {
 //   path: "/myapp",
 // });
 
-app.use("/peerjs", peerServer);
 
 peerServer.on("connection", (client) => {
   console.log("dew");
@@ -119,6 +118,7 @@ const excludedRoutes = [
   "/api/v1/webhooks/stripe",
   "/api/v1/webhooks/cloudflare/upload/success/notification",
 ];
+app.use(cors())
 
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
@@ -176,6 +176,8 @@ app.use("/api/v1/classroomresource", classroomresourcesRoute);
 app.use("/api/v1/studentwebinar", studentWebinarRoute);
 app.use("/api/v1/domain", domainRoute);
 app.use("/api/v1/blockedstudents", blockedStudentsRoute);
+app.use("/peerjs", peerServer);
+
 
 const root = require("path").join(__dirname, "../client", "build");
 
