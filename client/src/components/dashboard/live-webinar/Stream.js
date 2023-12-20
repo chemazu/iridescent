@@ -1189,13 +1189,14 @@ export default function Stream() {
     //   // secure: true,
     //   debug: 3,
     // });
+  
+
     const peerInstance = new Peer({
       host: 'tuturlybeta.com',
       port: 443,
- 
-      debug:3
+      path: '/peerjs',
+      secure: true,
     });
-
     // const peerInstance = new Peer({
     //   host: "tuturlybeta.com",
     //   path: "/peerjs",
