@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Peer from "peerjs";
 import axios from "axios";
 import socket from "../../../utilities/client-socket-connect";
+import uuid from "react-uuid";
 
 import {
   Col,
@@ -1179,7 +1180,10 @@ export default function Stream() {
     //     ],
     //   },
     // });
-    const peerInstance = new Peer(undefined, {
+    let finalAttempt = uuid();
+    console.log(finalAttempt);
+
+    const peerInstance = new Peer(finalAttempt, {
       host: "tuturlybeta.com",
 
       path: "/peerjs",
