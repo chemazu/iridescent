@@ -1192,7 +1192,7 @@ export default function Stream() {
   
 
     const peerInstance = new Peer({
-      host: "youtube.com",
+      host: "tuturlybeta.com",
       port: 443,
       path: "/peerjs",
       secure: true,
