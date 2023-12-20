@@ -1185,11 +1185,11 @@ export default function Stream() {
     //   path: "/peerjs",
     // });
 
-    const peerInstance = new Peer(undefined, {
+    const peerInstance = new Peer({
       host: "tuturlybeta.com",
       // port: 443, // Assuming your server uses HTTPS
       port: 443,
-      key: 'peerjs',
+      key: "peerjs",
       path: "/peerjs",
       secure: true,
       // Use secure connection for deployment
