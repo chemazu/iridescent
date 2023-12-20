@@ -477,38 +477,28 @@ function WatchStream({ schoolname }) {
   // }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
-    // const peerInstance = new Peer(undefined, {
-    //   debug: 3,
-    //   config: {
-    //     iceServers: [
-    //       {
-    //         url: "turn:localhost:3478",
-    //         credential: "credentials",
-    //         username: "username",
-    //       },
-    //     ],
-    //   },
-    // });
-    // const peerInstance = new Peer(undefined, {
-    //   host: "localhost",
-    //   port: 5000,
-    //   path: "/peerjs",
-    // });
 
-    const peerInstance = new Peer(undefined, {
-      host: 'tuturlybeta.com',
+
+  //   const peer = new Peer({
+  //     key: 'peerjs',
+  //     host: 'yourHerokuHostName.com',
+  //     port: 443,
+  //     path: '/',
+  //     secure: true,
+  // })
+    const peerInstance = new Peer( {
+      host: "tuturlybeta.com",
       // port: 443, // Assuming your server uses HTTPS
-      port: 5000,
-      path: '/peerjs',
+      // port: 5000,
+      port: 443,
+      key: 'peerjs',
+      path: "/peerjs",
+      secure: true,
+
       // secure: true, // Use secure connection for deployment
     });
 
     peerRef.current = peerInstance;
-    console.log(watcherUsername, peerInstance);
-    peerInstance.on("open", () => {
-      console.log("fer");
-    });
-
     if (watcherUsername !== "") {
       console.log("wew");
       peerInstance.on("open", () => {

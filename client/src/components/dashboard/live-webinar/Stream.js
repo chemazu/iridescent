@@ -1186,11 +1186,13 @@ export default function Stream() {
     // });
 
     const peerInstance = new Peer(undefined, {
-      host: 'tuturlybeta.com',
+      host: "tuturlybeta.com",
       // port: 443, // Assuming your server uses HTTPS
-      port: 5000,
-      path: '/peerjs',
-      // secure: true, // Use secure connection for deployment
+      port: 443,
+      key: 'peerjs',
+      path: "/peerjs",
+      secure: true,
+      // Use secure connection for deployment
     });
 
     peerRef.current = peerInstance;
@@ -1604,7 +1606,7 @@ export default function Stream() {
         );
 
         if (!isUserAlreadyInList) {
-          socket.emit("update-attendance",roomid, [
+          socket.emit("update-attendance", roomid, [
             ...attendanceList,
             {
               socketId,
