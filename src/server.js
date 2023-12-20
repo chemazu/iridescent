@@ -68,11 +68,7 @@ const PORT = process.env.PORT || 5000;
 
 const server = setupSocketIO(app);
 const serverNew = http.createServer(app);
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://www.tuturlybeta.com');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  next();
-});
+
 const peerServer = ExpressPeerServer(serverNew, {
   debug: true,
   path: "/peerjs",
