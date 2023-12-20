@@ -68,7 +68,7 @@ const PORT = process.env.PORT || 5000;
 
 const server = setupSocketIO(app);
 
-const peerServer = ExpressPeerServer(app, {
+const peerServer = ExpressPeerServer(server, {
   debug: true,
 });
  

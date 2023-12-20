@@ -1179,11 +1179,11 @@ export default function Stream() {
     //     ],
     //   },
     // });
-    const peerInstance = new Peer({
+    const peerInstance = new Peer(undefined, {
       host: "tuturlybeta.com",
- 
+
       path: "/peerjs",
-      secure:true
+      // secure: true,
     });
 
     // const peerInstance = new Peer({
