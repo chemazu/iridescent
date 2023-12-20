@@ -490,8 +490,8 @@ function WatchStream({ schoolname }) {
       host: "tuturlybeta.com",
       // port: 443, // Assuming your server uses HTTPS
       // port: 5000,
-      port: 443,
-      key: 'peerjs',
+ 
+ 
       path: "/peerjs",
       secure: true,
 
