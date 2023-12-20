@@ -71,7 +71,7 @@ const serverNew = http.createServer(app);
 
 const peerServer = ExpressPeerServer(serverNew, {
   debug: true,
-  path: "/myapp",
+ 
 });
  
 // var turnServer = new Turn({
