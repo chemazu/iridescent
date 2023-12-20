@@ -1197,6 +1197,8 @@ export default function Stream() {
       path: '/peerjs',
       secure: true,
       debug:3
+    // key: 'peerjs',
+
     });
     // const peerInstance = new Peer({
     //   host: "tuturlybeta.com",
@@ -1212,22 +1214,16 @@ export default function Stream() {
       console.error("PeerJS error:", error);
     });
 
-    peerRef.current = peerInstance;
+
 
     peerInstance.on("open", (peerId) => {
-      console.log("not Ref");
+ 
       console.log(peerId, "id");
       socket.emit("broadcaster", roomid, peerId, audioVisuals);
 
       socket.emit("audiovisuals", roomid, audioVisuals);
     });
-    peerRef.current.on("open", (peerId) => {
-      console.log(peerId, "id");
-      console.log("resf");
-      socket.emit("broadcaster", roomid, peerId, audioVisuals);
-
-      socket.emit("audiovisuals", roomid, audioVisuals);
-    });
+ 
     handleFreeTimer();
     navigator.mediaDevices
       .getUserMedia(audioVisuals)
