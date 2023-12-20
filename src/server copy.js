@@ -193,4 +193,5 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile("index.html", { root });
   });
 }
-
+console.log(PORT)
+server.listen(PORT, () => console.log(`App is Listenng on port ${PORT}`));
