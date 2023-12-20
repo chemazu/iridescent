@@ -1181,12 +1181,13 @@ export default function Stream() {
     // });
 
     const peerInstance = new Peer(undefined, {
-      host: "tuturlybeta.com",
+      host: "/",
 
       path: "/peerjs",
       port: 5000,
       key: "peerjs",
       // secure: true,
+      debug:3
     });
 
     // const peerInstance = new Peer({
