@@ -70,10 +70,9 @@ const PORT = process.env.PORT || 5000;
 const server = setupSocketIO(app);
 const serverNew = http.createServer(app);
 
-const peerServer = ExpressPeerServer(serverNew, {
+const peerServer = ExpressPeerServer(server, {
   debug: true,
-  path: "/peerjs",
-  port: 9000, 
+ 
 });
  
 // var turnServer = new Turn({
