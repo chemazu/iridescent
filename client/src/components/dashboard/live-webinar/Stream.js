@@ -1191,8 +1191,8 @@ export default function Stream() {
     // });
   
     const peerInstance = new Peer(undefined, {
-      host: "tuturlybeta.com",
-      port: 5000,
+      host: "https://www.tuturlybeta.com",
+      port: 443,
       path: "/peerjs",
     });
 

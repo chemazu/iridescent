@@ -68,7 +68,6 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const server = setupSocketIO(app);
-const serverNew = http.createServer(app);
 
 const peerServer = ExpressPeerServer(server, {
   debug: true,
@@ -118,7 +117,7 @@ const excludedRoutes = [
   "/api/v1/webhooks/stripe",
   "/api/v1/webhooks/cloudflare/upload/success/notification",
 ];
-app.use(cors())
+// app.use(cors())
 
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
