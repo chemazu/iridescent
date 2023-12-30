@@ -1196,6 +1196,15 @@ export default function Stream() {
     //   port: 5000,
     //   path: "/peerjs",
     // });
+
+var peerConfiguration = {};
+
+(async() => {
+  const response = await fetch("https://yourappname.metered.live/api/v1/turn/credentials?apiKey=API_KEY");
+  const iceServers = await response.json();
+  peerConfiguration.iceServers = iceServers
+})();
+
     let peerInstance = new Peer(null, {
       host: "peerjs.92k.de",
       secure: true,
@@ -1203,7 +1212,7 @@ export default function Stream() {
     
         iceServers: [
           {
-            urls: "stun:stun.relay.metered.ca:80",
+            urls: "stun:stun.l.google.com:19302",
           },
           {
             urls: "turn:standard.relay.metered.ca:80",

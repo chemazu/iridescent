@@ -501,7 +501,7 @@ function WatchStream({ schoolname }) {
     // });
     let peerInstance = new Peer(null, {
       host: "peerjs.92k.de",
-  
+
       config: {
         // iceServers: [
         //   { urls: "stun:stun.l.google.com:19302" }, // Example STUN server
@@ -514,16 +514,15 @@ function WatchStream({ schoolname }) {
         // ]
         iceServers: [
           {
-            urls: "stun:stun.relay.metered.ca:80",
+            urls: "stun:stun.l.google.com:19302",
           },
           {
             urls: "turn:standard.relay.metered.ca:80",
             username: "bc59038dbb74e55ce6d48662",
             credential: "Paf5iDBUvioWbs3r",
           },
-           
-      ]
-      }
+        ],
+      },
     });
 
     peerInstance.on("error", (error) => {
