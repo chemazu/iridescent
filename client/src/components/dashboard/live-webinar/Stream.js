@@ -1196,8 +1196,46 @@ export default function Stream() {
     //   port: 5000,
     //   path: "/peerjs",
     // });
-
-    let peerInstance = new Peer(null, { host: "peerjs.92k.de", secure: true });
+    let peerInstance = new Peer(null, {
+      host: "peerjs.92k.de",
+      secure: true,
+      config: {
+        // iceServers: [
+        //   { urls: "stun:stun.l.google.com:19302" }, // Example STUN server
+        //   {
+        //     urls: "turn:your-turn-server.com:3478",
+        //     username: "your-username",
+        //     credential: "your-password"
+        //   }
+        //   // Add more TURN servers if needed
+        // ]
+        iceServers: [
+          {
+            urls: "stun:stun.relay.metered.ca:80",
+          },
+          {
+            urls: "turn:standard.relay.metered.ca:80",
+            username: "bc59038dbb74e55ce6d48662",
+            credential: "Paf5iDBUvioWbs3r",
+          },
+          {
+            urls: "turn:standard.relay.metered.ca:80?transport=tcp",
+            username: "bc59038dbb74e55ce6d48662",
+            credential: "Paf5iDBUvioWbs3r",
+          },
+          {
+            urls: "turn:standard.relay.metered.ca:443",
+            username: "bc59038dbb74e55ce6d48662",
+            credential: "Paf5iDBUvioWbs3r",
+          },
+          {
+            urls: "turn:standard.relay.metered.ca:443?transport=tcp",
+            username: "bc59038dbb74e55ce6d48662",
+            credential: "Paf5iDBUvioWbs3r",
+          },
+      ]
+      }
+    });
 
 
     // const peerInstance = new Peer({
