@@ -71,6 +71,8 @@ const server = setupSocketIO(app);
 
 const peerServer = ExpressPeerServer(server, {
   debug: true,
+  path: "/peerjs",
+
  
 });
  

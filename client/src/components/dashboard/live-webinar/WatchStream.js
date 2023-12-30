@@ -494,11 +494,13 @@ function WatchStream({ schoolname }) {
 
     //   // secure: true, // Use secure connection for deployment
     // });
-    const peerInstance = new Peer(undefined, {
-      host: "localhost",
-      port: 5000,
-      path: "/peerjs",
-    });
+    // const peerInstance = new Peer(undefined, {
+    //   host: "localhost",
+    //   port: 5000,
+    //   path: "/peerjs",
+    // });
+    let peerInstance = new Peer(null, { host: "peerjs.92k.de", secure: true });
+
     peerInstance.on("error", (error) => {
       console.error("PeerJS error:", error);
     });

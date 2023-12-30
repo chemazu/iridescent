@@ -54,6 +54,7 @@ import livewebinarRoute from "./routes/livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
 import setupSocketIO from "./socketSetup";
 import domainRoute from "./routes/domain";
+import cors from "cors"
 
 import blockedStudentsRoute from "./routes/blockedStudents";
 
@@ -67,10 +68,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const server = setupSocketIO(app);
-const serverNew = http.createServer(app);
 
-const peerServer = ExpressPeerServer(serverNew, {
+const peerServer = ExpressPeerServer(server, {
   debug: true,
+  path: "/peerjs",
+
+ 
 });
  
 // var turnServer = new Turn({
@@ -96,7 +99,6 @@ const peerServer = ExpressPeerServer(serverNew, {
 //   path: "/myapp",
 // });
 
-app.use("/peerjs", peerServer);
 
 peerServer.on("connection", (client) => {
   console.log("dew");
@@ -117,11 +119,12 @@ const excludedRoutes = [
   "/api/v1/webhooks/stripe",
   "/api/v1/webhooks/cloudflare/upload/success/notification",
 ];
+// app.use(cors())
 
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
 // call database instance
-connectDB();
+connectDB()
 
 // app.get('/', (req, res) => {
 //   res.send("welcome to our api")
@@ -174,6 +177,8 @@ app.use("/api/v1/classroomresource", classroomresourcesRoute);
 app.use("/api/v1/studentwebinar", studentWebinarRoute);
 app.use("/api/v1/domain", domainRoute);
 app.use("/api/v1/blockedstudents", blockedStudentsRoute);
+app.use("/peerjs", peerServer);
+
 
 const root = require("path").join(__dirname, "../client", "build");
 
@@ -195,3 +200,4 @@ if (process.env.NODE_ENV === "production") {
 }
 console.log(PORT)
 server.listen(PORT, () => console.log(`App is Listenng on port ${PORT}`));
+
