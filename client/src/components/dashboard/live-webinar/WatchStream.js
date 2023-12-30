@@ -501,7 +501,7 @@ function WatchStream({ schoolname }) {
     // });
     let peerInstance = new Peer(null, {
       host: "peerjs.92k.de",
-      secure: true,
+  
       config: {
         // iceServers: [
         //   { urls: "stun:stun.l.google.com:19302" }, // Example STUN server
@@ -521,21 +521,7 @@ function WatchStream({ schoolname }) {
             username: "bc59038dbb74e55ce6d48662",
             credential: "Paf5iDBUvioWbs3r",
           },
-          {
-            urls: "turn:standard.relay.metered.ca:80?transport=tcp",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:443",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:443?transport=tcp",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
+           
       ]
       }
     });
