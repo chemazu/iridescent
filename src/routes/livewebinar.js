@@ -477,7 +477,11 @@ router.get("/iceserver", async (req, res) => {
   const client = new Twilio(accountSid, authToken);
 
   client.tokens.create().then((token) => {
-    res.json(token);
+    if (token) {
+      res.json(token);
+      console.log(token);
+    }
+    ƒ;
   });
 });
 // router.get("/watch/:streamKey", async (req, res) => {
