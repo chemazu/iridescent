@@ -474,6 +474,8 @@ router.get("/watch/:streamKey", async (req, res) => {
 router.get("/iceserver", async (req, res) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
  console.log(2)
+ console.log(process.env.FIRS)
+
  
 
   const authToken = process.env.TWILIO_AUTH_TOKEN;
