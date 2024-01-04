@@ -3,10 +3,11 @@ import express from "express";
 import connectDB from "./config/connection";
 import cloudinary from "cloudinary";
 import Turn from "node-turn";
-import { ExpressPeerServer } from "peer";
+// import { ExpressPeerServer } from "peer";
 
 import { Server } from "socket.io";
 import http from "http";
+import { Twilio } from "twilio";
 
 import userRoute from "./routes/user";
 import schoolRoute from "./routes/school";
@@ -54,7 +55,6 @@ import livewebinarRoute from "./routes/livewebinar";
 import studentWebinarRoute from "./routes/studentwebinar";
 import setupSocketIO from "./socketSetup";
 import domainRoute from "./routes/domain";
-import cors from "cors"
 
 import blockedStudentsRoute from "./routes/blockedStudents";
 
@@ -68,14 +68,24 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 const server = setupSocketIO(app);
+// Download the helper library from https://www.twilio.com/docs/node/install
+// Find your Account SID and Auth Token at twilio.com/console
+// and set the environment variables. See http://twil.io/secure
+const accountSid = process.env.TWILIO_ACCOUNT_SID;
+const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-const peerServer = ExpressPeerServer(server, {
-  debug: true,
-  path: "/peerjs",
+const client = new Twilio(
+  "AC9254d112cf0c799c99232b0eb74ce7f2",
+  "50c01d9e9dea3576ce049598680a9fa6"
+);
 
- 
-});
- 
+client.tokens.create().then((token) => console.log(token));
+
+// const peerServer = ExpressPeerServer(server, {
+//   debug: true,
+// });
+
+// const server = http.createServer(app);
 // var turnServer = new Turn({
 //   // set options
 //   authMech: "long-term",
@@ -99,11 +109,12 @@ const peerServer = ExpressPeerServer(server, {
 //   path: "/myapp",
 // });
 
+// app.use("/peerjs", peerServer);
 
-peerServer.on("connection", (client) => {
-  console.log("dew");
-  console.log(client, "dwe");
-});
+// peerServer.on("connection", (client) => {
+//   console.log("dew");
+//   console.log(client, "dwe");
+// });
 
 const unless = function (paths, middleware) {
   return function (req, res, next) {
@@ -119,12 +130,11 @@ const excludedRoutes = [
   "/api/v1/webhooks/stripe",
   "/api/v1/webhooks/cloudflare/upload/success/notification",
 ];
-// app.use(cors())
 
 app.use(unless(excludedRoutes, express.json({ extended: false })));
 
 // call database instance
-connectDB()
+connectDB();
 
 // app.get('/', (req, res) => {
 //   res.send("welcome to our api")
@@ -177,13 +187,8 @@ app.use("/api/v1/classroomresource", classroomresourcesRoute);
 app.use("/api/v1/studentwebinar", studentWebinarRoute);
 app.use("/api/v1/domain", domainRoute);
 app.use("/api/v1/blockedstudents", blockedStudentsRoute);
-app.use("/peerjs", peerServer);
-
 
 const root = require("path").join(__dirname, "../client", "build");
-
-// Add middleware to handle TURN requests
-// app.use(turnServer.router);
 
 // block of code come's after application routes
 if (process.env.NODE_ENV === "production") {
@@ -198,6 +203,5 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile("index.html", { root });
   });
 }
-console.log(PORT)
-server.listen(PORT, () => console.log(`App is Listenng on port ${PORT}`));
 
+server.listen(PORT, () => console.log(`App is Listenng on port ${PORT}`));

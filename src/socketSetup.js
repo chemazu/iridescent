@@ -21,6 +21,7 @@ const setupSocketIO = (app) => {
   const userHeartbeats = {}; // Initialize an object to track heartbeats
   const userRooms = {}; // Initialize an object to track which room each user is in
   const heartbeatTimeout = 10000;
+  const waitingRoom = {};
 
   io.on("connection", (socket) => {
     // broadcaster
@@ -31,6 +32,9 @@ const setupSocketIO = (app) => {
       socket.broadcast
         .to(roomId)
         .emit("broadcaster", broadcasterHolder[roomId].peerId);
+      if (waitingRoom[roomId]) {
+        io.in(roomId).emit("update-attendance", waitingRoom[roomId]);
+      }
       let currentWebinar = await LiveWebinar.findOne({ streamKey: roomId });
       currentWebinar.isLive = true;
       await currentWebinar.save();
@@ -46,11 +50,8 @@ const setupSocketIO = (app) => {
         const numberOfPeopleInRoom = roomsHolder[roomId].size;
       }
 
-      io.in(roomId).emit(
-        "watcher-exit",
-        socket.id 
-      );
-      
+      io.in(roomId).emit("watcher-exit", socket.id);
+
       if (broadcasterHolder[roomId].studentStream) {
         const students = broadcasterHolder[roomId]?.studentStream;
         const studentIndex = students.findIndex(
@@ -149,17 +150,55 @@ const setupSocketIO = (app) => {
             pollQuizHolder[roomId]
           );
         } else {
+          // Hold the students in the waiting room
+
+          if (waitingRoom[roomId]) {
+            // Check uniqueness based on studentIp
+            const existingStudent = waitingRoom[roomId].find(
+              (student) => student.studentIp === studentIp
+            );
+
+            if (existingStudent) {
+              // Student with the same studentIp already exists, handle accordingly
+              console.log("Student with the same IP already exists.");
+              // You might want to emit an error or take some other action
+            } else {
+              // Do stuff
+              let newWaitingRoom = [
+                ...waitingRoom[roomId],
+                {
+                  socketId: socket.id,
+                  peerId,
+                  userName,
+                  watcherAvatar,
+                  studentId: attendanceId,
+                  registeredUser,
+                  studentIp,
+                  speakingStatus: false,
+                  menuActive: false,
+                  tutorMuted: false,
+                },
+              ];
+              console.log(newWaitingRoom);
+              waitingRoom[roomId] = newWaitingRoom; // Update waitingRoom with the new array
+              console.log(waitingRoom[roomId]);
+            }
+          } else {
+            // If the waiting room doesn't exist, create it
+            waitingRoom[roomId] = [];
+          }
+
           io.to(socket.id).emit("no stream");
         }
       }
     );
-    socket.on("update-attendance", (roomId,attendanceList) => {
-      
+    socket.on("update-attendance", (roomId, attendanceList) => {
+      console.log(attendanceList);
+
       io.in(roomId).emit("update-attendance", attendanceList);
     });
     // Handle heartbeat events
     socket.on("heartbeat", (userId, roomId) => {
-      console.log(userId, roomId);
       // Update the last received heartbeat for the user
       userHeartbeats[userId] = Date.now();
 
@@ -187,7 +226,6 @@ const setupSocketIO = (app) => {
               if (roomsHolder[roomId]) {
                 roomsHolder[roomId].delete(userId);
                 console.log("delete the heart beat");
-                
               }
 
               // Update the room status as needed
@@ -211,7 +249,6 @@ const setupSocketIO = (app) => {
     });
 
     socket.on("speaking_status", (roomId, status) => {
-      console.log(roomId, status, socket.id);
       if (broadcasterHolder[roomId]?.studentStream) {
         const student = broadcasterHolder[roomId]?.studentStream.find(
           (student) => student.socketId === socket.id
@@ -226,7 +263,6 @@ const setupSocketIO = (app) => {
       // let streamingStudent =
       //   broadcasterHolder[roomId]?.studentStream?.audioStat || 0;
 
-      console.log(broadcasterHolder[roomId]);
       // socket.broadcast
       //   .to(roomId)
       //   .emit("speaking_status", status, socket.id, streamingStudent);
@@ -528,13 +564,8 @@ const setupSocketIO = (app) => {
               }
             }
             delete broadcasterHolder[roomId];
-          }
-          else{
-            console.log(socketId,"fish")
-            io.in(roomId).emit(
-              "watcher-exit",
-               socketId
-            );
+          } else {
+            io.in(roomId).emit("watcher-exit", socketId);
           }
         }
       );

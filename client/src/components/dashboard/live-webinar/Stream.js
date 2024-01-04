@@ -109,6 +109,7 @@ export default function Stream() {
     video: true,
     audio: true,
   });
+  const [twiloServer, setTwiloServer] = useState(null);
   const [screenStreamhandler, setScreenStreamhandler] = useState(null);
   const [presenterDetails, setPresenterDetails] = useState(null);
   const [planname, setPlanname] = useState(null);
@@ -291,7 +292,14 @@ export default function Stream() {
       ? `http://${schoolname}.${baseDomain}`
       : `https://${schoolname}.${baseDomain}.com`;
   };
-
+  const getIceServer = async () => {
+    let res = await axios.get("/api/v1/livewebinar/iceserver");
+    if (res) {
+      console.log(res.data);
+      setTwiloServer(res.data);
+    } else {
+    }
+  };
   const getResourceDeploymentCount = async () => {
     let res = await axios.get("/api/v1/classroomresource/deployment-count");
 
@@ -299,8 +307,7 @@ export default function Stream() {
       if (res.data.paymentInfo === "free") {
         let { pollCount, quizCount } = res.data;
         setPlanStatus("free");
-        console.log(res.data);
-        console.log(trackResourceDeployment);
+
         setTrackResourceDeployment({ pollCount, quizCount });
       } else {
       }
@@ -338,6 +345,7 @@ export default function Stream() {
   }, [roomid]);
   useEffect(() => {
     getResourceDeploymentCount();
+    getIceServer();
   }, [roomid]);
   function copyText() {
     if (presenterDetails.fee === 0) {
@@ -1166,118 +1174,53 @@ export default function Stream() {
 
   const initializePeer = async () => {
     getResourceDeploymentCount();
-    // const peerInstance = new Peer(undefined, peerConfig);
-    // const peerInstance = new Peer(undefined, {
-    //   debug: 3,
-    //   config: {
-    //     iceServers: [
-    //       {
-    //         url: "turn:localhost:3478",
-    //         credential: "credentials",
-    //         username: "password",
-    //       },
-    //     ],
-    //   },
-    // });
 
-    // const peerInstance = new Peer(undefined, {
-    //   host: "tuturlybeta.com",
+    // Create a new Twilio client
 
-    //   path: "/peerjs",
-    //   port: 5000,
-    //   key: "peerjs",
-    //   // secure: true,
-    //   debug: 3,
-    // });
+    try {
+      // Generate Twilio token
 
-  
-    // const peerInstance = new Peer(undefined, {
-    //   host: "147.182.131.27",
-    //   port: 5000,
-    //   path: "/peerjs",
-    // });
+      // Initialize Peer.js with the extracted ICE servers
+      console.log(trackResourceDeployment);
+      console.log(twiloServer);
+      const peerInstance = new Peer({
+        config: {
+          iceServers: twiloServer.iceServers,
+        },
+      });
 
-var peerConfiguration = {};
+      peerInstance.on("error", (error) => {
+        console.error("PeerJS error:", error);
+      });
 
-(async() => {
-  const response = await fetch("https://yourappname.metered.live/api/v1/turn/credentials?apiKey=API_KEY");
-  const iceServers = await response.json();
-  peerConfiguration.iceServers = iceServers
-})();
+      peerRef.current = peerInstance;
+      console.log(peerInstance);
 
-    let peerInstance = new Peer(null, {
-      host: "peerjs.92k.de",
-      secure: true,
-      config: {
-    
-        iceServers: [
-          {
-            urls: "stun:stun.l.google.com:19302",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:80",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:80?transport=tcp",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:443",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:443?transport=tcp",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-      ]
-      }
-    });
+      peerInstance.on("open", (peerId) => {
+        console.log(peerId);
+        socket.emit("broadcaster", roomid, peerId, audioVisuals);
+        socket.emit("audiovisuals", roomid, audioVisuals);
+      });
 
+      handleFreeTimer();
 
-    // const peerInstance = new Peer({
-    //   host: "tuturlybeta.com",
-    //   path: "/peerjs",
-    //   secure: true,
-    // port: 443,
-    // key: 'peerjs',
-    //   // Assuming your server uses HTTPS
-    // });
-    console.log(peerInstance, "dsd");
-    console.log("dsd2");
-    peerInstance.on("error", (error) => {
-      console.error("PeerJS error:", error);
-    });
+      // Get user media
+      navigator.mediaDevices
+        .getUserMedia(audioVisuals)
+        .then((stream) => {
+          addVideoStream(myVideoRef.current, stream);
+          addVideoStream(mySecondVideoRef.current, stream);
+          videoStreamRef.current = stream;
+        })
+        .catch((error) => console.error(error));
 
-
-
-    peerInstance.on("open", (peerId) => {
- 
-      console.log(peerId, "id");
-      socket.emit("broadcaster", roomid, peerId, audioVisuals);
-
-      socket.emit("audiovisuals", roomid, audioVisuals);
-    });
- 
-    handleFreeTimer();
-    navigator.mediaDevices
-      .getUserMedia(audioVisuals)
-
-      .then((stream) => {
-        addVideoStream(myVideoRef.current, stream);
-        addVideoStream(mySecondVideoRef.current, stream);
-
-        videoStreamRef.current = stream;
-      })
-      .catch((error) => console.error(error));
-
-    peerInstance.on("call", (call) => {
-      call.answer(videoStreamRef.current);
-    });
+      // Answer incoming calls
+      peerInstance.on("call", (call) => {
+        call.answer(videoStreamRef.current);
+      });
+    } catch (error) {
+      console.error("error", error);
+    }
   };
   const handleMuteStudent = (studentSpeaking) => {
     console.log(studentSpeaking);
@@ -1624,50 +1567,23 @@ var peerConfiguration = {};
   }, [roomid, attendanceList]);
 
   useEffect(() => {
-    socket.on(
-      "watcher",
-      (
-        socketId,
-        peerId,
-        userName,
-        watcherAvatar,
-        studentId,
-        registeredUser,
-        studentIp
-      ) => {
-        setAttendanceList((prevAttendanceList) => {
-          const isUserAlreadyInList = prevAttendanceList.some(
-            (user) => user.socketId === socketId
-          );
-
-          if (!isUserAlreadyInList) {
-            return [
-              ...prevAttendanceList,
-              {
-                socketId,
-                peerId,
-                userName,
-                watcherAvatar,
-                studentId,
-                registeredUser,
-                studentIp,
-                speakingStatus: false,
-                menuActive: false,
-                tutorMuted: false,
-              },
-            ];
-          }
-
-          // If the user with the given socketId already exists, return the unchanged list
-          return prevAttendanceList;
-        });
-        const isUserAlreadyInList = attendanceList.some(
+    const handleWatcher = (
+      socketId,
+      peerId,
+      userName,
+      watcherAvatar,
+      studentId,
+      registeredUser,
+      studentIp
+    ) => {
+      setAttendanceList((prevAttendanceList) => {
+        const isUserAlreadyInList = prevAttendanceList.some(
           (user) => user.socketId === socketId
         );
 
         if (!isUserAlreadyInList) {
-          socket.emit("update-attendance", roomid, [
-            ...attendanceList,
+          const newAttendanceList = [
+            ...prevAttendanceList,
             {
               socketId,
               peerId,
@@ -1680,13 +1596,23 @@ var peerConfiguration = {};
               menuActive: false,
               tutorMuted: false,
             },
-          ]);
+          ];
+          socket.emit("update-attendance", roomid, newAttendanceList);
+          return newAttendanceList;
         }
 
-        setShowAttendance(showAttendance);
-      }
-    );
-  }, [roomid]);
+        // If the user with the given socketId already exists, return the unchanged list
+        return prevAttendanceList;
+      });
+    };
+
+    socket.on("watcher", handleWatcher);
+
+    return () => {
+      // Clean up the socket event listener when the component unmounts
+      socket.off("watcher", handleWatcher);
+    };
+  }, [roomid, attendanceList, socket]);
 
   useEffect(() => {
     socket.on("speaking student has left", (socketId) => {
@@ -1742,14 +1668,20 @@ var peerConfiguration = {};
       console.log(foundStudentIndex);
 
       if (foundStudentIndex !== -1) {
-        setAttendanceList((prevAttendanceList) =>
-          prevAttendanceList.filter((student) => student.socketId !== socketId)
-        );
+        setAttendanceList((prevAttendanceList) => {
+          let newAttendanceList = prevAttendanceList.filter(
+            (student) => student.socketId !== socketId
+          );
+          socket.emit("update-attendance", roomid, newAttendanceList);
+
+          return newAttendanceList;
+        });
       }
     });
   }, [roomid, showAttendance]);
 
   const handleInitializePeer = () => {
+    // get iceServer
     setStartController(true);
   };
 

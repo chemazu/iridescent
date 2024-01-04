@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import auth from "../middleware/auth";
 import studentAuth from "../middleware/studentAuth";
+import { Twilio } from "twilio";
 
 import cloudinary from "cloudinary";
 import multer, { memoryStorage } from "multer";
@@ -405,7 +406,6 @@ router.get("/watch/:streamKey", async (req, res) => {
       .populate("school");
 
     if (livestream) {
-
       const blockedStudent = await BlockedStudent.find({
         blockedBy: livestream.creator,
         studentIp: ip,
@@ -470,6 +470,16 @@ router.get("/watch/:streamKey", async (req, res) => {
   } catch (error) {
     res.status(400).json({ error: "Server error" });
   }
+});
+router.get("/iceserver", async (req, res) => {
+  const client = new Twilio(
+    "AC9254d112cf0c799c99232b0eb74ce7f2",
+    "50c01d9e9dea3576ce049598680a9fa6"
+  );
+
+  client.tokens.create().then((token) => {
+    res.json(token);
+  });
 });
 // router.get("/watch/:streamKey", async (req, res) => {
 //   const { streamKey } = req.params;

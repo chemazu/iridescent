@@ -54,6 +54,8 @@ function WatchStream({ schoolname }) {
   let [submitQuizModal, setSubmitQuizModal] = useState(false);
   let [audioVisuals, setAudioVisuals] = useState({ video: true, audio: true });
   let [screenSharing, setScreenSharing] = useState(false);
+  const [twiloServer, setTwiloServer] = useState(null);
+
   const [title, setTitle] = useState("");
   const [minimizedPoll, setMinimizedPoll] = useState(false);
   const [minimizedQuiz, setMinimizedQuiz] = useState(false);
@@ -89,6 +91,14 @@ function WatchStream({ schoolname }) {
   const [registeredUser, setRegisteredUser] = useState(false);
   const [attendanceList, setAttendanceList] = useState([]);
 
+  const getIceServer = async () => {
+    let res = await axios.get("/api/v1/livewebinar/iceserver");
+    if (res) {
+      console.log(res.data);
+      setTwiloServer(res.data);
+    } else {
+    }
+  };
   const handleStartStudentAudio = () => {
     socket.emit("request audio", roomid);
   };
@@ -477,65 +487,19 @@ function WatchStream({ schoolname }) {
   // }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
-    //   const peer = new Peer({
-    //     key: 'peerjs',
-    //     host: 'yourHerokuHostName.com',
-    //     port: 443,
-    //     path: '/',
-    //     secure: true,
-    // })
-    // const peerInstance = new Peer({
-    //   host: "tuturlybeta.com",
-    //   // port: 443, // Assuming your server uses HTTPS
-    //   // port: 5000,
-
-    //   path: "/peerjs",
-    //   secure: true,
-
-    //   // secure: true, // Use secure connection for deployment
-    // });
-    // const peerInstance = new Peer(undefined, {
-    //   host: "localhost",
-    //   port: 5000,
-    //   path: "/peerjs",
-    // });
-    let peerInstance = new Peer(null, {
-      host: "peerjs.92k.de",
-
+    getIceServer()
+    console.log(twiloServer)
+    const peerInstance = new Peer({
       config: {
-        // iceServers: [
-        //   { urls: "stun:stun.l.google.com:19302" }, // Example STUN server
-        //   {
-        //     urls: "turn:your-turn-server.com:3478",
-        //     username: "your-username",
-        //     credential: "your-password"
-        //   }
-        //   // Add more TURN servers if needed
-        // ]
-        iceServers: [
-          {
-            urls: "stun:stun.l.google.com:19302",
-          },
-          {
-            urls: "turn:standard.relay.metered.ca:80",
-            username: "bc59038dbb74e55ce6d48662",
-            credential: "Paf5iDBUvioWbs3r",
-          },
-        ],
+        iceServers: twiloServer.iceServers,
       },
     });
-
-    peerInstance.on("error", (error) => {
-      console.error("PeerJS error:", error);
-    });
-
     peerRef.current = peerInstance;
-    if (watcherUsername !== "") {
-      console.log("wew");
-      peerInstance.on("open", (peerId) => {
-        console.log("watcher");
-        console.log(peerId, "id");
+    console.log(watcherUsername, peerInstance);
 
+    if (watcherUsername !== "") {
+      peerInstance.on("open", () => {
+        console.log("watcher");
         socket.emit(
           "watcher",
           roomid,
@@ -1566,48 +1530,92 @@ function WatchStream({ schoolname }) {
                         {4 > 2 ? (
                           <div>
                             {" "}
-                            {attendanceList.map((item, i) => {
-                              return (
-                                <div
-                                  className="single-attendee hover"
-                                  key={i}
-                                  onClick={() => {
-                                    setAttendanceList((prevAttendanceList) => {
-                                      const updatedList =
-                                        prevAttendanceList.map(
-                                          (listItem, index) => {
-                                            if (index === i) {
-                                              // Clicked on the current item, toggle menuActive to true
-                                              return {
-                                                ...listItem,
-                                                menuActive:
-                                                  !listItem.menuActive,
-                                              };
-                                            } else {
-                                              // Clicked on another item, set menuActive to false
-                                              return {
-                                                ...listItem,
-                                                menuActive: false,
-                                              };
-                                            }
-                                          }
-                                        );
+                            {
+                              // attendanceList.map((item, i) => {
+                              [
+                                {
+                                  socketId: "MkKBHS8W8D7CSSJ6AAAB",
+                                  peerId: "user",
+                                  userName: "Lopez",
+                                  watcherAvatar: null,
+                                  studentId:
+                                    "7b2d2e83-bcff-0eef-7b8f-5e8f1ec60bb1",
+                                  registeredUser: false,
+                                  studentIp: "::ffff:127.0.0.1",
+                                  speakingStatus: false,
+                                  menuActive: false,
+                                  tutorMuted: false,
+                                },
+                                {
+                                  socketId: "MkKBHS8W8D7CSSJ6AAAB",
+                                  peerId: "user",
+                                  userName: "SLopez",
+                                  watcherAvatar: null,
+                                  studentId:
+                                    "7b2d2e83-bcff-0eef-7b8f-5e8f1ec60bb1",
+                                  registeredUser: false,
+                                  studentIp: "::ffff:127.0.0.1",
+                                  speakingStatus: false,
+                                  menuActive: false,
+                                  tutorMuted: false,
+                                },
+                                {
+                                  socketId: "MkKBHS8W8D7CSSJ6AAAB",
+                                  peerId: "user",
+                                  userName: "Gopez",
+                                  watcherAvatar: null,
+                                  studentId:
+                                    "7b2d2e83-bcff-0eef-7b8f-5e8f1ec60bb1",
+                                  registeredUser: false,
+                                  studentIp: "::ffff:127.0.0.1",
+                                  speakingStatus: false,
+                                  menuActive: false,
+                                  tutorMuted: false,
+                                },
+                              ].map((item, i) => {
+                                return (
+                                  <div
+                                    className="single-attendee hover"
+                                    key={i}
+                                    onClick={() => {
+                                      setAttendanceList(
+                                        (prevAttendanceList) => {
+                                          const updatedList =
+                                            prevAttendanceList.map(
+                                              (listItem, index) => {
+                                                if (index === i) {
+                                                  // Clicked on the current item, toggle menuActive to true
+                                                  return {
+                                                    ...listItem,
+                                                    menuActive:
+                                                      !listItem.menuActive,
+                                                  };
+                                                } else {
+                                                  // Clicked on another item, set menuActive to false
+                                                  return {
+                                                    ...listItem,
+                                                    menuActive: false,
+                                                  };
+                                                }
+                                              }
+                                            );
 
-                                      return updatedList;
-                                    });
-                                  }}
-                                >
-                                  <div>
-                                    {item.speakingStatus ? (
-                                      <img src={wave} alt="wave" />
-                                    ) : (
-                                      <i
-                                        className="fa fa-microphone-slash"
-                                        aria-hidden="true"
-                                      ></i>
-                                    )}
-                                  </div>
-                                  {/* <p
+                                          return updatedList;
+                                        }
+                                      );
+                                    }}
+                                  >
+                                    <div>
+                                      {item.speakingStatus ? (
+                                        <img src={wave} alt="wave" />
+                                      ) : (
+                                        <i
+                                          className="fa fa-microphone-slash"
+                                          aria-hidden="true"
+                                        ></i>
+                                      )}
+                                    </div>
+                                    {/* <p
                                   className="speaking-icon"
                                   style={{
                                     background: "green",
@@ -1617,32 +1625,33 @@ function WatchStream({ schoolname }) {
                                     .charAt(0)
                                     .toUpperCase() || "T"}
                                 </p> */}
-                                  <p>{item.userName || "Chadius"}</p>
-                                  {item.menuActive && (
-                                    <div
-                                      className={`attendance-mute-delete${
-                                        i === 0 || i % 3 === 0
-                                          ? " firstColumn"
-                                          : ""
-                                      }${
-                                        i === 1 || i % 3 === 1
-                                          ? " secondColumn"
-                                          : ""
-                                      }${
-                                        i === 2 || i % 3 === 2
-                                          ? " thirdColumn"
-                                          : ""
-                                      }`}
-                                      onClick={() => {}}
-                                    >
-                                      <p>Give permission to speak</p>
-                                      <p>Mute student</p>
-                                      <p>Block student</p>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                                    <p>{item.userName || "Chadius"}</p>
+                                    {item.menuActive && (
+                                      <div
+                                        className={`attendance-mute-delete${
+                                          i === 0 || i % 3 === 0
+                                            ? " firstColumn"
+                                            : ""
+                                        }${
+                                          i === 1 || i % 3 === 1
+                                            ? " secondColumn"
+                                            : ""
+                                        }${
+                                          i === 2 || i % 3 === 2
+                                            ? " thirdColumn"
+                                            : ""
+                                        }`}
+                                        onClick={() => {}}
+                                      >
+                                        <p>Give permission to speak</p>
+                                        <p>Mute student</p>
+                                        <p>Block student</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            }
                           </div>
                         ) : (
                           <div className="chat-interface">
