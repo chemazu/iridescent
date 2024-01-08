@@ -485,10 +485,16 @@ function WatchStream({ schoolname }) {
   //     socket.off("broadcaster");
   //   };
   // }, [roomid, waiting, disconnect]);
-
   useEffect(() => {
-    getIceServer()
-    console.log(twiloServer)
+    getIceServer();
+  }, [roomid]);
+  useEffect(() => {
+    // Check if twiloServer.iceServers is not empty
+    if (!twiloServer.iceServers || twiloServer.iceServers.length === 0) {
+      // Early return if iceServers is empty
+      return;
+    }
+  
     const peerInstance = new Peer({
       config: {
         iceServers: twiloServer.iceServers,
@@ -496,7 +502,7 @@ function WatchStream({ schoolname }) {
     });
     peerRef.current = peerInstance;
     console.log(watcherUsername, peerInstance);
-
+  
     if (watcherUsername !== "") {
       peerInstance.on("open", () => {
         console.log("watcher");
@@ -524,7 +530,7 @@ function WatchStream({ schoolname }) {
           // const call = peerInstance.call(peerId, fast);
           call?.on("stream", (remoteStream) => {
             handleAddStream(remoteStream, audioStat);
-
+  
             setWaiting(false);
             secondHandleAddStream(remoteStream, audioStat);
           });
@@ -534,9 +540,9 @@ function WatchStream({ schoolname }) {
           // });
         });
     };
-
+  
     socket.on("audio status", () => {});
-
+  
     socket.on("join stream", (roomSize, peerId, roomStatus) => {
       setAudioVisuals(roomStatus);
       startClass(peerId, "join", roomStatus);
@@ -546,19 +552,92 @@ function WatchStream({ schoolname }) {
     socket.on("blocked", () => {
       handleBlockStudent();
     });
-
+  
     socket.on("broadcaster", (peerId, roomStatus) => {
       startClass(peerId, "broadcaster");
       setWaiting(false);
       setDisconnect(false);
     });
-
+  
     return () => {
       peerInstance.destroy();
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
+  }, [roomid, waiting, disconnect, watcherUsername, registeredUser, twiloServer.iceServers]);
+  
+  // useEffect(() => {
+  //   console.log(twiloServer);
+  //   const peerInstance = new Peer({
+  //     config: {
+  //       iceServers: twiloServer.iceServers,
+  //     },
+  //   });
+  //   peerRef.current = peerInstance;
+  //   console.log(watcherUsername, peerInstance);
+
+  //   if (watcherUsername !== "") {
+  //     peerInstance.on("open", () => {
+  //       console.log("watcher");
+  //       socket.emit(
+  //         "watcher",
+  //         roomid,
+  //         "user",
+  //         getUserId(roomid),
+  //         watcherUsername,
+  //         watcherAvatar,
+  //         registeredUser,
+  //         studentIp
+  //       );
+  //     });
+  //   }
+  //   const handleBlockStudent = () => {
+  //     peerInstance.disconnect();
+  //   };
+  //   const startClass = (peerId, stat, audioStat) => {
+  //     console.log(stat);
+  //     navigator.mediaDevices
+  //       .getUserMedia({ video: true, audio: true })
+  //       .then((newStream) => {
+  //         let call = peerInstance.call(peerId, newStream);
+  //         // const call = peerInstance.call(peerId, fast);
+  //         call?.on("stream", (remoteStream) => {
+  //           handleAddStream(remoteStream, audioStat);
+
+  //           setWaiting(false);
+  //           secondHandleAddStream(remoteStream, audioStat);
+  //         });
+  //         call?.on("error", (error) => {
+  //           console.error("Call error:", error);
+  //         });
+  //         // });
+  //       });
+  //   };
+
+  //   socket.on("audio status", () => {});
+
+  //   socket.on("join stream", (roomSize, peerId, roomStatus) => {
+  //     setAudioVisuals(roomStatus);
+  //     startClass(peerId, "join", roomStatus);
+  //     setWaiting(false);
+  //     setDisconnect(false);
+  //   });
+  //   socket.on("blocked", () => {
+  //     handleBlockStudent();
+  //   });
+
+  //   socket.on("broadcaster", (peerId, roomStatus) => {
+  //     startClass(peerId, "broadcaster");
+  //     setWaiting(false);
+  //     setDisconnect(false);
+  //   });
+
+  //   return () => {
+  //     peerInstance.destroy();
+  //     socket.off("join stream");
+  //     socket.off("broadcaster");
+  //   };
+  // }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
   const attendanceCount = attendance || 1;
 
   const revertHandleAddScreenStream = () => {
