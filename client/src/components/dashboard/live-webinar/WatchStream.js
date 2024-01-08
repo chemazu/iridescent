@@ -564,7 +564,7 @@ function WatchStream({ schoolname }) {
       socket.off("join stream");
       socket.off("broadcaster");
     };
-  }, [roomid, waiting, disconnect, watcherUsername, registeredUser, twiloServer.iceServers]);
+  }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
   
   // useEffect(() => {
   //   console.log(twiloServer);
