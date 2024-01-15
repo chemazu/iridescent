@@ -7,7 +7,7 @@ import Turn from "node-turn";
 
 import { Server } from "socket.io";
 import http from "http";
-import { Twilio } from "twilio";
+ 
 
 import userRoute from "./routes/user";
 import schoolRoute from "./routes/school";
@@ -71,15 +71,10 @@ const server = setupSocketIO(app);
 // Download the helper library from https://www.twilio.com/docs/node/install
 // Find your Account SID and Auth Token at twilio.com/console
 // and set the environment variables. See http://twil.io/secure
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
 
-const client = new Twilio(
-  "AC9254d112cf0c799c99232b0eb74ce7f2",
-  "50c01d9e9dea3576ce049598680a9fa6"
-);
+ 
 
-client.tokens.create().then((token) => console.log(token));
+ 
 
 // const peerServer = ExpressPeerServer(server, {
 //   debug: true,

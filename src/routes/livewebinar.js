@@ -410,9 +410,72 @@ router.get("/watch/:streamKey", async (req, res) => {
         blockedBy: livestream.creator,
         studentIp: ip,
       });
+      console.log(blockedStudent);
 
       if (blockedStudent.length >= 1) {
-        res.status(400).json({ error: "Stream not found" });
+        const firstBlockedStudent = blockedStudent[0];
+
+        // res.status(400).json({ error: "Stream not found" });
+        if (
+          firstBlockedStudent.blockType === "class" &&
+          firstBlockedStudent.roomId === streamKey
+        ) {
+          // Block entry if blockType is class and roomid doesn't match streamKey
+          res.status(400).json({ error: "Stream not found" });
+        } else if (firstBlockedStudent.blockType === "school") {
+          // Block entry if blockType is school
+          res.status(400).json({ error: "Stream not found" });
+        } else {
+          const planName = await PaymentPlans.findOne({
+            _id: livestream.creator.selectedplan,
+          });
+          if (livestream.fee > 0) {
+            const token = req.header("x-auth-token");
+
+            if (!token) {
+              return res.status(401).json({
+                msg: "No Token. Authorization Denied",
+              });
+            }
+            const decoded = jwt.verify(token, process.env.STUDENTTOKENSECRET);
+            studentId = decoded.student.id;
+            const payment = await StudentWebinar.findOne({
+              student: studentId,
+              webinarBought: livestream._id,
+              boughtfrom: livestream.school._id,
+            });
+            if (payment) {
+              res.json({
+                title: livestream.title,
+                streamkey: livestream.streamKey,
+                isLive: livestream.isLive,
+                firstname: livestream.creator.firstname,
+                lastname: livestream.creator.lastname,
+                username: livestream.creator.username,
+                school: livestream.school.name,
+                planname: planName.planname,
+                timeLeft: livestream.timeleft,
+                avatar: livestream.creator.avatar,
+              });
+            } else {
+              res.status(400).json({ error: "Payment not found" });
+            }
+          } else {
+            res.json({
+              title: livestream.title,
+              streamkey: livestream.streamKey,
+              isLive: livestream.isLive,
+              firstname: livestream.creator.firstname,
+              lastname: livestream.creator.lastname,
+              username: livestream.creator.username,
+              school: livestream.school.name,
+              planname: planName.planname,
+              timeLeft: livestream.timeleft,
+              avatar: livestream.creator.avatar,
+              studentIp: ip,
+            });
+          }
+        }
       } else {
         const planName = await PaymentPlans.findOne({
           _id: livestream.creator.selectedplan,
@@ -473,16 +536,13 @@ router.get("/watch/:streamKey", async (req, res) => {
 });
 router.get("/iceserver", async (req, res) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
- console.log(2)
- console.log(process.env.FIRS)
-
- 
-
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const client = new Twilio(accountSid, authToken);
+  console.log(2,accountSid.charAt(4))
+  console.log(accountSid.charAt(4))
+
 
   client.tokens.create().then((token) => {
-    console.log(token);
     res.json(token);
   });
 });

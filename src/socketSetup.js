@@ -55,7 +55,7 @@ const setupSocketIO = (app) => {
       if (broadcasterHolder[roomId].studentStream) {
         const students = broadcasterHolder[roomId]?.studentStream;
         const studentIndex = students.findIndex(
-          (student) => student.socketId === socketId
+          (student) => student.socketId === socket.id
         );
 
         if (studentIndex !== -1) {
@@ -200,10 +200,11 @@ const setupSocketIO = (app) => {
     // Handle heartbeat events
     socket.on("heartbeat", (userId, roomId) => {
       // Update the last received heartbeat for the user
-      userHeartbeats[userId] = Date.now();
+      let socketId = socket.id;
+      userHeartbeats[socketId] = Date.now();
 
       // Track which room the user is in
-      userRooms[userId] = roomId;
+      userRooms[socketId] = roomId;
 
       // You can also update the room status here if needed
       // roomStatus[roomId] = updatedStatus; // Update room status as needed
@@ -224,6 +225,8 @@ const setupSocketIO = (app) => {
             if (roomId) {
               // Remove the user from the room
               if (roomsHolder[roomId]) {
+                console.log(userId);
+                console.log(roomsHolder, roomId);
                 roomsHolder[roomId].delete(userId);
                 console.log("delete the heart beat");
               }
@@ -233,7 +236,8 @@ const setupSocketIO = (app) => {
 
               // Notify other users in the room about the updated attendance
               const numberOfPeopleInRoom = roomsHolder[roomId]?.size;
-              io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
+              // io.in(roomId).emit("updateAttendance", numberOfPeopleInRoom);
+              io.in(roomId).emit("watcher-exit", userId, "heartbeat");
 
               // Remove the user's heartbeat and room information
               delete userHeartbeats[userId];
@@ -407,6 +411,7 @@ const setupSocketIO = (app) => {
       }
     });
     socket.on("on student audio", (roomId) => {
+      console.log(roomId, broadcasterHolder[roomId]);
       // Check if studentStream exists and is an array
       if (
         broadcasterHolder[roomId].studentStream &&
@@ -421,14 +426,12 @@ const setupSocketIO = (app) => {
           studentToUpdate.audioStat = true;
 
           // Broadcast the updated student audio status to others in the room
-          socket.broadcast
-            .to(roomId)
-            .emit("student audio stat", true, socket.id);
+          socket.broadcast.to(roomId).emit("on student audio", socket.id);
         }
       }
     });
-
     socket.on("off student audio", (roomId) => {
+      console.log(roomId, broadcasterHolder[roomId]);
       // Check if studentStream exists and is an array
       if (
         broadcasterHolder[roomId].studentStream &&
@@ -443,32 +446,87 @@ const setupSocketIO = (app) => {
           studentToUpdate.audioStat = false;
 
           // Broadcast the updated student audio status to others in the room
-          socket.broadcast
-            .to(roomId)
-            .emit("student audio stat", false, socket.id);
+          socket.broadcast.to(roomId).emit("off student audio", socket.id);
         }
       }
     });
-    socket.on("disable student audio", (roomId, studentSocketId) => {
-      // Check if studentStream exists and is an array
-      if (
-        broadcasterHolder[roomId].studentStream &&
-        Array.isArray(broadcasterHolder[roomId].studentStream)
-      ) {
-        // Find the student based on socket.id and update audioStat
-        const studentToUpdate = broadcasterHolder[roomId].studentStream.find(
-          (student) => student.socketId === studentSocketId
-        );
+    socket.on("block-user", (data) => {
+      let { socketId } = data;
 
-        if (studentToUpdate) {
-          studentToUpdate.audioStat = false;
+      socket.broadcast.to(socketId).emit("blocked");
 
-          // Broadcast the updated student audio status to others in the room
-          socket.broadcast
-            .to(studentSocketId)
-            .emit("student audio stat", false, studentSocketId);
-        }
-      }
+      console.log(data);
+    });
+
+    // socket.on(
+    //   "disable student audio",
+    //   (roomId, studentSocketId, trackResourceDeployment) => {
+    //     // Check if studentStream exists and is an array
+    //     if (
+    //       broadcasterHolder[roomId].studentStream &&
+    //       Array.isArray(broadcasterHolder[roomId].studentStream)
+    //     ) {
+    //       // Find the student based on socket.id and update audioStat
+    //       const studentToUpdate = broadcasterHolder[roomId].studentStream.find(
+    //         (student) => student.socketId === studentSocketId
+    //       );
+
+    //       if (studentToUpdate) {
+    //         studentToUpdate.audioStat = false;
+
+    //         // Broadcast the updated student audio status to others in the room
+    //         socket.broadcast
+    //           .to(roomId)
+    //           .emit("student audio stat", false, studentSocketId);
+    //       }
+    //     }
+    //   }
+    // );
+    // socket.on(
+    //   "enable student audio",
+    //   (roomId, studentSocketId, trackResourceDeployment) => {
+    //     // Check if studentStream exists and is an array
+    //     if (
+    //       broadcasterHolder[roomId].studentStream &&
+    //       Array.isArray(broadcasterHolder[roomId].studentStream)
+    //     ) {
+    //       // Find the student based on socket.id and update audioStat
+    //       const studentToUpdate = broadcasterHolder[roomId].studentStream.find(
+    //         (student) => student.socketId === studentSocketId
+    //       );
+
+    //       if (studentToUpdate) {
+    //         console.log(studentToUpdate, "sty");
+    //         studentToUpdate.audioStat = false;
+
+    //         // Broadcast the updated student audio status to others in the room
+    //         socket.broadcast
+    //           .to(roomId)
+    //           .emit("student audio stat", true, socket.id);
+    //       } else {
+    //         console.log(roomId, studentSocketId);
+    //       }
+    //     }
+    //   }
+    // );
+    socket.on("enable student audio", (roomid, studentSocketId) => {
+      console.log("enable student audio");
+      socket.broadcast
+        .to(studentSocketId)
+        .emit("enable student audio", studentSocketId);
+      socket.broadcast
+        .to(roomid)
+        .emit("unmute student with socket id", studentSocketId);
+    });
+
+    socket.on("disable student audio", (roomid, studentSocketId) => {
+      console.log("disable student audio");
+      socket.broadcast
+        .to(studentSocketId)
+        .emit("disable student audio", studentSocketId);
+      socket.broadcast
+        .to(roomid)
+        .emit("mute student with socket id", studentSocketId);
     });
 
     socket.on("endstream", async (roomid) => {
@@ -565,7 +623,11 @@ const setupSocketIO = (app) => {
             }
             delete broadcasterHolder[roomId];
           } else {
+            console.log(socketId);
+            console.log(roomId);
+
             io.in(roomId).emit("watcher-exit", socketId);
+            socket.in(roomId).emit("watcher-exit", socketId);
           }
         }
       );

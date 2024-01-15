@@ -2047,7 +2047,6 @@
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-
   /* overflow-x: hidden; */
   /* display: flex; */
   overflow-y: scroll;
@@ -2064,6 +2063,56 @@
   /* height: 100%; */
   border-radius: 10px;
   padding-bottom: 5rem;
+}
+.student-attendance-wrapper {
+  height: 100%;
+
+  overflow-y: scroll;
+  padding-bottom: 2rem;
+  grid-template-columns: auto auto;
+  /* grid-template-rows: repeat(2, 170px); */
+  /* grid-template-rows: repeat(auto-fill,170px); */
+  background-color: #fff;
+}
+.student-attendance-wrapper .single-attendee {
+  height: 150px;
+  border-radius: 20px;
+  border: 1px solid #000;
+  width: 90%;
+  min-width: 150px;
+  max-width: 150px;
+
+  background: #eaedf6;
+  margin-bottom: 2%;
+  padding-top: 15%;
+}
+.student-attendance-wrapper .single-attendee .name-icon {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
+.student-attendance-wrapper .single-attendee .name-icon h3 {
+  background: #3d3c3c;
+  border-radius: 50%;
+  height: 70px;
+  width: 70px;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  text-transform: capitalize;
+}
+.student-attendance-wrapper .single-attendee .control-options {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 0 5%;
+  align-items: center;
+  flex-direction: row-reverse;
+}
+.single-attendee .control-options p {
+  text-transform: capitalize;
 }
 .single-attendee {
   border-radius: 10px;
@@ -2088,12 +2137,12 @@
   padding: 10% 7.5%;
   font-weight: bold;
 }
-.single-attendee .speaking-icon{
+.single-attendee .speaking-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   color: rgb(255, 255, 255);
- 
+
   border-radius: 50%;
   width: 35px;
   font-size: 20px;
@@ -2118,6 +2167,9 @@
 
   /* align-items: center; */
 }
+.single-attendee .attendance-mute-delete p {
+  font-weight: normal;
+}
 .firstColumn {
   right: -10rem;
   bottom: -3rem;
@@ -2134,6 +2186,62 @@
   display: flex;
   justify-content: space-between;
   width: 29.5%;
+}
+.student-attendance {
+  z-index: 55;
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding: 1% 10%;
+  align-items: flex-end;
+  background-color: rgb(25, 28, 45);
+  padding-top: 4%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+.student-attendance p {
+  width: 37.5%;
+  margin: 0;
+  padding-bottom: 1.5%;
+  text-align: center;
+  color: #fff;
+  border-bottom: 5px solid transparent;
+}
+.student-attendance .active {
+  border-bottom: 5px solid #fff;
+  font-weight: bold;
+}
+.box-shadow {
+  box-shadow: 0px 4px 15px 0px rgba(0, 0, 0, 0.2);
+}
+.single-attendee p {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+.speaking-icon-holder {
+  display: flex;
+  width: 100%;
+  justify-content: end;
+  padding-top: 2%;
+  padding-right: 2%;
+}
+
+.no-attendees {
+  width: 100%;
+  text-align: center;
+  margin-top: 30dvh;
+}
+.second-block-screen {
+  flex-direction: column;
+  padding: 0 25%;
+  padding-bottom: 5%;
+}
+.second-block-screen button {
+  width: 100%;
+  margin: 2.5% 0;
+}
+.broadcaster-mute:hover {
+  cursor: not-allowed;
 }
 @media screen and (max-width: 812px) {
   .speaking-request * {
@@ -2170,8 +2278,7 @@
   .watch-screen {
     background-color: var(--site-white-color);
   }
-  .chat-interface-text {
-  }
+
   .videoRef .video-js .vjs-tech {
     object-fit: cover !important;
     height: 100vh !important;

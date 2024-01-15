@@ -75,7 +75,7 @@ export default function Stream() {
   const chatInterfaceRef = useRef(null);
   const alert = useAlert();
   const [title, setTitle] = useState("");
-  const [attendance, setAttendance] = useState(1);
+
   const [quizStatus, setQuizStatus] = useState(false);
   const [startController, setStartController] = useState(false);
   const [quizHolder, setQuizHolder] = useState([]);
@@ -137,9 +137,13 @@ export default function Stream() {
   const [stopStudentSpeakingModal, setStopStudentSpeakingModal] =
     useState(false);
   const [blockStudentModal, setBlockStudentModal] = useState(false);
-  const [showAttendance, setShowAttendance] = useState(false);
+  const [selectBlockType, setSelectBlockType] = useState(false);
 
-  let myArray = new Array(2).fill(0);
+  const [showAttendance, setShowAttendance] = useState(false);
+  const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
+  const [studentToBlock, setStudentToBlock] = useState(null);
+
+
 
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
@@ -151,7 +155,6 @@ export default function Stream() {
       blockType: type,
       roomId: roomid,
     };
-    console.log(body);
 
     let res = await axios.post(
       "/api/v1/blockedstudents/blocked-students",
@@ -162,6 +165,8 @@ export default function Stream() {
     } else {
     }
     dispatch(stopLoading());
+    setBlockStudentModal(false);
+    setSelectBlockType(false);
   };
 
   const handleStopStudentSpeaking = () => {
@@ -195,7 +200,7 @@ export default function Stream() {
         break;
     }
   };
-  const attendanceCount = attendance || 1;
+  const attendanceCount = attendanceList.length || 0;
 
   const handleDurationValueChange = (event) => {
     setDurationValue(event.target.value);
@@ -295,7 +300,6 @@ export default function Stream() {
   const getIceServer = async () => {
     let res = await axios.get("/api/v1/livewebinar/iceserver");
     if (res) {
-      console.log(res.data);
       setTwiloServer(res.data);
     } else {
     }
@@ -326,23 +330,6 @@ export default function Stream() {
     }
   };
 
-  useEffect(() => {
-    // Send a heartbeat to the server periodically
-    // const heartbeatInterval = setInterval(() => {
-    //   socket.emit("heartbeat", "", roomid); // Replace 'yourUserId' with the actual user identifier
-    // }, 5000); // Send a heartbeat every 5 seconds (adjust as needed)
-
-    socket.on("updateAttendance", (users) => {
-      setAttendance(users);
-      console.log("heart beat");
-    });
-
-    // Clean up the event listener and heartbeat interval when the component unmounts
-    return () => {
-      socket.off("updateAttendance");
-      // clearInterval(heartbeatInterval);
-    };
-  }, [roomid]);
   useEffect(() => {
     getResourceDeploymentCount();
     getIceServer();
@@ -1023,7 +1010,6 @@ export default function Stream() {
     socket.on("special submit", (type, result, user) => {
       if (type === "poll") {
         handleStudentPollSubmit(result);
-        console.log("first", result);
       }
 
       if (type === "quiz") {
@@ -1181,8 +1167,6 @@ export default function Stream() {
       // Generate Twilio token
 
       // Initialize Peer.js with the extracted ICE servers
-      console.log(trackResourceDeployment);
-      console.log(twiloServer);
       const peerInstance = new Peer({
         config: {
           iceServers: twiloServer.iceServers,
@@ -1194,10 +1178,8 @@ export default function Stream() {
       });
 
       peerRef.current = peerInstance;
-      console.log(peerInstance);
 
       peerInstance.on("open", (peerId) => {
-        console.log(peerId);
         socket.emit("broadcaster", roomid, peerId, audioVisuals);
         socket.emit("audiovisuals", roomid, audioVisuals);
       });
@@ -1223,11 +1205,40 @@ export default function Stream() {
     }
   };
   const handleMuteStudent = (studentSpeaking) => {
-    console.log(studentSpeaking);
     audioRefs.current[studentSpeaking.socketId].muted = true;
+    let newTrackStudentAudioStat = {
+      ...trackStudentAudioStat,
+      [studentSpeaking.socketId]: {
+        broadcasterMuted: true,
+      },
+    };
+    setTrackStudentAudioStat(newTrackStudentAudioStat);
 
-    socket.emit("disable student audio", roomid, studentSpeaking.socketId);
+    socket.emit(
+      "disable student audio",
+      roomid,
+      studentSpeaking.socketId,
+      newTrackStudentAudioStat
+    );
   };
+  const handleUnMuteStudent = (studentSpeaking) => {
+    audioRefs.current[studentSpeaking.socketId].muted = true;
+    let newTrackStudentAudioStat = {
+      ...trackStudentAudioStat,
+      [studentSpeaking.socketId]: {
+        broadcasterMuted: false,
+      },
+    };
+    setTrackStudentAudioStat(newTrackStudentAudioStat);
+
+    socket.emit(
+      "enable student audio",
+      roomid,
+      studentSpeaking.socketId,
+      newTrackStudentAudioStat
+    );
+  };
+
   const initializeScreenPeer = async () => {
     navigator.mediaDevices
       .getDisplayMedia({ video: true, audio: true })
@@ -1236,7 +1247,16 @@ export default function Stream() {
         screenSharingTrack.addEventListener("ended", () => {
           handleScreenSharingEnded();
         });
-        const screenInstance = new Peer();
+
+        if (!twiloServer || twiloServer.iceServers.length === 0) {
+          // Early return if iceServers is empty
+          return;
+        }
+        const screenInstance = new Peer({
+          config: {
+            iceServers: twiloServer.iceServers,
+          },
+        });
         screenPeerRef.current = screenInstance;
         setScreenStreamhandler(stream);
         screenInstance.on("open", (peerId) => {
@@ -1262,7 +1282,7 @@ export default function Stream() {
         peerRef.current.destroy();
       }
     };
-  }, [roomid, startController]);
+  }, [roomid, startController, twiloServer]);
 
   useEffect(() => {
     if (startController) {
@@ -1325,9 +1345,6 @@ export default function Stream() {
           setAudioRequestModal(true);
         } else {
           // Entry already exists and is not declined
-          console.log(
-            `Student with socketId ${studentSocketId} already in audioRequests.`
-          );
         }
       } else {
         // Add the new entry to audioRequests
@@ -1344,90 +1361,19 @@ export default function Stream() {
     };
   }, [attendanceList, audioRequests, socket]);
 
-  // useEffect(() => {
-  //   socket.on(
-  //     "student stream",
-  //     (peerId, audioStat) =>
-  //     {
-  //       console.log(audioStat, peerId);
-  //       const receiveSudentPeer = new Peer();
-  //       receiveSudentPeer.on("open", () => {
-  //         navigator.mediaDevices
-  //           .getUserMedia({ video: false, audio: true })
-  //           .then((newStream) => {
-  //             let call = receiveSudentPeer.call(peerId, newStream);
-  //             // const call = peerInstance.call(peerId, fast);
-  //             call?.on("stream", (remoteStream) => {
-  //               if (audioRef.current) {
-  //                 audioRef.current.srcObject = remoteStream;
-  //                 audioRef.current.muted = !audioStat;
-  //                 audioRef.current.onloadedmetadata = () => {
-  //                   // Media has loaded, you can now play it
-  //                   audioRef.current
-  //                     .play()
-  //                     .then(() => {
-  //                       console.log("Audio playback started successfully");
-  //                     })
-  //                     .catch((error) => {
-  //                       console.error("Audio playback error:", error);
-  //                     });
-  //                 };
-  //                 audioRef.current.oncanplay = () => {
-  //                   // Media can be played, but it may not have fully loaded yet
-  //                 };
-
-  //                 // Add an event listener to handle interruptions
-  //                 audioRef.current.onabort = () => {
-  //                   console.error("Audio load request was interrupted");
-  //                 };
-  //                 // const audioContext = new AudioContext();
-  //                 // const source =
-  //                 //   audioContext.createMediaStreamSource(remoteStream);
-
-  //                 // source.connect(audioContext.destination);
-
-  //                 // // Define a threshold for sound activity (adjust as needed)
-  //                 // const soundThreshold = 0.05;
-
-  //                 // // Listen for audio activity
-  //                 // source.onaudioprocess = (event) => {
-  //                 //   const audioBuffer = event.inputBuffer.getChannelData(0);
-  //                 //   const rms = calculateRMS(audioBuffer);
-
-  //                 //   if (rms > soundThreshold) {
-  //                 //     console.log("student Sound is being inputted");
-  //                 //   }
-  //                 // };
-
-  //                 // Listen for audio activity
-  //               } else {
-  //                 console.log("error");
-  //                 console.log(audioRef.current);
-  //               }
-  //               function calculateRMS(buffer) {
-  //                 let sum = 0;
-  //                 for (let i = 0; i < buffer.length; i++) {
-  //                   sum += buffer[i] * buffer[i];
-  //                 }
-  //                 return Math.sqrt(sum / buffer.length);
-  //               }
-  //             });
-  //             call?.on("error", (error) => {
-  //               console.error("Call error:", error);
-  //             });
-  //             // });
-  //           });
-  //       });
-  //     }
-  //   );
-
-  //   return () => {};
-  // }, [roomid]);
   useEffect(() => {
     const peers = {}; // Store peers for each speaker
 
     socket.on("student stream", (peerId, audioStat, socketId) => {
-      const receiveStudentPeer = new Peer();
+      if (!twiloServer || twiloServer.iceServers.length === 0) {
+        // Early return if iceServers is empty
+        return;
+      }
+      const receiveStudentPeer = new Peer({
+        config: {
+          iceServers: twiloServer.iceServers,
+        },
+      });
       receiveStudentPeer.on("open", () => {
         navigator.mediaDevices
           .getUserMedia({ video: false, audio: true })
@@ -1462,7 +1408,6 @@ export default function Stream() {
               const foundStudentIndex = attendanceList.findIndex(
                 (student) => student.socketId === socketId
               );
-              console.log(foundStudent);
               if (foundStudentIndex !== -1) {
                 setAttendanceList((prevAttendanceList) => {
                   const updatedAttendanceList = [...prevAttendanceList];
@@ -1471,9 +1416,15 @@ export default function Stream() {
                   // Update speaking status in the found student
                   foundStudent.speakingStatus = true;
                   foundStudent.audioStatus = audioStat;
+                  socket.emit(
+                    "update-attendance",
+                    roomid,
+                    updatedAttendanceList
+                  );
 
-                  return updatedAttendanceList;
+                  return;
                 });
+
                 setStudentSpeaking({
                   ...foundStudent,
                   status: false,
@@ -1507,7 +1458,7 @@ export default function Stream() {
         peer.destroy();
       });
     };
-  }, []);
+  }, [twiloServer]);
 
   // Helper function to create an audio element
   const createAudioRef = () => {
@@ -1517,44 +1468,91 @@ export default function Stream() {
   };
 
   useEffect(() => {
-    socket.on("student audio stat", (audioStat, socketId) => {
-      console.log("Audio Stat:", audioStat, "Socket ID:", socketId);
+    const onStudentAudio = (socketId, retryCount = 0) => {
+      const audioRef = audioRefs.current[socketId];
 
-      // Mute or unmute the audio reference based on socketId
       if (Object.keys(studentSpeaking).length !== 0) {
         setActiveSpeaker(true);
       }
-      if (audioRefs.current[socketId]) {
-        console.log(audioRefs.current[socketId]);
 
-        audioRefs.current[socketId].muted = !audioStat;
-        // Update the state if needed
-        // setSpeakingPeers((prevSpeakingPeers) => ({
-        //   ...prevSpeakingPeers,
-        //   [socketId]: {
-        //     ...prevSpeakingPeers[socketId],
-        //     audioStatus: audioStat,
-        //   },
-        // }));
+      if (audioRef) {
+        // Try unmuting, and if unsuccessful, retry after a delay
+        try {
+          audioRef.muted = false;
+          let newTrackStudentAudioStat = {
+            ...trackStudentAudioStat,
+            [socketId]: {
+              studentMuted: false,
+              broadcasterMute: false,
+
+            },
+          };
+          
+          // Update the state with the new object
+          setTrackStudentAudioStat(newTrackStudentAudioStat);
+        } catch (error) {
+          // Set a limit on the number of retries
+          const maxRetries = 3;
+
+          if (retryCount < maxRetries) {
+            // Retry after a delay (e.g., 1 second)
+            setTimeout(() => {
+              onStudentAudio(socketId, retryCount + 1);
+            }, 1000);
+          } else {
+            console.error("Max retries reached. Unable to unmute.");
+          }
+        }
       }
-    });
+    };
+
+    socket.on("on student audio", onStudentAudio);
 
     return () => {
-      socket.off("student audio stat");
+      socket.off("on student audio", onStudentAudio);
     };
-  }, []);
+  }, [roomid, twiloServer]);
+  useEffect(() => {
+    const offStudentAudio = (socketId, retryCount = 0) => {
+      const audioRef = audioRefs.current[socketId];
 
+      if (audioRef) {
+        // Try unmuting, and if unsuccessful, retry after a delay
+        try {
+          audioRef.muted = true;
+        } catch (error) {
+          console.error("Failed to mute:", error);
+
+          // Set a limit on the number of retries
+          const maxRetries = 3;
+
+          if (retryCount < maxRetries) {
+            // Retry after a delay (e.g., 1 second)
+            setTimeout(() => {
+              offStudentAudio(socketId, retryCount + 1);
+            }, 1000);
+          } else {
+            console.error("Max retries reached. Unable to unmute.");
+          }
+        }
+      }
+    };
+
+    socket.on("off student audio", offStudentAudio);
+
+    return () => {
+      socket.off("off student audio", offStudentAudio);
+    };
+  }, [roomid, twiloServer]);
   useEffect(() => {
     socket.on("speaking_status", (status, studentSocketId, audioStatus) => {
-      console.log(studentSocketId);
-
       const foundStudent = attendanceList.find(
         (student) => student.socketId === studentSocketId
       );
       const foundStudentIndex = attendanceList.findIndex(
         (student) => student.socketId === studentSocketId
       );
-      console.log(foundStudent);
+
       if (foundStudentIndex !== -1) {
         setStudentSpeaking({ ...foundStudent, status, audioStatus });
         setActiveSpeaker(true);
@@ -1578,6 +1576,7 @@ export default function Stream() {
     ) => {
       setAttendanceList((prevAttendanceList) => {
         const isUserAlreadyInList = prevAttendanceList.some(
+          // (user) => user.studentIp === studentIp
           (user) => user.socketId === socketId
         );
 
@@ -1607,6 +1606,22 @@ export default function Stream() {
     };
 
     socket.on("watcher", handleWatcher);
+    socket.on("watcher-exit", (socketId, a) => {
+      const foundStudentIndex = attendanceList.findIndex(
+        (student) => student.socketId === socketId
+      );
+
+      if (foundStudentIndex !== -1) {
+        setAttendanceList((prevAttendanceList) => {
+          let newAttendanceList = prevAttendanceList.filter(
+            (student) => student.socketId !== socketId
+          );
+          socket.emit("update-attendance", roomid, newAttendanceList);
+
+          return newAttendanceList;
+        });
+      }
+    });
 
     return () => {
       // Clean up the socket event listener when the component unmounts
@@ -1616,23 +1631,18 @@ export default function Stream() {
 
   useEffect(() => {
     socket.on("speaking student has left", (socketId) => {
-      console.log(socketId);
-
       const foundStudent = attendanceList.find(
         (student) => student.socketId === socketId
       );
       const foundStudentIndex = attendanceList.findIndex(
         (student) => student.socketId === socketId
       );
-      console.log(foundStudent);
-      console.log(speakingPeers);
+
       if (foundStudentIndex !== -1) {
-        console.log(studentSpeaking);
         setActiveSpeaker(false);
 
         // setStudentSpeaking({});
 
-        console.log(studentSpeaking);
         if (
           Object.keys(studentSpeaking).length !== 0 &&
           studentSpeaking.socketId === socketId
@@ -1647,7 +1657,6 @@ export default function Stream() {
           });
         }
 
-        // console.log(speakingPeers);
         setAttendanceList((prevAttendanceList) =>
           prevAttendanceList.filter((student) => student.socketId !== socketId)
         );
@@ -1658,27 +1667,6 @@ export default function Stream() {
       socket.off("speaking student has left");
     };
   }, [roomid, attendanceList, studentSpeaking]);
-
-  useEffect(() => {
-    socket.on("watcher-exit", (socketId) => {
-      console.log("first");
-      const foundStudentIndex = attendanceList.findIndex(
-        (student) => student.socketId === socketId
-      );
-      console.log(foundStudentIndex);
-
-      if (foundStudentIndex !== -1) {
-        setAttendanceList((prevAttendanceList) => {
-          let newAttendanceList = prevAttendanceList.filter(
-            (student) => student.socketId !== socketId
-          );
-          socket.emit("update-attendance", roomid, newAttendanceList);
-
-          return newAttendanceList;
-        });
-      }
-    });
-  }, [roomid, showAttendance]);
 
   const handleInitializePeer = () => {
     // get iceServer
@@ -1807,7 +1795,6 @@ export default function Stream() {
     dispatch(startLoading());
     // check the
     try {
-      console.log(type);
       const response = await axios.get(
         `/api/v1/classroomresource/creator-resources/${type}?page=${1}`
       );
@@ -2000,35 +1987,70 @@ export default function Stream() {
                   className="confirm-poll-modal"
                 >
                   <div className="top">
-                    <h4>
+                    <h4
+                      className="hover"
+                      onClick={() => {
+                        setBlockStudentModal(false);
+                        setSelectBlockType(false);
+                      }}
+                    >
                       {" "}
-                      <i className="fa fa-times"></i>
+                      <i className="fa fa-times hover"></i>
                     </h4>
                   </div>
                   <p className="confirm-heading" style={{ padding: "0 15%" }}>
                     Are you sure you want to block this student?
                   </p>
 
-                  <div className="button-wrapper">
-                    <Button
-                      onClick={() => {
-                        setBlockStudentModal(false);
-                      }}
-                      className="cancel"
-                    >
-                      No
-                    </Button>{" "}
-                    <Button
-                      onClick={() => {
-                        // handleBlockStudent(
-                        //   "class",
-                        //   studentSpeaking
-                        // );
-                      }}
-                    >
-                      Yes
-                    </Button>
-                  </div>
+                  {selectBlockType ? (
+                    <div className="button-wrapper second-block-screen">
+                      <Button
+                        onClick={() => {
+                          handleBlockStudent("class", studentToBlock);
+                        }}
+                      >
+                        Block from class
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          handleBlockStudent("school", studentToBlock);
+                        }}
+                      >
+                        Block from school
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setBlockStudentModal(false);
+                          setSelectBlockType(false);
+                        }}
+                        className="cancel"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="button-wrapper">
+                      <Button
+                        onClick={() => {
+                          setBlockStudentModal(false);
+                        }}
+                        className="cancel"
+                      >
+                        No
+                      </Button>{" "}
+                      <Button
+                        onClick={() => {
+                          setSelectBlockType(true);
+                          // handleBlockStudent(
+                          //   "class",
+                          //   studentSpeaking
+                          // );
+                        }}
+                      >
+                        Yes
+                      </Button>
+                    </div>
+                  )}
                 </Modal>
                 <Modal
                   isOpen={stopStudentSpeakingModal}
@@ -2077,10 +2099,11 @@ export default function Stream() {
                     <>
                       {" "}
                       {filteredAudioRequests.map((item, index) => {
-                        console.log(item);
                         return (
                           <div className="single-speaking-request" key={index}>
-                            <p>{item.userName} is requesting to speak</p>
+                            <p style={{ textTransform: "capitalize" }}>
+                              {item.userName} is requesting to speak
+                            </p>
                             <div className="speaking-request-permissions">
                               <p
                                 className="speaking-accept hover"
@@ -2934,7 +2957,7 @@ export default function Stream() {
                           }}
                           className="attendies-span hover"
                         >
-                          Attendies{" "}
+                          Attendees{" "}
                           <strong>
                             {"("}
                             {attendanceCount}
@@ -3212,19 +3235,36 @@ export default function Stream() {
                                   <p
                                     className="hover"
                                     onClick={() => {
+                                      setStudentToBlock(studentSpeaking);
                                       setBlockStudentModal(true);
                                     }}
                                   >
                                     Block
                                   </p>
-                                  <p
-                                    className="hover"
-                                    onClick={() => {
-                                      handleMuteStudent(studentSpeaking);
-                                    }}
-                                  >
-                                    Mute
-                                  </p>
+
+                                  {trackStudentAudioStat[
+                                    studentSpeaking.socketId
+                                  ]?.broadcasterMuted ? (
+                                    <p
+                                      className="hover"
+                                      onClick={() => {
+                                        handleUnMuteStudent(studentSpeaking);
+                                      }}
+                                    >
+                                      Unmute
+                                    </p>
+                                  ) : (
+                                    <p
+                                      className="hover"
+                                      onClick={() => {
+                                        handleMuteStudent(studentSpeaking);
+
+                                        // handleToggleStudentAudio(studentSpeaking);
+                                      }}
+                                    >
+                                      Mute
+                                    </p>
+                                  )}
                                 </div>
                               )}
 
@@ -3315,54 +3355,58 @@ export default function Stream() {
                             <div className="attendance-wrapper-parent ">
                               <div
                                 className="attendance-wrapper"
-                                // style={{
-                                //   minHeight: `${Math.ceil(myArray.length / 3) * 150 + 50}px`
-                                // }}
+                                style={{
+                                  gridTemplateColumns:
+                                    attendanceList.length < 1 && "1fr",
+                                }}
                               >
-                                {attendanceList.map((item, i) => {
-                                  return (
-                                    <div
-                                      className="single-attendee hover"
-                                      key={i}
-                                      onClick={() => {
-                                        setAttendanceList(
-                                          (prevAttendanceList) => {
-                                            const updatedList =
-                                              prevAttendanceList.map(
-                                                (listItem, index) => {
-                                                  if (index === i) {
-                                                    // Clicked on the current item, toggle menuActive to true
-                                                    return {
-                                                      ...listItem,
-                                                      menuActive:
-                                                        !listItem.menuActive,
-                                                    };
-                                                  } else {
-                                                    // Clicked on another item, set menuActive to false
-                                                    return {
-                                                      ...listItem,
-                                                      menuActive: false,
-                                                    };
+                                {attendanceList.length < 1 ? (
+                                  <p className="no-attendees">No Attendee</p>
+                                ) : (
+                                  attendanceList.map((item, i) => {
+                                    return (
+                                      <div
+                                        className="single-attendee hover"
+                                        key={i}
+                                        onClick={() => {
+                                          setAttendanceList(
+                                            (prevAttendanceList) => {
+                                              const updatedList =
+                                                prevAttendanceList.map(
+                                                  (listItem, index) => {
+                                                    if (index === i) {
+                                                      // Clicked on the current item, toggle menuActive to true
+                                                      return {
+                                                        ...listItem,
+                                                        menuActive:
+                                                          !listItem.menuActive,
+                                                      };
+                                                    } else {
+                                                      // Clicked on another item, set menuActive to false
+                                                      return {
+                                                        ...listItem,
+                                                        menuActive: false,
+                                                      };
+                                                    }
                                                   }
-                                                }
-                                              );
+                                                );
 
-                                            return updatedList;
-                                          }
-                                        );
-                                      }}
-                                    >
-                                      <div>
-                                        {item.speakingStatus ? (
-                                          <img src={wave} alt="wave" />
-                                        ) : (
-                                          <i
-                                            className="fa fa-microphone-slash"
-                                            aria-hidden="true"
-                                          ></i>
-                                        )}
-                                      </div>
-                                      {/* <p
+                                              return updatedList;
+                                            }
+                                          );
+                                        }}
+                                      >
+                                        <div className="speaking-icon-holder">
+                                          {item.speakingStatus ? (
+                                            <img src={wave} alt="wave" />
+                                          ) : (
+                                            <i
+                                              className="fa fa-microphone-slash"
+                                              aria-hidden="true"
+                                            ></i>
+                                          )}
+                                        </div>
+                                        {/* <p
                                         className="speaking-icon"
                                         style={{
                                           background: "green",
@@ -3372,32 +3416,67 @@ export default function Stream() {
                                           .charAt(0)
                                           .toUpperCase() || "T"}
                                       </p> */}
-                                      <p>{item.userName || "Chadius"}</p>
-                                      {item.menuActive && (
-                                        <div
-                                          className={`attendance-mute-delete${
-                                            i === 0 || i % 3 === 0
-                                              ? " firstColumn"
-                                              : ""
-                                          }${
-                                            i === 1 || i % 3 === 1
-                                              ? " secondColumn"
-                                              : ""
-                                          }${
-                                            i === 2 || i % 3 === 2
-                                              ? " thirdColumn"
-                                              : ""
-                                          }`}
-                                          onClick={() => {}}
+                                        {/* <p>{item.userName || "Chadius"}</p> */}
+                                        <p
+                                          title={item.userName || "chadius"}
+                                          style={{
+                                            display: "inline-block",
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                          }}
                                         >
-                                          <p>Give permission to speak</p>
-                                          <p>Mute student</p>
-                                          <p>Block student</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  );
-                                })}
+                                          {item.userName &&
+                                          item.userName.length > 8
+                                            ? `${item.userName.substring(
+                                                0,
+                                                6
+                                              )}...`
+                                            : item.userName || "chadius"}
+                                        </p>
+                                        {item.menuActive && (
+                                          <div
+                                            className={`attendance-mute-delete${
+                                              i === 0 || i % 3 === 0
+                                                ? " firstColumn"
+                                                : ""
+                                            }${
+                                              i === 1 || i % 3 === 1
+                                                ? " secondColumn"
+                                                : ""
+                                            }${
+                                              i === 2 || i % 3 === 2
+                                                ? " thirdColumn"
+                                                : ""
+                                            }`}
+                                            onClick={() => {}}
+                                          >
+                                            <p>Give permission to speak</p>
+                                            <p
+                                              className="hover"
+                                              onClick={() => {
+                                                // handleMuteStudent(item);
+                                                console.log(item);
+                                              }}
+                                            >
+                                              Mute student
+                                            </p>
+                                            <p
+                                              className="hover"
+                                              onClick={() => {
+                                                // handleBlockStudent(item);
+                                                setStudentToBlock(item);
+                                                setBlockStudentModal(true);
+                                              }}
+                                            >
+                                              Block student
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })
+                                )}
                               </div>
                             </div>
                           </div>
@@ -3823,7 +3902,7 @@ export default function Stream() {
                           </div>
 
                           <p>
-                            Attendies{" "}
+                            Attendees{" "}
                             <strong>
                               {"("}
                               {attendanceCount}
@@ -4168,7 +4247,10 @@ export default function Stream() {
                                 setMobileChat(!mobileChat);
                               }}
                             >
-                              <i class="fa fa-envelope" aria-hidden="true"></i>
+                              <i
+                                className="fa fa-envelope"
+                                aria-hidden="true"
+                              ></i>
                               <h4>New Message</h4>
                               <p>{unReadCount}</p>
                             </div>

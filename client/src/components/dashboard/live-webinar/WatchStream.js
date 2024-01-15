@@ -90,6 +90,9 @@ function WatchStream({ schoolname }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [registeredUser, setRegisteredUser] = useState(false);
   const [attendanceList, setAttendanceList] = useState([]);
+  const [activeAttendance, setActiveAttendance] = useState(false);
+  const [trackBroadcasterMute, setTrackBroadcasterMute] = useState(false);
+  const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
 
   const getIceServer = async () => {
     let res = await axios.get("/api/v1/livewebinar/iceserver");
@@ -99,6 +102,7 @@ function WatchStream({ schoolname }) {
     } else {
     }
   };
+
   const handleStartStudentAudio = () => {
     socket.emit("request audio", roomid);
   };
@@ -485,16 +489,14 @@ function WatchStream({ schoolname }) {
   //     socket.off("broadcaster");
   //   };
   // }, [roomid, waiting, disconnect]);
+
   useEffect(() => {
     getIceServer();
-  }, [roomid]);
-  useEffect(() => {
-    // Check if twiloServer.iceServers is not empty
+    console.log(twiloServer);
     if (!twiloServer || twiloServer.iceServers.length === 0) {
       // Early return if iceServers is empty
       return;
     }
-
     const peerInstance = new Peer({
       config: {
         iceServers: twiloServer.iceServers,
@@ -519,7 +521,9 @@ function WatchStream({ schoolname }) {
       });
     }
     const handleBlockStudent = () => {
+      console.log("sdsdsbloced");
       peerInstance.disconnect();
+      handleExitStream();
     };
     const startClass = (peerId, stat, audioStat) => {
       console.log(stat);
@@ -565,79 +569,6 @@ function WatchStream({ schoolname }) {
       socket.off("broadcaster");
     };
   }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
-
-  // useEffect(() => {
-  //   console.log(twiloServer);
-  //   const peerInstance = new Peer({
-  //     config: {
-  //       iceServers: twiloServer.iceServers,
-  //     },
-  //   });
-  //   peerRef.current = peerInstance;
-  //   console.log(watcherUsername, peerInstance);
-
-  //   if (watcherUsername !== "") {
-  //     peerInstance.on("open", () => {
-  //       console.log("watcher");
-  //       socket.emit(
-  //         "watcher",
-  //         roomid,
-  //         "user",
-  //         getUserId(roomid),
-  //         watcherUsername,
-  //         watcherAvatar,
-  //         registeredUser,
-  //         studentIp
-  //       );
-  //     });
-  //   }
-  //   const handleBlockStudent = () => {
-  //     peerInstance.disconnect();
-  //   };
-  //   const startClass = (peerId, stat, audioStat) => {
-  //     console.log(stat);
-  //     navigator.mediaDevices
-  //       .getUserMedia({ video: true, audio: true })
-  //       .then((newStream) => {
-  //         let call = peerInstance.call(peerId, newStream);
-  //         // const call = peerInstance.call(peerId, fast);
-  //         call?.on("stream", (remoteStream) => {
-  //           handleAddStream(remoteStream, audioStat);
-
-  //           setWaiting(false);
-  //           secondHandleAddStream(remoteStream, audioStat);
-  //         });
-  //         call?.on("error", (error) => {
-  //           console.error("Call error:", error);
-  //         });
-  //         // });
-  //       });
-  //   };
-
-  //   socket.on("audio status", () => {});
-
-  //   socket.on("join stream", (roomSize, peerId, roomStatus) => {
-  //     setAudioVisuals(roomStatus);
-  //     startClass(peerId, "join", roomStatus);
-  //     setWaiting(false);
-  //     setDisconnect(false);
-  //   });
-  //   socket.on("blocked", () => {
-  //     handleBlockStudent();
-  //   });
-
-  //   socket.on("broadcaster", (peerId, roomStatus) => {
-  //     startClass(peerId, "broadcaster");
-  //     setWaiting(false);
-  //     setDisconnect(false);
-  //   });
-
-  //   return () => {
-  //     peerInstance.destroy();
-  //     socket.off("join stream");
-  //     socket.off("broadcaster");
-  //   };
-  // }, [roomid, waiting, disconnect, watcherUsername, registeredUser]);
   const attendanceCount = attendance || 1;
 
   const revertHandleAddScreenStream = () => {
@@ -674,7 +605,16 @@ function WatchStream({ schoolname }) {
     };
   }, [roomid]);
   useEffect(() => {
-    const screenInstance = new Peer();
+    if (!twiloServer || twiloServer.iceServers.length === 0) {
+      // Early return if iceServers is empty
+      return;
+    }
+    const screenInstance = new Peer({
+      config: {
+        iceServers: twiloServer.iceServers,
+      },
+    });
+
     screenPeerRef.current = screenInstance;
     screenInstance.on("open", (user) => {});
     const startScreenSharing = (peerId, stat) => {
@@ -701,7 +641,7 @@ function WatchStream({ schoolname }) {
     return () => {
       socket.off("screenSharingStatus");
     };
-  }, [roomid, audioVisuals]);
+  }, [roomid, audioVisuals, twiloServer]);
 
   useEffect(() => {
     socket.on("watcher-exit", (size) => {});
@@ -875,11 +815,24 @@ function WatchStream({ schoolname }) {
   }, [defaultChat]);
   useEffect(() => {
     socket.on("start streaming", () => {
-      const studentSharePeer = new Peer();
+      console.log("student start Streaming");
+      console.log(twiloServer);
+
+      if (!twiloServer || twiloServer.iceServers.length === 0) {
+        // Early return if iceServers is empty
+        return;
+      }
+      const studentSharePeer = new Peer({
+        config: {
+          iceServers: twiloServer.iceServers,
+        },
+      });
+
       studentSharePeerRef.current = studentSharePeer;
 
       setStudentMic(true);
       studentSharePeerRef.current.on("open", (peerId) => {
+        console.log(peerId);
         socket.emit("student stream", roomid, peerId, studentMicControl);
 
         // socket.emit("audiovisuals", roomid, audioVisuals);
@@ -943,11 +896,19 @@ function WatchStream({ schoolname }) {
         }
       }
     };
-  }, [roomid]);
+  }, [roomid, twiloServer]);
   useEffect(() => {
     socket.on("student stream", (peerId, audioStat) => {
-      console.log(audioStat, peerId);
-      const receiveSudentPeer = new Peer();
+      if (!twiloServer || twiloServer.iceServers.length === 0) {
+        // Early return if iceServers is empty
+        return;
+      }
+      const receiveSudentPeer = new Peer({
+        config: {
+          iceServers: twiloServer.iceServers,
+        },
+      });
+
       receiveSudentPeer.on("open", () => {
         navigator.mediaDevices
           .getUserMedia({ video: false, audio: true })
@@ -1018,19 +979,100 @@ function WatchStream({ schoolname }) {
     });
 
     return () => {};
-  }, [roomid]);
+  }, [roomid, twiloServer]);
 
   useEffect(() => {
-    socket.on("student audio stat", (audioStat, socketId) => {
-      if (audioRefs.current[socketId]) {
-        audioRefs.current[socketId].muted = !audioStat;
+    const onStudentAudio = (socketId, retryCount = 0) => {
+      const audioRef = audioRefs.current[socketId];
+
+      if (audioRef) {
+        console.log(audioRef);
+        console.log(audioRef.muted);
+
+        // Try unmuting, and if unsuccessful, retry after a delay
+        try {
+          audioRef.muted = false;
+          console.log("Successfully unmuted");
+          let newTrackStudentAudioStat = {
+            ...trackStudentAudioStat,
+            [socketId]: {
+              studentMuted: false,
+              broadcasterMute:
+                trackStudentAudioStat[socketId]?.broadcasterMute || false,
+            },
+          };
+
+          // Update the state with the new object
+          setTrackStudentAudioStat(newTrackStudentAudioStat);
+        } catch (error) {
+          console.error("Failed to unmute:", error);
+
+          // Set a limit on the number of retries
+          const maxRetries = 3;
+
+          if (retryCount < maxRetries) {
+            // Retry after a delay (e.g., 1 second)
+            setTimeout(() => {
+              onStudentAudio(socketId, retryCount + 1);
+            }, 1000);
+          } else {
+            console.error("Max retries reached. Unable to unmute.");
+          }
+        }
       }
-    });
+    };
+
+    socket.on("on student audio", onStudentAudio);
 
     return () => {
-      socket.off("student audio stat");
+      socket.off("on student audio", onStudentAudio);
     };
-  }, [roomid]);
+  }, [roomid, twiloServer]);
+
+  useEffect(() => {
+    const offStudentAudio = (socketId, retryCount = 0) => {
+      const audioRef = audioRefs.current[socketId];
+
+      if (audioRef) {
+        // Try unmuting, and if unsuccessful, retry after a delay
+        try {
+          audioRef.muted = true;
+          console.log("Successfully mute");
+          let newTrackStudentAudioStat = {
+            ...trackStudentAudioStat,
+            [socketId]: {
+              studentMuted: true,
+              broadcasterMute:
+                trackStudentAudioStat[socketId]?.broadcasterMute || false,
+            },
+          };
+
+          // Update the state with the new object
+          setTrackStudentAudioStat(newTrackStudentAudioStat);
+        } catch (error) {
+          console.error("Failed to mute:", error);
+
+          // Set a limit on the number of retries
+          const maxRetries = 3;
+
+          if (retryCount < maxRetries) {
+            // Retry after a delay (e.g., 1 second)
+            setTimeout(() => {
+              offStudentAudio(socketId, retryCount + 1);
+            }, 1000);
+          } else {
+            console.error("Max retries reached. Unable to unmute.");
+          }
+        }
+      }
+    };
+
+    socket.on("off student audio", offStudentAudio);
+
+    return () => {
+      socket.off("off student audio", offStudentAudio);
+    };
+  }, [roomid, twiloServer]);
 
   // useEffect(() => {
   //   socket.on("welcome student speaking", (speakingArray) => {
@@ -1046,7 +1088,15 @@ function WatchStream({ schoolname }) {
     socket.on("welcome student speaking", (speakingArray) => {
       // Connect to each speaking student in the array
       speakingArray.forEach(({ peerId, audioStat }) => {
-        const receiveStudentPeer = new Peer();
+        if (!twiloServer || twiloServer.iceServers.length === 0) {
+          // Early return if iceServers is empty
+          return;
+        }
+        const receiveStudentPeer = new Peer({
+          config: {
+            iceServers: twiloServer.iceServers,
+          },
+        });
 
         receiveStudentPeer.on("open", () => {
           navigator.mediaDevices
@@ -1087,13 +1137,22 @@ function WatchStream({ schoolname }) {
     return () => {
       socket.off("welcome student speaking");
     };
-  }, [audioRef, socket]);
+  }, [audioRef, socket, twiloServer]);
 
   useEffect(() => {
     const peers = {}; // Store peers for each speaker
 
     socket.on("student stream", (peerId, audioStat, socketId) => {
-      const receiveStudentPeer = new Peer();
+      if (!twiloServer || twiloServer.iceServers.length === 0) {
+        // Early return if iceServers is empty
+        return;
+      }
+      const receiveStudentPeer = new Peer({
+        config: {
+          iceServers: twiloServer.iceServers,
+        },
+      });
+
       receiveStudentPeer.on("open", () => {
         navigator.mediaDevices
           .getUserMedia({ video: false, audio: true })
@@ -1134,43 +1193,73 @@ function WatchStream({ schoolname }) {
         peer.destroy();
       });
     };
-  }, []);
+  }, [twiloServer, roomid]);
 
   useEffect(() => {
-    socket.on("student audio stat", (audioStat, socketId) => {
-      console.log("Audio Stat:", audioStat, "Socket ID:", socketId);
-
-      // Mute or unmute the audio reference based on socketId
+    socket.on("mute student with socket id", (socketId) => {
+      console.log(socketId);
+      console.log(audioRefs.current);
       if (audioRefs.current[socketId]) {
-        console.log(audioRefs.current[socketId]);
-
-        audioRefs.current[socketId].muted = !audioStat;
-        // Update the state if needed
-        // setSpeakingPeers((prevSpeakingPeers) => ({
-        //   ...prevSpeakingPeers,
-        //   [socketId]: {
-        //     ...prevSpeakingPeers[socketId],
-        //     audioStatus: audioStat,
-        //   },
-        // }));
+        audioRefs.current[socketId].muted = true;
       }
+      let newTrackStudentAudioStat = {
+        ...trackStudentAudioStat,
+        [socketId]: {
+          studentMuted: trackStudentAudioStat[socketId]?.studentMuted || false,
+          broadcasterMute: true,
+        },
+      };
+
+      // Update the state with the new object
+      setTrackStudentAudioStat(newTrackStudentAudioStat);
     });
 
     return () => {
-      socket.off("student audio stat");
+      socket.off("mute student with socket id");
     };
-  }, []);
-
+  }, [roomid]);
   useEffect(() => {
-    socket.on("disable student audio", (roomid, socketId) => {
-      // if your and the socket id matches the socket id , it should emit something,
-      //
+    socket.on("disable student audio", (socketId) => {
+      console.log(socketId);
+      setTrackBroadcasterMute(true);
     });
 
     return () => {
       socket.off("disable student audio");
     };
-  }, []);
+  }, [roomid]);
+  useEffect(() => {
+    socket.on("unmute student with socket id", (socketId) => {
+      console.log(socketId);
+      if (audioRefs.current[socketId]) {
+        audioRefs.current[socketId].muted = false;
+      }
+      let newTrackStudentAudioStat = {
+        ...trackStudentAudioStat,
+        [socketId]: {
+          studentMuted: trackStudentAudioStat[socketId]?.studentMuted || false,
+          broadcasterMute: false,
+        },
+      };
+      setTrackStudentAudioStat(newTrackStudentAudioStat);
+    });
+
+    return () => {
+      socket.off("unmute student with socket id");
+    };
+  }, [roomid]);
+  useEffect(() => {
+    socket.on("enable student audio", (socketId) => {
+      console.log(socketId);
+
+      setTrackBroadcasterMute(false);
+    });
+
+    return () => {
+      socket.off("enable student audio");
+    };
+  }, [roomid]);
+
   // Helper function to create an audio element
   const createAudioRef = () => {
     const audioElement = document.createElement("audio");
@@ -1347,7 +1436,12 @@ function WatchStream({ schoolname }) {
                                 borderRadius: "10px",
                               }}
                             >
-                              {studentMic &&
+                              {trackBroadcasterMute ? (
+                                <p className="watcher-speaking-status">
+                                  Muted by Tutor
+                                </p>
+                              ) : (
+                                studentMic &&
                                 (studentMicControl ? (
                                   <p className="watcher-speaking-status">
                                     Your mic is on, speak now
@@ -1356,7 +1450,8 @@ function WatchStream({ schoolname }) {
                                   <p className="watcher-speaking-status">
                                     Request granted, turn mic on to speak
                                   </p>
-                                ))}
+                                ))
+                              )}
                               <div>
                                 <div
                                   ref={videoRef}
@@ -1378,7 +1473,12 @@ function WatchStream({ schoolname }) {
                                             width: "15%",
                                           }}
                                         />
-                                        {studentMic &&
+                                        {trackBroadcasterMute ? (
+                                          <p className="watcher-speaking-status">
+                                            Muted by Tutor
+                                          </p>
+                                        ) : (
+                                          studentMic &&
                                           (studentMicControl ? (
                                             <p className="watcher-speaking-status">
                                               Your mic is on, speak now
@@ -1388,7 +1488,8 @@ function WatchStream({ schoolname }) {
                                               Request granted, turn mic on to
                                               speak
                                             </p>
-                                          ))}
+                                          ))
+                                        )}
                                       </div>
                                     )}
                                   </>
@@ -1444,45 +1545,56 @@ function WatchStream({ schoolname }) {
                               </span>
                             )}
                           </div>
-                          <div
-                            className="audio-wrapper"
-                            onClick={
-                              studentMic
-                                ? studentMicControl
-                                  ? handleTurnOffStudentAudio
-                                  : handleTurnOnStudentAudio
-                                : handleStartStudentAudio
-                            }
-                          >
-                            {studentMic ? (
-                              studentMicControl ? (
-                                <i
-                                  className="fa fa-microphone"
-                                  aria-hidden="true"
-                                ></i>
+                          {trackBroadcasterMute ? (
+                            <div className="audio-wrapper broadcaster-mute">
+                              {" "}
+                              <i
+                                className="fa fa-microphone-slash"
+                                aria-hidden="true"
+                              ></i>{" "}
+                              <span>Muted by Tutor</span>{" "}
+                            </div>
+                          ) : (
+                            <div
+                              className="audio-wrapper"
+                              onClick={
+                                studentMic
+                                  ? studentMicControl
+                                    ? handleTurnOffStudentAudio
+                                    : handleTurnOnStudentAudio
+                                  : handleStartStudentAudio
+                              }
+                            >
+                              {studentMic ? (
+                                studentMicControl ? (
+                                  <i
+                                    className="fa fa-microphone"
+                                    aria-hidden="true"
+                                  ></i>
+                                ) : (
+                                  <i
+                                    className="fa fa-microphone-slash"
+                                    aria-hidden="true"
+                                  ></i>
+                                )
                               ) : (
                                 <i
                                   className="fa fa-microphone-slash"
                                   aria-hidden="true"
                                 ></i>
-                              )
-                            ) : (
-                              <i
-                                className="fa fa-microphone-slash"
-                                aria-hidden="true"
-                              ></i>
-                            )}
+                              )}
 
-                            {studentMic ? (
-                              studentMicControl ? (
-                                <span>Turn mic off</span>
+                              {studentMic ? (
+                                studentMicControl ? (
+                                  <span>Turn mic off</span>
+                                ) : (
+                                  <span>Turn mic On</span>
+                                )
                               ) : (
-                                <span>Turn mic On</span>
-                              )
-                            ) : (
-                              <span>Ask to speak</span>
-                            )}
-                          </div>
+                                <span>Ask to speak</span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </>
@@ -1573,24 +1685,29 @@ function WatchStream({ schoolname }) {
                   </div>
 
                   <div className="chat-box watcher-chat-box">
-                    {/* {!audioVisuals.video && (
-                      <div
-                        className={`broadcaster-disconnected reconnect-loading webcam-off ${
-                          screenSharing ? "share-active-mini" : "share-inactive"
-                        }`}
-                      >
-                        <img
-                          src={presenterAvatar}
-                          alt=""
-                          style={{
-                            borderRadius: "50%",
-                            width: "15%",
+                    {disconnect || waiting ? (
+                      ""
+                    ) : (
+                      <div className="student-attendance box-shadow">
+                        <p
+                          className={`hover ${!activeAttendance && "active"}`}
+                          onClick={() => {
+                            setActiveAttendance(false);
                           }}
-                        />
+                        >
+                          Chat
+                        </p>
+                        <p
+                          className={`hover ${activeAttendance && "active"}`}
+                          onClick={() => {
+                            setActiveAttendance(true);
+                          }}
+                        >
+                          Attendees({attendanceList.length})
+                        </p>
                       </div>
-                    )} */}
-
-                    <div className="mini-screen">
+                    )}
+                    <div className="mini-screen ">
                       {!audioVisuals?.video && screenSharing && (
                         <div className="no-camera"></div>
                       )}
@@ -1606,244 +1723,207 @@ function WatchStream({ schoolname }) {
                       ""
                     ) : (
                       <>
-                        {4 > 2 ? (
-                          <div>
-                            {" "}
-                            {
-                              // attendanceList.map((item, i) => {
-                              [
-                                {
-                                  socketId: "MkKBHS8W8D7CSSJ6AAAB",
-                                  peerId: "user",
-                                  userName: "Lopez",
-                                  watcherAvatar: null,
-                                  studentId:
-                                    "7b2d2e83-bcff-0eef-7b8f-5e8f1ec60bb1",
-                                  registeredUser: false,
-                                  studentIp: "::ffff:127.0.0.1",
-                                  speakingStatus: false,
-                                  menuActive: false,
-                                  tutorMuted: false,
-                                },
-                                {
-                                  socketId: "MkKBHS8W8D7CSSJ6AAAB",
-                                  peerId: "user",
-                                  userName: "SLopez",
-                                  watcherAvatar: null,
-                                  studentId:
-                                    "7b2d2e83-bcff-0eef-7b8f-5e8f1ec60bb1",
-                                  registeredUser: false,
-                                  studentIp: "::ffff:127.0.0.1",
-                                  speakingStatus: false,
-                                  menuActive: false,
-                                  tutorMuted: false,
-                                },
-                                {
-                                  socketId: "MkKBHS8W8D7CSSJ6AAAB",
-                                  peerId: "user",
-                                  userName: "Gopez",
-                                  watcherAvatar: null,
-                                  studentId:
-                                    "7b2d2e83-bcff-0eef-7b8f-5e8f1ec60bb1",
-                                  registeredUser: false,
-                                  studentIp: "::ffff:127.0.0.1",
-                                  speakingStatus: false,
-                                  menuActive: false,
-                                  tutorMuted: false,
-                                },
-                              ].map((item, i) => {
-                                return (
-                                  <div
-                                    className="single-attendee hover"
-                                    key={i}
-                                    onClick={() => {
-                                      setAttendanceList(
-                                        (prevAttendanceList) => {
-                                          const updatedList =
-                                            prevAttendanceList.map(
-                                              (listItem, index) => {
-                                                if (index === i) {
-                                                  // Clicked on the current item, toggle menuActive to true
-                                                  return {
-                                                    ...listItem,
-                                                    menuActive:
-                                                      !listItem.menuActive,
-                                                  };
-                                                } else {
-                                                  // Clicked on another item, set menuActive to false
-                                                  return {
-                                                    ...listItem,
-                                                    menuActive: false,
-                                                  };
+                        <div
+                          className="chat-interface box-shadow"
+                          style={{
+                            background: activeAttendance ? "transparent" : "",
+                          }}
+                        >
+                          {activeAttendance ? (
+                            <div
+                              className="attendance-wrapper student-attendance-wrapper"
+                              style={{
+                                gridTemplateColumns:
+                                  attendanceList.length < 1 && "1fr",
+                                gridTemplateRows:
+                                  attendanceList.length <= 6
+                                    ? "repeat(auto-fill,170px)"
+                                    : "",
+                              }}
+                            >
+                              {attendanceList.length < 1 ? (
+                                <p className="no-attendees">No Attendee</p>
+                              ) : (
+                                attendanceList.map((item, i) => {
+                                  return (
+                                    <div
+                                      style={{
+                                        marginBottom:
+                                          attendanceList.length > 6
+                                            ? "15px"
+                                            : "",
+                                      }}
+                                      className="single-attendee hover"
+                                      key={i}
+                                      onClick={() => {
+                                        setAttendanceList(
+                                          (prevAttendanceList) => {
+                                            const updatedList =
+                                              prevAttendanceList.map(
+                                                (listItem, index) => {
+                                                  if (index === i) {
+                                                    // Clicked on the current item, toggle menuActive to true
+                                                    return {
+                                                      ...listItem,
+                                                      menuActive:
+                                                        !listItem.menuActive,
+                                                    };
+                                                  } else {
+                                                    // Clicked on another item, set menuActive to false
+                                                    return {
+                                                      ...listItem,
+                                                      menuActive: false,
+                                                    };
+                                                  }
                                                 }
-                                              }
-                                            );
+                                              );
 
-                                          return updatedList;
-                                        }
-                                      );
-                                    }}
-                                  >
-                                    <div>
-                                      {item.speakingStatus ? (
-                                        <img src={wave} alt="wave" />
-                                      ) : (
-                                        <i
-                                          className="fa fa-microphone-slash"
-                                          aria-hidden="true"
-                                        ></i>
-                                      )}
-                                    </div>
-                                    {/* <p
-                                  className="speaking-icon"
-                                  style={{
-                                    background: "green",
-                                  }}
-                                >
-                                  {item.userName
-                                    .charAt(0)
-                                    .toUpperCase() || "T"}
-                                </p> */}
-                                    <p>{item.userName || "Chadius"}</p>
-                                    {item.menuActive && (
-                                      <div
-                                        className={`attendance-mute-delete${
-                                          i === 0 || i % 3 === 0
-                                            ? " firstColumn"
-                                            : ""
-                                        }${
-                                          i === 1 || i % 3 === 1
-                                            ? " secondColumn"
-                                            : ""
-                                        }${
-                                          i === 2 || i % 3 === 2
-                                            ? " thirdColumn"
-                                            : ""
-                                        }`}
-                                        onClick={() => {}}
-                                      >
-                                        <p>Give permission to speak</p>
-                                        <p>Mute student</p>
-                                        <p>Block student</p>
+                                            return updatedList;
+                                          }
+                                        );
+                                      }}
+                                    >
+                                      <div className="name-icon">
+                                        <h3>{item.userName?.charAt(0) || 1}</h3>
                                       </div>
-                                    )}
-                                  </div>
-                                );
-                              })
-                            }
-                          </div>
-                        ) : (
-                          <div className="chat-interface">
-                            <div className="chat-interface-text">
-                              {defaultChat.map((singleChat, index) => {
-                                return (
-                                  // <div
-                                  //   style={{
-                                  //     display: "flex",
-                                  //     flexDirection: "column",
-                                  //     alignItems: "flex-end",
-                                  //   }}
-                                  // >
-                                  //   <p
-                                  //     className="watcher-username"
-                                  //     style={{
-                                  //       color: singleChat.color || "#fe0017",
+                                      <div className="control-options">
+                                        {item.speakingStatus ? (
+                                          <img src={wave} alt="wave" />
+                                        ) : (
+                                          <i
+                                            className="fa fa-microphone-slash"
+                                            aria-hidden="true"
+                                          ></i>
+                                        )}
+                                        <p
+                                          title={item.userName || "chadius"}
+                                          style={{
+                                            display: "inline-block",
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                          }}
+                                        >
+                                          {item.userName &&
+                                          item.userName.length > 8
+                                            ? `${item.userName.substring(
+                                                0,
+                                                6
+                                              )}...`
+                                            : item.userName || "chadius"}
+                                        </p>
+                                        {/* <p>Pythagoras is a long ass name</p> */}
+                                      </div>
 
-                                  //       marginBottom: "0",
-                                  //       alignSelf:
-                                  //         singleChat.user === watcherUsername
-                                  //           ? ""
-                                  //           : "flex-start",
-                                  //     }}
-                                  //   >
-                                  //     {singleChat.user}
-                                  //   </p>
-                                  //   <div
-                                  //     key={index}
-                                  //     className={`chat-bubble ${
-                                  //       singleChat.user === watcherUsername
-                                  //         ? "user-bubble"
-                                  //         : ""
-                                  //     }`}
-                                  //   >
-                                  //     {singleChat.msg}
-                                  //   </div>
-                                  // </div>
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                    }}
-                                  >
+                                      {/* {item.menuActive && (
+                                        <div
+                                          className={`attendance-mute-delete${
+                                            i === 0 || i % 3 === 0
+                                              ? " firstColumn"
+                                              : ""
+                                          }${
+                                            i === 1 || i % 3 === 1
+                                              ? " secondColumn"
+                                              : ""
+                                          }${
+                                            i === 2 || i % 3 === 2
+                                              ? " thirdColumn"
+                                              : ""
+                                          }`}
+                                          onClick={() => {}}
+                                        >
+                                          <p>Give permission to speak</p>
+                                          <p>Mute student</p>
+                                          <p>Block student</p>
+                                        </div>
+                                      )} */}
+                                    </div>
+                                  );
+                                })
+                              )}
+                            </div>
+                          ) : (
+                            <>
+                              {" "}
+                              <div className="chat-interface-text">
+                                {defaultChat.map((singleChat, index) => {
+                                  return (
+                                    // <div
+                                    //   style={{
+                                    //     display: "flex",
+                                    //     flexDirection: "column",
+                                    //     alignItems: "flex-end",
+                                    //   }}
+                                    // >
+                                    //   <p
+                                    //     className="watcher-username"
+                                    //     style={{
+                                    //       color: singleChat.color || "#fe0017",
+
+                                    //       marginBottom: "0",
+                                    //       alignSelf:
+                                    //         singleChat.user === watcherUsername
+                                    //           ? ""
+                                    //           : "flex-start",
+                                    //     }}
+                                    //   >
+                                    //     {singleChat.user}
+                                    //   </p>
+                                    //   <div
+                                    //     key={index}
+                                    //     className={`chat-bubble ${
+                                    //       singleChat.user === watcherUsername
+                                    //         ? "user-bubble"
+                                    //         : ""
+                                    //     }`}
+                                    //   >
+                                    //     {singleChat.msg}
+                                    //   </div>
+                                    // </div>
                                     <div
                                       style={{
                                         display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "flex-end",
-                                        flex: 5,
-                                        // paddingRight: "5%",
+                                        alignItems: "center",
                                       }}
                                     >
-                                      <p
+                                      <div
                                         style={{
-                                          fontWeight: 600,
-
-                                          marginBottom: "0",
-                                          color: singleChat.color
-                                            ? singleChat.color
-                                            : "#200b72",
-                                          alignSelf:
-                                            singleChat.user === watcherUsername
-                                              ? ""
-                                              : "flex-start",
+                                          display: "flex",
+                                          flexDirection: "column",
+                                          alignItems: "flex-end",
+                                          flex: 5,
+                                          // paddingRight: "5%",
                                         }}
                                       >
-                                        {singleChat.user}
-                                      </p>
-                                      <div
-                                        className={`in-chat-message ${
-                                          singleChat.user !== watcherUsername &&
-                                          "watcher-message"
-                                        }`}
-                                      >
-                                        {singleChat.user === watcherUsername ? (
-                                          watcherAvatar ? (
-                                            <img
-                                              src={watcherAvatar}
-                                              alt="user"
-                                              style={{
-                                                width: "25px",
-                                                height: "auto",
+                                        <p
+                                          style={{
+                                            fontWeight: 600,
 
-                                                borderRadius: "50%",
-                                                marginLeft: "5px",
-                                              }}
-                                            />
-                                          ) : (
-                                            <span
-                                              style={{
-                                                color: "#fff",
-                                                background: singleChat.color
-                                                  ? singleChat.color
-                                                  : "#200b72",
-                                                borderRadius: "50%",
-                                                zIndex: 5,
-                                                marginLeft: "5px",
-                                                width: "25px",
-                                                height: "25px",
-                                                textAlign: "center",
-                                              }}
-                                            >
-                                              {watcherUsername
-                                                .charAt(0)
-                                                .toUpperCase()}
-                                            </span>
-                                          )
-                                        ) : (
-                                          <>
-                                            {singleChat.img ? (
+                                            marginBottom: "0",
+                                            color: singleChat.color
+                                              ? singleChat.color
+                                              : "#200b72",
+                                            alignSelf:
+                                              singleChat.user ===
+                                              watcherUsername
+                                                ? ""
+                                                : "flex-start",
+                                          }}
+                                        >
+                                          {singleChat.user}
+                                        </p>
+                                        <div
+                                          className={`in-chat-message ${
+                                            singleChat.user !==
+                                              watcherUsername &&
+                                            "watcher-message"
+                                          }`}
+                                        >
+                                          {singleChat.user ===
+                                          watcherUsername ? (
+                                            watcherAvatar ? (
                                               <img
-                                                src={singleChat.img}
+                                                src={watcherAvatar}
                                                 alt="user"
                                                 style={{
                                                   width: "25px",
@@ -1851,7 +1931,6 @@ function WatchStream({ schoolname }) {
 
                                                   borderRadius: "50%",
                                                   marginLeft: "5px",
-                                                  marginRight: "5px",
                                                 }}
                                               />
                                             ) : (
@@ -1862,123 +1941,366 @@ function WatchStream({ schoolname }) {
                                                     ? singleChat.color
                                                     : "#200b72",
                                                   borderRadius: "50%",
-
+                                                  zIndex: 5,
+                                                  marginLeft: "5px",
                                                   width: "25px",
                                                   height: "25px",
                                                   textAlign: "center",
                                                 }}
                                               >
-                                                {singleChat.user
+                                                {watcherUsername
                                                   .charAt(0)
                                                   .toUpperCase()}
                                               </span>
-                                            )}
-                                          </>
-                                        )}
-                                        <div
-                                          key={index}
-                                          className={`${
-                                            singleChat.user === watcherUsername
-                                              ? "user-bubble"
-                                              : "chat-bubble"
-                                          }`}
-                                        >
-                                          {singleChat.msg}
+                                            )
+                                          ) : (
+                                            <>
+                                              {singleChat.img ? (
+                                                <img
+                                                  src={singleChat.img}
+                                                  alt="user"
+                                                  style={{
+                                                    width: "25px",
+                                                    height: "auto",
+
+                                                    borderRadius: "50%",
+                                                    marginLeft: "5px",
+                                                    marginRight: "5px",
+                                                  }}
+                                                />
+                                              ) : (
+                                                <span
+                                                  style={{
+                                                    color: "#fff",
+                                                    background: singleChat.color
+                                                      ? singleChat.color
+                                                      : "#200b72",
+                                                    borderRadius: "50%",
+
+                                                    width: "25px",
+                                                    height: "25px",
+                                                    textAlign: "center",
+                                                  }}
+                                                >
+                                                  {singleChat.user
+                                                    .charAt(0)
+                                                    .toUpperCase()}
+                                                </span>
+                                              )}
+                                            </>
+                                          )}
+                                          <div
+                                            key={index}
+                                            className={`${
+                                              singleChat.user ===
+                                              watcherUsername
+                                                ? "user-bubble"
+                                                : "chat-bubble"
+                                            }`}
+                                          >
+                                            {singleChat.msg}
+                                          </div>
                                         </div>
                                       </div>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                              <div ref={chatInterfaceRef} />
-                            </div>
-                            <div className="chat-interface-quiz">
-                              {specialChat?.map((singleChat, index) => {
-                                return singleChat.type === "quiz" ? (
-                                  <div className="inchat-poll   inchat-quiz">
-                                    <div
-                                      className="top"
-                                      style={{
-                                        backgroundColor:
-                                          theme?.themestyles
-                                            .navbarbackgroundcolor,
-                                        color:
-                                          theme?.themestyles.primarytextcolor,
-                                      }}
-                                    >
-                                      <span style={{ color: "#fff" }}>
-                                        Pop Quiz{" "}
-                                        <i className="fas fa-book-open poll"></i>
-                                      </span>
-                                      {minimizedQuiz ? (
-                                        <i
-                                          className="fa fa-expand"
-                                          style={{
-                                            color: "#fff",
-                                          }}
-                                          onClick={() => {
-                                            setMinimizedQuiz(false);
-                                          }}
-                                        ></i>
-                                      ) : (
-                                        <i
-                                          className="fa fa-minus"
-                                          style={{
-                                            color: "#fff",
-                                          }}
-                                          onClick={() => {
-                                            setMinimizedQuiz(true);
-                                          }}
-                                        ></i>
+                                  );
+                                })}
+                                <div ref={chatInterfaceRef} />
+                              </div>
+                              <div className="chat-interface-quiz">
+                                {specialChat?.map((singleChat, index) => {
+                                  return singleChat.type === "quiz" ? (
+                                    <div className="inchat-poll   inchat-quiz">
+                                      <div
+                                        className="top"
+                                        style={{
+                                          backgroundColor:
+                                            theme?.themestyles
+                                              .navbarbackgroundcolor,
+                                          color:
+                                            theme?.themestyles.primarytextcolor,
+                                        }}
+                                      >
+                                        <span style={{ color: "#fff" }}>
+                                          Pop Quiz{" "}
+                                          <i className="fas fa-book-open poll"></i>
+                                        </span>
+                                        {minimizedQuiz ? (
+                                          <i
+                                            className="fa fa-expand"
+                                            style={{
+                                              color: "#fff",
+                                            }}
+                                            onClick={() => {
+                                              setMinimizedQuiz(false);
+                                            }}
+                                          ></i>
+                                        ) : (
+                                          <i
+                                            className="fa fa-minus"
+                                            style={{
+                                              color: "#fff",
+                                            }}
+                                            onClick={() => {
+                                              setMinimizedQuiz(true);
+                                            }}
+                                          ></i>
+                                        )}
+                                      </div>
+                                      {!minimizedQuiz && (
+                                        <div className="bottom">
+                                          {submitted ? (
+                                            <p className="resource-question">
+                                              Submitted!!!
+                                            </p>
+                                          ) : (
+                                            singleChat.quizHolder.map(
+                                              (item, index, arr) => {
+                                                // return submitStatusHolder[
+                                                //   singleChat.questionControl
+                                                // ] ? (
+                                                //   <p>Submitted</p>
+                                                // ) : (
+                                                return (
+                                                  <div
+                                                    className="single-question-holder"
+                                                    key={index}
+                                                    style={{
+                                                      display:
+                                                        index + 1 ===
+                                                          currentQuestion ||
+                                                        arr.length === 1
+                                                          ? "block"
+                                                          : "none",
+                                                    }}
+                                                  >
+                                                    <p className="resource-question">
+                                                      {item.question}
+                                                    </p>
+                                                    <ul
+                                                      className="question-options "
+                                                      type="A"
+                                                    >
+                                                      {item.options.map(
+                                                        (option, index) => {
+                                                          return (
+                                                            <li
+                                                              key={index}
+                                                              style={{
+                                                                fontWeight: 400,
+
+                                                                listStyleType:
+                                                                  answers[
+                                                                    currentQuestion -
+                                                                      1
+                                                                  ] ===
+                                                                  String.fromCharCode(
+                                                                    65 + index
+                                                                  )
+                                                                    ? "disc"
+                                                                    : "circle",
+                                                              }}
+                                                              onClick={() =>
+                                                                handleOptionClick(
+                                                                  index
+                                                                )
+                                                              }
+                                                            >
+                                                              {option}
+                                                            </li>
+                                                          );
+                                                        }
+                                                      )}
+                                                    </ul>
+                                                    <div
+                                                      className="quiz-button-wrapper"
+                                                      style={{
+                                                        padding: "0 7%",
+                                                      }}
+                                                    >
+                                                      {currentQuestion > 1 &&
+                                                        currentQuestion <=
+                                                          item.options
+                                                            .length && (
+                                                          <Button
+                                                            onClick={() => {
+                                                              setCurrentQuestion(
+                                                                currentQuestion -
+                                                                  1
+                                                              );
+                                                            }}
+                                                            className="quiz-button prev"
+                                                          >
+                                                            Prev
+                                                          </Button>
+                                                        )}
+
+                                                      {index + 1 >=
+                                                        arr.length ||
+                                                      arr.length === 1 ? (
+                                                        ""
+                                                      ) : (
+                                                        <Button
+                                                          onClick={() => {
+                                                            setCurrentQuestion(
+                                                              currentQuestion +
+                                                                1
+                                                            );
+                                                          }}
+                                                          className="quiz-button"
+                                                        >
+                                                          Next
+                                                        </Button>
+                                                      )}
+                                                      {submitted || false ? (
+                                                        <Button disabled>
+                                                          Submitted
+                                                        </Button>
+                                                      ) : (
+                                                        // <Button
+                                                        //   onClick={() => {
+                                                        //     handleUniqueSubmission(
+                                                        //       answers,
+                                                        //       "quiz",
+                                                        //       singleChat.questionControl
+                                                        //     );
+                                                        //   }}
+                                                        // >
+                                                        //   Unique Submission
+                                                        // </Button>
+                                                        <Button
+                                                          onClick={() => {
+                                                            setSubmitQuizModal(
+                                                              true
+                                                            );
+                                                          }}
+                                                          className={`submit-button ${
+                                                            index + 1 >=
+                                                              arr.length ||
+                                                            arr.length === 1
+                                                              ? "quiz-button"
+                                                              : "prev"
+                                                          }`}
+                                                        >
+                                                          Submit
+                                                        </Button>
+                                                      )}
+                                                    </div>
+                                                  </div>
+                                                );
+                                              }
+                                            )
+                                          )}
+                                        </div>
                                       )}
                                     </div>
-                                    {!minimizedQuiz && (
-                                      <div className="bottom">
-                                        {submitted ? (
-                                          <p className="resource-question">
-                                            Submitted!!!
-                                          </p>
-                                        ) : (
-                                          singleChat.quizHolder.map(
-                                            (item, index, arr) => {
-                                              // return submitStatusHolder[
-                                              //   singleChat.questionControl
-                                              // ] ? (
-                                              //   <p>Submitted</p>
-                                              // ) : (
-                                              return (
-                                                <div
-                                                  className="single-question-holder"
-                                                  key={index}
-                                                  style={{
-                                                    display:
-                                                      index + 1 ===
-                                                        currentQuestion ||
-                                                      arr.length === 1
-                                                        ? "block"
-                                                        : "none",
-                                                  }}
-                                                >
-                                                  <p className="resource-question">
-                                                    {item.question}
-                                                  </p>
-                                                  <ul
-                                                    className="question-options "
-                                                    type="A"
-                                                  >
-                                                    {item.options.map(
+                                  ) : (
+                                    <>
+                                      {singleChat.type === "poll" ? (
+                                        <div
+                                          className="inchat-poll"
+                                          // style={{
+                                          //   backgroundColor:
+                                          //     theme?.themestyles
+                                          //       .secondarybackgroundcolor,
+                                          //   color:
+                                          //     theme?.themestyles.navbartextcolor,
+                                          // }}
+                                        >
+                                          <div
+                                            className="top"
+                                            style={{
+                                              backgroundColor:
+                                                theme?.themestyles
+                                                  .navbarbackgroundcolor,
+                                              color:
+                                                theme?.themestyles
+                                                  .primarytextcolor,
+                                            }}
+                                          >
+                                            <span
+                                              style={{
+                                                color: "#fff",
+                                              }}
+                                            >
+                                              <i
+                                                className="fas fa-poll poll"
+                                                style={{
+                                                  color: "yellow",
+                                                }}
+                                              ></i>{" "}
+                                              Poll
+                                            </span>
+                                            {minimizedPoll ? (
+                                              <i
+                                                className="fa fa-expand"
+                                                style={{
+                                                  color: "#fff",
+                                                }}
+                                                onClick={() => {
+                                                  setMinimizedPoll(false);
+                                                }}
+                                              ></i>
+                                            ) : (
+                                              <i
+                                                className="fa fa-minus"
+                                                style={{
+                                                  color: "#fff",
+                                                }}
+                                                onClick={() => {
+                                                  setMinimizedPoll(true);
+                                                }}
+                                              ></i>
+                                            )}
+                                          </div>
+                                          {!minimizedPoll && (
+                                            <div className="bottom">
+                                              {pollResults ? (
+                                                ""
+                                              ) : (
+                                                <Progress
+                                                  max={`${singleChat.durationInSec}`}
+                                                  value={
+                                                    Number(
+                                                      timerHolder?.remainingTime
+                                                    )
+                                                      ? Number(
+                                                          timerHolder?.remainingTime
+                                                        )
+                                                      : 0
+                                                  }
+                                                />
+                                              )}
+                                              <p className="resource-question">
+                                                Question :{" "}
+                                              </p>
+                                              <p className="resource-question">
+                                                {singleChat.title}
+                                              </p>
+                                              <div className="poll-options">
+                                                {/* add POLL RES HERES */}
+                                                {pollResults && submitted ? (
+                                                  <Poll
+                                                    pollOptions={
+                                                      singleChat.options
+                                                    }
+                                                    pollResult={
+                                                      pollResults
+                                                        ? pollResults
+                                                        : []
+                                                    }
+                                                    // pollResult={[submitted[singleChat.questionControl]]}
+                                                  />
+                                                ) : (
+                                                  <ul>
+                                                    {singleChat.options.map(
                                                       (option, index) => {
                                                         return (
                                                           <li
                                                             key={index}
                                                             style={{
-                                                              fontWeight: 400,
-
                                                               listStyleType:
-                                                                answers[
-                                                                  currentQuestion -
-                                                                    1
-                                                                ] ===
+                                                                pollAnswerHolder[0] ===
                                                                 String.fromCharCode(
                                                                   65 + index
                                                                 )
@@ -1986,7 +2308,7 @@ function WatchStream({ schoolname }) {
                                                                   : "circle",
                                                             }}
                                                             onClick={() =>
-                                                              handleOptionClick(
+                                                              handlePollOptionClick(
                                                                 index
                                                               )
                                                             }
@@ -1997,282 +2319,82 @@ function WatchStream({ schoolname }) {
                                                       }
                                                     )}
                                                   </ul>
-                                                  <div
-                                                    className="quiz-button-wrapper"
-                                                    style={{ padding: "0 7%" }}
-                                                  >
-                                                    {currentQuestion > 1 &&
-                                                      currentQuestion <=
-                                                        item.options.length && (
-                                                        <Button
-                                                          onClick={() => {
-                                                            setCurrentQuestion(
-                                                              currentQuestion -
-                                                                1
-                                                            );
-                                                          }}
-                                                          className="quiz-button prev"
-                                                        >
-                                                          Prev
-                                                        </Button>
-                                                      )}
-
-                                                    {index + 1 >= arr.length ||
-                                                    arr.length === 1 ? (
-                                                      ""
-                                                    ) : (
-                                                      <Button
-                                                        onClick={() => {
-                                                          setCurrentQuestion(
-                                                            currentQuestion + 1
-                                                          );
-                                                        }}
-                                                        className="quiz-button"
-                                                      >
-                                                        Next
-                                                      </Button>
-                                                    )}
-                                                    {submitted || false ? (
-                                                      <Button disabled>
-                                                        Submitted
-                                                      </Button>
-                                                    ) : (
-                                                      // <Button
-                                                      //   onClick={() => {
-                                                      //     handleUniqueSubmission(
-                                                      //       answers,
-                                                      //       "quiz",
-                                                      //       singleChat.questionControl
-                                                      //     );
-                                                      //   }}
-                                                      // >
-                                                      //   Unique Submission
-                                                      // </Button>
-                                                      <Button
-                                                        onClick={() => {
-                                                          setSubmitQuizModal(
-                                                            true
-                                                          );
-                                                        }}
-                                                        className={`submit-button ${
-                                                          index + 1 >=
-                                                            arr.length ||
-                                                          arr.length === 1
-                                                            ? "quiz-button"
-                                                            : "prev"
-                                                        }`}
-                                                      >
-                                                        Submit
-                                                      </Button>
-                                                    )}
-                                                  </div>
-                                                </div>
-                                              );
-                                            }
-                                          )
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <>
-                                    {singleChat.type === "poll" ? (
-                                      <div
-                                        className="inchat-poll"
-                                        // style={{
-                                        //   backgroundColor:
-                                        //     theme?.themestyles
-                                        //       .secondarybackgroundcolor,
-                                        //   color:
-                                        //     theme?.themestyles.navbartextcolor,
-                                        // }}
-                                      >
-                                        <div
-                                          className="top"
-                                          style={{
-                                            backgroundColor:
-                                              theme?.themestyles
-                                                .navbarbackgroundcolor,
-                                            color:
-                                              theme?.themestyles
-                                                .primarytextcolor,
-                                          }}
-                                        >
-                                          <span
-                                            style={{
-                                              color: "#fff",
-                                            }}
-                                          >
-                                            <i
-                                              className="fas fa-poll poll"
-                                              style={{
-                                                color: "yellow",
-                                              }}
-                                            ></i>{" "}
-                                            Poll
-                                          </span>
-                                          {minimizedPoll ? (
-                                            <i
-                                              className="fa fa-expand"
-                                              style={{
-                                                color: "#fff",
-                                              }}
-                                              onClick={() => {
-                                                setMinimizedPoll(false);
-                                              }}
-                                            ></i>
-                                          ) : (
-                                            <i
-                                              className="fa fa-minus"
-                                              style={{
-                                                color: "#fff",
-                                              }}
-                                              onClick={() => {
-                                                setMinimizedPoll(true);
-                                              }}
-                                            ></i>
-                                          )}
-                                        </div>
-                                        {!minimizedPoll && (
-                                          <div className="bottom">
-                                            {pollResults ? (
-                                              ""
-                                            ) : (
-                                              <Progress
-                                                max={`${singleChat.durationInSec}`}
-                                                value={
-                                                  Number(
-                                                    timerHolder?.remainingTime
-                                                  )
-                                                    ? Number(
-                                                        timerHolder?.remainingTime
-                                                      )
-                                                    : 0
-                                                }
-                                              />
-                                            )}
-                                            <p className="resource-question">
-                                              Question :{" "}
-                                            </p>
-                                            <p className="resource-question">
-                                              {singleChat.title}
-                                            </p>
-                                            <div className="poll-options">
-                                              {/* add POLL RES HERES */}
-                                              {pollResults && submitted ? (
-                                                <Poll
-                                                  pollOptions={
-                                                    singleChat.options
-                                                  }
-                                                  pollResult={
-                                                    pollResults
-                                                      ? pollResults
-                                                      : []
-                                                  }
-                                                  // pollResult={[submitted[singleChat.questionControl]]}
-                                                />
+                                                )}
+                                              </div>
+                                              {/* {submitted ? ( */}
+                                              {submitted ? (
+                                                <Button disabled>Voted</Button>
                                               ) : (
-                                                <ul>
-                                                  {singleChat.options.map(
-                                                    (option, index) => {
-                                                      return (
-                                                        <li
-                                                          key={index}
-                                                          style={{
-                                                            listStyleType:
-                                                              pollAnswerHolder[0] ===
-                                                              String.fromCharCode(
-                                                                65 + index
-                                                              )
-                                                                ? "disc"
-                                                                : "circle",
-                                                          }}
-                                                          onClick={() =>
-                                                            handlePollOptionClick(
-                                                              index
-                                                            )
-                                                          }
-                                                        >
-                                                          {option}
-                                                        </li>
-                                                      );
-                                                    }
-                                                  )}
-                                                </ul>
+                                                <Button
+                                                  onClick={() => {
+                                                    handlePollSubmit();
+                                                    // handleSpecialSubmit(
+                                                    //   pollAnswers,
+                                                    //   "poll",
+                                                    //   index
+                                                    // );
+                                                  }}
+                                                  className="vote"
+                                                >
+                                                  Vote
+                                                </Button>
                                               )}
                                             </div>
-                                            {/* {submitted ? ( */}
-                                            {submitted ? (
-                                              <Button disabled>Voted</Button>
-                                            ) : (
-                                              <Button
-                                                onClick={() => {
-                                                  handlePollSubmit();
-                                                  // handleSpecialSubmit(
-                                                  //   pollAnswers,
-                                                  //   "poll",
-                                                  //   index
-                                                  // );
-                                                }}
-                                                className="vote"
-                                              >
-                                                Vote
-                                              </Button>
-                                            )}
-                                          </div>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <></>
-                                    )}
-                                  </>
-                                );
-                              })}
-                            </div>
-                            <div
-                              className="chat-control"
-                              style={{
-                                color: theme?.themestyles.navbartextcolor,
-                              }}
-                            >
-                              {showEmojiPicker && (
-                                // <Picker
-                                //
-                                // />
-                                <div
-                                  className="emoji-wrapper"
-                                  style={{
-                                    position: "absolute",
-                                    bottom: "90px",
-
-                                    width: "100%",
-                                  }}
-                                >
-                                  <Picker
-                                    previewPosition="none"
-                                    showPreview="false"
-                                    data={data}
-                                    onClickOutside={() => {
-                                      setShowEmojiPicker(false);
-                                    }}
-                                    onEmojiSelect={(emoji) => {
-                                      handleSelectEmoji(emoji);
-                                    }}
-                                    perLine="7"
-                                  />
-                                </div>
-                              )}
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <></>
+                                      )}
+                                    </>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          )}
+                          <div
+                            className="chat-control box-shadow"
+                            style={{
+                              color: theme?.themestyles.navbartextcolor,
+                            }}
+                          >
+                            {showEmojiPicker && (
+                              // <Picker
+                              //
+                              // />
                               <div
-                                className="action-wrapper"
-                                style={{ justifyContent: "center" }}
-                                onClick={() => {
-                                  handleToggleEmojiPicker();
+                                className="emoji-wrapper"
+                                style={{
+                                  position: "absolute",
+                                  bottom: "90px",
+
+                                  width: "100%",
                                 }}
                               >
-                                <img src={smiley} alt="emoji" />
+                                <Picker
+                                  previewPosition="none"
+                                  showPreview="false"
+                                  data={data}
+                                  onClickOutside={() => {
+                                    setShowEmojiPicker(false);
+                                  }}
+                                  onEmojiSelect={(emoji) => {
+                                    handleSelectEmoji(emoji);
+                                  }}
+                                  perLine="7"
+                                />
                               </div>
+                            )}
+                            <div
+                              className="action-wrapper"
+                              style={{ justifyContent: "center" }}
+                              onClick={() => {
+                                handleToggleEmojiPicker();
+                              }}
+                            >
+                              <img src={smiley} alt="emoji" />
+                            </div>
 
-                              {/* 
+                            {/* 
                         <textarea
                           value={chatMessage}
                           onChange={(e) => {
@@ -2287,42 +2409,18 @@ function WatchStream({ schoolname }) {
                           }}
                         /> */}
 
-                              <CustomTextArea
-                                text={chatMessage}
-                                setText={setChatMessage}
-                                keyDown={handleKeyDown}
-                                height={height}
-                                setHeight={setHeight}
-                              />
-                              {studentMic ? (
-                                studentMicControl ? (
-                                  <div
-                                    className="mobile-audio-wrapper mobile-control audio-active"
-                                    onClick={handleTurnOffStudentAudio}
-                                  >
-                                    {" "}
-                                    <i
-                                      className="fa fa-microphone"
-                                      aria-hidden="true"
-                                    ></i>
-                                  </div>
-                                ) : (
-                                  <div
-                                    className="mobile-audio-wrapper mobile-control  audio-active"
-                                    onClick={handleTurnOnStudentAudio}
-                                  >
-                                    {" "}
-                                    <i
-                                      className="fa fa-microphone-slash"
-                                      // className="fa fa-microphone"
-                                      aria-hidden="true"
-                                    ></i>
-                                  </div>
-                                )
-                              ) : (
+                            <CustomTextArea
+                              text={chatMessage}
+                              setText={setChatMessage}
+                              keyDown={handleKeyDown}
+                              height={height}
+                              setHeight={setHeight}
+                            />
+                            {studentMic ? (
+                              studentMicControl ? (
                                 <div
-                                  className="mobile-audio-wrapper mobile-control  audio-inactive"
-                                  onClick={handleStartStudentAudio}
+                                  className="mobile-audio-wrapper mobile-control audio-active"
+                                  onClick={handleTurnOffStudentAudio}
                                 >
                                   {" "}
                                   <i
@@ -2330,29 +2428,52 @@ function WatchStream({ schoolname }) {
                                     aria-hidden="true"
                                   ></i>
                                 </div>
-                              )}
+                              ) : (
+                                <div
+                                  className="mobile-audio-wrapper mobile-control  audio-active"
+                                  onClick={handleTurnOnStudentAudio}
+                                >
+                                  {" "}
+                                  <i
+                                    className="fa fa-microphone-slash"
+                                    // className="fa fa-microphone"
+                                    aria-hidden="true"
+                                  ></i>
+                                </div>
+                              )
+                            ) : (
                               <div
-                                className="expand-wrapper"
-                                onClick={() => {
-                                  setVideoFill(!videoFill);
-                                }}
+                                className="mobile-audio-wrapper mobile-control  audio-inactive"
+                                onClick={handleStartStudentAudio}
                               >
+                                {" "}
                                 <i
-                                  className="fa fa-expand"
+                                  className="fa fa-microphone"
                                   aria-hidden="true"
-                                  style={{ color: "#ccc" }}
                                 ></i>
                               </div>
-                              <Button
-                                onClick={() => {
-                                  sendMessage();
-                                }}
-                              >
-                                Send
-                              </Button>
+                            )}
+                            <div
+                              className="expand-wrapper"
+                              onClick={() => {
+                                setVideoFill(!videoFill);
+                              }}
+                            >
+                              <i
+                                className="fa fa-expand"
+                                aria-hidden="true"
+                                style={{ color: "#ccc" }}
+                              ></i>
                             </div>
+                            <Button
+                              onClick={() => {
+                                sendMessage();
+                              }}
+                            >
+                              Send
+                            </Button>
                           </div>
-                        )}
+                        </div>
                       </>
                     )}
                   </div>
