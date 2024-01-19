@@ -115,6 +115,17 @@ function WatchStream({ schoolname }) {
   };
   const handleTurnOnStudentAudio = () => {
     setStudentMicControl(true);
+    // let newTrackStudentAudioStat = {
+    //   ...trackStudentAudioStat,
+    //   [socketId]: {
+    //     studentMuted: false,
+    //     broadcasterMute:
+    //       trackStudentAudioStat[socketId]?.broadcasterMute || false,
+    //   },
+    // };
+
+    // // Update the state with the new object
+    // setTrackStudentAudioStat(newTrackStudentAudioStat);
 
     socket.emit("on student audio", roomid);
   };
@@ -434,6 +445,7 @@ function WatchStream({ schoolname }) {
       secondScreenPlayer.current.muted(!audioVisuals.audio);
     }
   }, [audioVisuals]);
+
   function createBlankVideoStream() {
     const canvas = Object.assign(document.createElement("canvas"), {
       width: 1,
@@ -445,50 +457,6 @@ function WatchStream({ schoolname }) {
     const stream = canvas.captureStream();
     return stream;
   }
-  // useEffect(() => {
-  //   const peerInstance = new Peer();
-  //   peerRef.current = peerInstance;
-  //   peerInstance.on("open", (user) => {
-  //     socket.emit("watcher", roomid, user, getUserId(roomid));
-  //   });
-  //   const startClass = (peerId, stat, audioStat) => {
-  //     navigator.mediaDevices
-  //       .getUserMedia({ video: true, audio: true })
-  //       .then((newStream) => {
-  //         let call = peerInstance.call(peerId, newStream);
-  //         // const call = peerInstance.call(peerId, fast);
-  //         call?.on("stream", (remoteStream) => {
-  //           handleAddStream(remoteStream, audioStat);
-
-  //           setWaiting(false);
-  //           secondHandleAddStream(remoteStream, audioStat);
-  //         });
-  //         call?.on("error", (error) => {
-  //           console.error("Call error:", error);
-  //         });
-  //         // });
-  //       });
-  //   };
-
-  //   socket.on("audio status", () => {});
-  //   socket.on("join stream", (roomSize, peerId, roomStatus) => {
-  //     setAudioVisuals(roomStatus);
-  //     startClass(peerId, "join", roomStatus);
-  //     setWaiting(false);
-  //     setDisconnect(false);
-  //   });
-  //   socket.on("broadcaster", (peerId, roomStatus) => {
-  //     startClass(peerId, "broadcaster");
-  //     setWaiting(false);
-  //     setDisconnect(false);
-  //   });
-
-  //   return () => {
-  //     peerInstance.destroy();
-  //     socket.off("join stream");
-  //     socket.off("broadcaster");
-  //   };
-  // }, [roomid, waiting, disconnect]);
 
   useEffect(() => {
     getIceServer();
@@ -938,26 +906,6 @@ function WatchStream({ schoolname }) {
                 audioRef.current.onabort = () => {
                   console.error("Audio load request was interrupted");
                 };
-                // const audioContext = new AudioContext();
-                // const source =
-                //   audioContext.createMediaStreamSource(remoteStream);
-
-                // source.connect(audioContext.destination);
-
-                // // Define a threshold for sound activity (adjust as needed)
-                // const soundThreshold = 0.05;
-
-                // // Listen for audio activity
-                // source.onaudioprocess = (event) => {
-                //   const audioBuffer = event.inputBuffer.getChannelData(0);
-                //   const rms = calculateRMS(audioBuffer);
-
-                //   if (rms > soundThreshold) {
-                //     console.log("student Sound is being inputted");
-                //   }
-                // };
-
-                // Listen for audio activity
               } else {
                 console.log("error");
                 console.log(audioRef.current);
@@ -980,109 +928,6 @@ function WatchStream({ schoolname }) {
 
     return () => {};
   }, [roomid, twiloServer]);
-
-  useEffect(() => {
-    const onStudentAudio = (socketId, retryCount = 0) => {
-      const audioRef = audioRefs.current[socketId];
-
-      if (audioRef) {
-        console.log(audioRef);
-        console.log(audioRef.muted);
-
-        // Try unmuting, and if unsuccessful, retry after a delay
-        try {
-          audioRef.muted = false;
-          console.log("Successfully unmuted");
-          let newTrackStudentAudioStat = {
-            ...trackStudentAudioStat,
-            [socketId]: {
-              studentMuted: false,
-              broadcasterMute:
-                trackStudentAudioStat[socketId]?.broadcasterMute || false,
-            },
-          };
-
-          // Update the state with the new object
-          setTrackStudentAudioStat(newTrackStudentAudioStat);
-        } catch (error) {
-          console.error("Failed to unmute:", error);
-
-          // Set a limit on the number of retries
-          const maxRetries = 3;
-
-          if (retryCount < maxRetries) {
-            // Retry after a delay (e.g., 1 second)
-            setTimeout(() => {
-              onStudentAudio(socketId, retryCount + 1);
-            }, 1000);
-          } else {
-            console.error("Max retries reached. Unable to unmute.");
-          }
-        }
-      }
-    };
-
-    socket.on("on student audio", onStudentAudio);
-
-    return () => {
-      socket.off("on student audio", onStudentAudio);
-    };
-  }, [roomid, twiloServer]);
-
-  useEffect(() => {
-    const offStudentAudio = (socketId, retryCount = 0) => {
-      const audioRef = audioRefs.current[socketId];
-
-      if (audioRef) {
-        // Try unmuting, and if unsuccessful, retry after a delay
-        try {
-          audioRef.muted = true;
-          console.log("Successfully mute");
-          let newTrackStudentAudioStat = {
-            ...trackStudentAudioStat,
-            [socketId]: {
-              studentMuted: true,
-              broadcasterMute:
-                trackStudentAudioStat[socketId]?.broadcasterMute || false,
-            },
-          };
-
-          // Update the state with the new object
-          setTrackStudentAudioStat(newTrackStudentAudioStat);
-        } catch (error) {
-          console.error("Failed to mute:", error);
-
-          // Set a limit on the number of retries
-          const maxRetries = 3;
-
-          if (retryCount < maxRetries) {
-            // Retry after a delay (e.g., 1 second)
-            setTimeout(() => {
-              offStudentAudio(socketId, retryCount + 1);
-            }, 1000);
-          } else {
-            console.error("Max retries reached. Unable to unmute.");
-          }
-        }
-      }
-    };
-
-    socket.on("off student audio", offStudentAudio);
-
-    return () => {
-      socket.off("off student audio", offStudentAudio);
-    };
-  }, [roomid, twiloServer]);
-
-  // useEffect(() => {
-  //   socket.on("welcome student speaking", (speakingArray) => {
-  //     console.log(speakingArray)
-  //   });
-
-  //   return () => {
-  //     socket.off("welcome student speaking");
-  //   };
-  // }, [roomid]);
 
   useEffect(() => {
     socket.on("welcome student speaking", (speakingArray) => {
@@ -1185,8 +1030,108 @@ function WatchStream({ schoolname }) {
           });
       });
     });
+    const onStudentAudio = (socketId, retryCount = 0) => {
+      console.log("on student audio");
+      const audioRef = audioRefs.current[socketId];
+
+      if (audioRef) {
+        console.log(audioRef);
+        console.log(audioRef.muted);
+
+        // Try unmuting, and if unsuccessful, retry after a delay
+        try {
+          audioRef.muted = false;
+          console.log("Attempted to unmute");
+
+          // Check if the audio is actually unmuted after the attempt
+          if (!audioRef.muted) {
+            console.log("Successfully unmuted");
+
+            let newTrackStudentAudioStat = {
+              ...trackStudentAudioStat,
+              [socketId]: {
+                studentMuted: false,
+                broadcasterMute:
+                  trackStudentAudioStat[socketId]?.broadcasterMute || false,
+              },
+            };
+
+            // Update the state with the new object
+            setTrackStudentAudioStat(newTrackStudentAudioStat);
+            console.log("tck");
+          } else {
+            console.log("failed to mute");
+            audioRef.muted = false;
+
+            // console.error("Unmute attempt unsuccessful");
+            // retryUnmute(socketId, retryCount);
+          }
+        } catch (error) {
+          console.error("Failed to unmute:", error);
+          retryUnmute(socketId, retryCount);
+        }
+      } else {
+        console.log("no audoREf");
+      }
+    };
+
+    const retryUnmute = (socketId, retryCount) => {
+      // Set a limit on the number of retries
+      const maxRetries = 3;
+
+      if (retryCount < maxRetries) {
+        // Retry after a delay (e.g., 1 second)
+        setTimeout(() => {
+          onStudentAudio(socketId, retryCount + 1);
+        }, 1000);
+      } else {
+        console.error("Max retries reached. Unable to unmute.");
+      }
+    };
+    const offStudentAudio = (socketId, retryCount = 0) => {
+      const audioRef = audioRefs.current[socketId];
+
+      if (audioRef) {
+        // Try unmuting, and if unsuccessful, retry after a delay
+        try {
+          audioRef.muted = true;
+          console.log("Successfully mute");
+          let newTrackStudentAudioStat = {
+            ...trackStudentAudioStat,
+            [socketId]: {
+              studentMuted: true,
+              broadcasterMute:
+                trackStudentAudioStat[socketId]?.broadcasterMute || false,
+            },
+          };
+
+          // Update the state with the new object
+          setTrackStudentAudioStat(newTrackStudentAudioStat);
+        } catch (error) {
+          console.error("Failed to mute:", error);
+
+          // Set a limit on the number of retries
+          const maxRetries = 3;
+
+          if (retryCount < maxRetries) {
+            // Retry after a delay (e.g., 1 second)
+            setTimeout(() => {
+              offStudentAudio(socketId, retryCount + 1);
+            }, 1000);
+          } else {
+            console.error("Max retries reached. Unable to unmute.");
+          }
+        }
+      }
+    };
+
+    socket.on("off student audio", offStudentAudio);
+
+    socket.on("on student audio", onStudentAudio);
 
     return () => {
+      socket.off("on student audio", onStudentAudio);
+      socket.off("off student audio", offStudentAudio);
       socket.off("student stream");
       // Clean up peers when the component is unmounted
       Object.values(peers).forEach(({ peer }) => {
@@ -1787,7 +1732,35 @@ function WatchStream({ schoolname }) {
                                         <h3>{item.userName?.charAt(0) || 1}</h3>
                                       </div>
                                       <div className="control-options">
-                                        {item.speakingStatus ? (
+                                        {trackStudentAudioStat[item.socketId] &&
+                                        trackStudentAudioStat[item.socketId]
+                                          .broadcasterMute ? (
+                                          <i
+                                            className="fa fa-microphone-slash"
+                                            aria-hidden="true"
+                                          ></i>
+                                        ) : item.userName ===
+                                          watcherUsername ? (
+                                          studentMic ? (
+                                            studentMicControl ? (
+                                              <img src={wave} alt="wave" />
+                                            ) : (
+                                              <i
+                                                className="fa fa-microphone-slash"
+                                                aria-hidden="true"
+                                              ></i>
+                                            )
+                                          ) : (
+                                            <i
+                                              className="fa fa-microphone-slash"
+                                              aria-hidden="true"
+                                            ></i>
+                                          )
+                                        ) : trackStudentAudioStat[
+                                            item.socketId
+                                          ] &&
+                                          !trackStudentAudioStat[item.socketId]
+                                            .studentMuted ? (
                                           <img src={wave} alt="wave" />
                                         ) : (
                                           <i
@@ -1795,6 +1768,7 @@ function WatchStream({ schoolname }) {
                                             aria-hidden="true"
                                           ></i>
                                         )}
+
                                         <p
                                           title={item.userName || "chadius"}
                                           style={{
@@ -2448,7 +2422,7 @@ function WatchStream({ schoolname }) {
                               >
                                 {" "}
                                 <i
-                                  className="fa fa-microphone"
+                                  className="fa fa-microphone-slash"
                                   aria-hidden="true"
                                 ></i>
                               </div>

@@ -143,8 +143,6 @@ export default function Stream() {
   const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
   const [studentToBlock, setStudentToBlock] = useState(null);
 
-
-
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
 
@@ -1209,7 +1207,10 @@ export default function Stream() {
     let newTrackStudentAudioStat = {
       ...trackStudentAudioStat,
       [studentSpeaking.socketId]: {
-        broadcasterMuted: true,
+        studentMuted:
+          trackStudentAudioStat[studentSpeaking.socketId]?.studentMuted ||
+          false,
+        broadcasterMute: true,
       },
     };
     setTrackStudentAudioStat(newTrackStudentAudioStat);
@@ -1226,7 +1227,10 @@ export default function Stream() {
     let newTrackStudentAudioStat = {
       ...trackStudentAudioStat,
       [studentSpeaking.socketId]: {
-        broadcasterMuted: false,
+        studentMuted:
+          trackStudentAudioStat[studentSpeaking.socketId]?.studentMuted ||
+          false,
+        broadcasterMute: false,
       },
     };
     setTrackStudentAudioStat(newTrackStudentAudioStat);
@@ -1483,11 +1487,11 @@ export default function Stream() {
             ...trackStudentAudioStat,
             [socketId]: {
               studentMuted: false,
-              broadcasterMute: false,
-
+              broadcasterMute:
+                trackStudentAudioStat[socketId]?.broadcasterMute || false,
             },
           };
-          
+
           // Update the state with the new object
           setTrackStudentAudioStat(newTrackStudentAudioStat);
         } catch (error) {
@@ -1520,6 +1524,17 @@ export default function Stream() {
         // Try unmuting, and if unsuccessful, retry after a delay
         try {
           audioRef.muted = true;
+          let newTrackStudentAudioStat = {
+            ...trackStudentAudioStat,
+            [socketId]: {
+              studentMuted: true,
+              broadcasterMute:
+                trackStudentAudioStat[socketId]?.broadcasterMute || false,
+            },
+          };
+
+          // Update the state with the new object
+          setTrackStudentAudioStat(newTrackStudentAudioStat);
         } catch (error) {
           console.error("Failed to mute:", error);
 
@@ -3396,27 +3411,33 @@ export default function Stream() {
                                           );
                                         }}
                                       >
-                                        <div className="speaking-icon-holder">
-                                          {item.speakingStatus ? (
-                                            <img src={wave} alt="wave" />
-                                          ) : (
-                                            <i
-                                              className="fa fa-microphone-slash"
-                                              aria-hidden="true"
-                                            ></i>
-                                          )}
-                                        </div>
-                                        {/* <p
-                                        className="speaking-icon"
-                                        style={{
-                                          background: "green",
-                                        }}
-                                      >
-                                        {item.userName
-                                          .charAt(0)
-                                          .toUpperCase() || "T"}
-                                      </p> */}
-                                        {/* <p>{item.userName || "Chadius"}</p> */}
+                                        <div className="speaking-icon-holder"></div>
+                                        {trackStudentAudioStat[item.socketId] &&
+                                        trackStudentAudioStat[item.socketId]
+                                          .broadcasterMute ? (
+                                          <i
+                                            className="fa fa-microphone-slash"
+                                            aria-hidden="true"
+                                          ></i>
+                                        ) : trackStudentAudioStat[
+                                            item.socketId
+                                          ] &&
+                                          !trackStudentAudioStat[item.socketId]
+                                            .studentMuted ? (
+                                          <img
+                                            src={wave}
+                                            alt="wave"
+                                            style={{
+                                              width: "22px",
+                                              height: "22px",
+                                            }}
+                                          />
+                                        ) : (
+                                          <i
+                                            className="fa fa-microphone-slash"
+                                            aria-hidden="true"
+                                          ></i>
+                                        )}
                                         <p
                                           title={item.userName || "chadius"}
                                           style={{

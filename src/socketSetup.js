@@ -22,6 +22,7 @@ const setupSocketIO = (app) => {
   const userRooms = {}; // Initialize an object to track which room each user is in
   const heartbeatTimeout = 10000;
   const waitingRoom = {};
+  const trackStudentAudioStatByRoomId = {};
 
   io.on("connection", (socket) => {
     // broadcaster
@@ -410,6 +411,7 @@ const setupSocketIO = (app) => {
         // Handle duplicate request (if needed)
       }
     });
+
     socket.on("on student audio", (roomId) => {
       console.log(roomId, broadcasterHolder[roomId]);
       // Check if studentStream exists and is an array
@@ -426,7 +428,13 @@ const setupSocketIO = (app) => {
           studentToUpdate.audioStat = true;
 
           // Broadcast the updated student audio status to others in the room
-          socket.broadcast.to(roomId).emit("on student audio", socket.id);
+          socket.broadcast
+            .to(roomId)
+            .emit(
+              "on student audio",
+              socket.id,
+              broadcasterHolder[roomId].studentStream
+            );
         }
       }
     });
@@ -457,58 +465,19 @@ const setupSocketIO = (app) => {
 
       console.log(data);
     });
+    socket.on("trackStudentAudioStat", (trackStudentAudioStat, roomId) => {
+      if (!trackStudentAudioStatByRoomId.hasOwnProperty(roomId)) {
+        // If it doesn't exist, create a new entry
+        trackStudentAudioStatByRoomId[roomId] = {};
+      }
 
-    // socket.on(
-    //   "disable student audio",
-    //   (roomId, studentSocketId, trackResourceDeployment) => {
-    //     // Check if studentStream exists and is an array
-    //     if (
-    //       broadcasterHolder[roomId].studentStream &&
-    //       Array.isArray(broadcasterHolder[roomId].studentStream)
-    //     ) {
-    //       // Find the student based on socket.id and update audioStat
-    //       const studentToUpdate = broadcasterHolder[roomId].studentStream.find(
-    //         (student) => student.socketId === studentSocketId
-    //       );
+      // Update or add the audio stats for the specified room ID
+      trackStudentAudioStatByRoomId[roomId] = trackStudentAudioStat
+      socket.broadcast
+        .to(roomId)
+        .emit("trackStudentAudioStat", trackStudentAudioStat);
+    });
 
-    //       if (studentToUpdate) {
-    //         studentToUpdate.audioStat = false;
-
-    //         // Broadcast the updated student audio status to others in the room
-    //         socket.broadcast
-    //           .to(roomId)
-    //           .emit("student audio stat", false, studentSocketId);
-    //       }
-    //     }
-    //   }
-    // );
-    // socket.on(
-    //   "enable student audio",
-    //   (roomId, studentSocketId, trackResourceDeployment) => {
-    //     // Check if studentStream exists and is an array
-    //     if (
-    //       broadcasterHolder[roomId].studentStream &&
-    //       Array.isArray(broadcasterHolder[roomId].studentStream)
-    //     ) {
-    //       // Find the student based on socket.id and update audioStat
-    //       const studentToUpdate = broadcasterHolder[roomId].studentStream.find(
-    //         (student) => student.socketId === studentSocketId
-    //       );
-
-    //       if (studentToUpdate) {
-    //         console.log(studentToUpdate, "sty");
-    //         studentToUpdate.audioStat = false;
-
-    //         // Broadcast the updated student audio status to others in the room
-    //         socket.broadcast
-    //           .to(roomId)
-    //           .emit("student audio stat", true, socket.id);
-    //       } else {
-    //         console.log(roomId, studentSocketId);
-    //       }
-    //     }
-    //   }
-    // );
     socket.on("enable student audio", (roomid, studentSocketId) => {
       console.log("enable student audio");
       socket.broadcast
