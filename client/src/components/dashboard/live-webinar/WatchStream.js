@@ -45,9 +45,11 @@ function WatchStream({ schoolname }) {
   const screenPeerRef = useRef(null);
   const secondScreenPlayer = useRef(null);
   const studentStream = useRef(null);
+  const studentAudioRef = useRef(null);
+
   const audioRef = useRef(null);
   const audioRefs = useRef({});
-
+  const audioWrapperRef = useRef(null);
   const peerRef = useRef(null);
   const chatInterfaceRef = useRef(null);
   let [currentPeer, setCurrentPeer] = useState(null);
@@ -93,17 +95,18 @@ function WatchStream({ schoolname }) {
   const [activeAttendance, setActiveAttendance] = useState(false);
   const [trackBroadcasterMute, setTrackBroadcasterMute] = useState(false);
   const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
+  const [showMicRetoggle, setShowMicRetoggle] = useState(false);
 
   const getIceServer = async () => {
     let res = await axios.get("/api/v1/livewebinar/iceserver");
     if (res) {
-      console.log(res.data);
       setTwiloServer(res.data);
     } else {
     }
   };
 
   const handleStartStudentAudio = () => {
+    // check if a student is speaking and alert them that someone is speaking ,you can use that "hmm something value"
     socket.emit("request audio", roomid);
   };
   const handleStopStudentAudio = () => {
@@ -115,6 +118,7 @@ function WatchStream({ schoolname }) {
   };
   const handleTurnOnStudentAudio = () => {
     setStudentMicControl(true);
+    setShowMicRetoggle(false);
     // let newTrackStudentAudioStat = {
     //   ...trackStudentAudioStat,
     //   [socketId]: {
@@ -128,6 +132,14 @@ function WatchStream({ schoolname }) {
     // setTrackStudentAudioStat(newTrackStudentAudioStat);
 
     socket.emit("on student audio", roomid);
+  };
+  const handleRetoggle = () => {
+    setShowMicRetoggle(true);
+
+    // Delay for 2 seconds
+    setTimeout(() => {
+      setShowMicRetoggle(false);
+    }, 3000);
   };
   const handleTurnOffStudentAudio = () => {
     setStudentMicControl(false);
@@ -261,13 +273,12 @@ function WatchStream({ schoolname }) {
       let res = await axios.get("/api/v1/livewebinar/studentdetails");
       if (res) {
         setWatcherUsername(res.data.username);
-        console.log(res.data);
         localStorage.setItem(roomid, res.data.id);
         setWatcherAvatar(res.data.avatar);
         setRegisteredUser(true);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     }
   };
   //
@@ -460,7 +471,6 @@ function WatchStream({ schoolname }) {
 
   useEffect(() => {
     getIceServer();
-    console.log(twiloServer);
     if (!twiloServer || twiloServer.iceServers.length === 0) {
       // Early return if iceServers is empty
       return;
@@ -471,11 +481,9 @@ function WatchStream({ schoolname }) {
       },
     });
     peerRef.current = peerInstance;
-    console.log(watcherUsername, peerInstance);
 
     if (watcherUsername !== "") {
       peerInstance.on("open", () => {
-        console.log("watcher");
         socket.emit(
           "watcher",
           roomid,
@@ -489,12 +497,12 @@ function WatchStream({ schoolname }) {
       });
     }
     const handleBlockStudent = () => {
-      console.log("sdsdsbloced");
       peerInstance.disconnect();
+      studentSharePeerRef.current.destroy();
       handleExitStream();
+
     };
     const startClass = (peerId, stat, audioStat) => {
-      console.log(stat);
       navigator.mediaDevices
         .getUserMedia({ video: true, audio: true })
         .then((newStream) => {
@@ -724,10 +732,8 @@ function WatchStream({ schoolname }) {
       setWaiting(false);
       playerRef.current = null;
       setScreenSharing(false);
-      console.log(audioRefs.current);
 
       if (studentSharePeerRef.current) {
-        console.log(" ");
         handleStopStudentAudio();
       }
 
@@ -756,7 +762,6 @@ function WatchStream({ schoolname }) {
 
   useEffect(() => {
     socket.on("update-attendance", (newAttendanceList) => {
-      console.log(newAttendanceList);
       setAttendanceList(newAttendanceList);
     });
   }, [roomid]);
@@ -783,33 +788,30 @@ function WatchStream({ schoolname }) {
   }, [defaultChat]);
   useEffect(() => {
     socket.on("start streaming", () => {
-      console.log("student start Streaming");
-      console.log(twiloServer);
-
+      console.log("strart");
       if (!twiloServer || twiloServer.iceServers.length === 0) {
         // Early return if iceServers is empty
         return;
       }
+
       const studentSharePeer = new Peer({
         config: {
           iceServers: twiloServer.iceServers,
         },
       });
-
       studentSharePeerRef.current = studentSharePeer;
 
       setStudentMic(true);
       studentSharePeerRef.current.on("open", (peerId) => {
-        console.log(peerId);
         socket.emit("student stream", roomid, peerId, studentMicControl);
 
         // socket.emit("audiovisuals", roomid, audioVisuals);
       });
+
       navigator.mediaDevices
         .getUserMedia({ video: false, audio: true })
         .then((stream) => {
           studentStream.current = stream;
-          console.log(watcherUsername);
 
           const audioContext = new AudioContext();
           const analyser = audioContext.createAnalyser();
@@ -825,11 +827,8 @@ function WatchStream({ schoolname }) {
             const average = dataArray.reduce((a, b) => a + b, 0) / bufferLength;
             const isSpeakingNow = average > 10; // Adjust this threshold as needed
             if (isSpeakingNow !== previousSpeakingStatus) {
-              console.log(isSpeakingNow);
               previousSpeakingStatus = isSpeakingNow;
-              console.log(isSpeakingNow, 1);
 
-              console.log(roomid, isSpeakingNow, watcherUsername);
               socket.emit("speaking_status", roomid, isSpeakingNow);
               if (isSpeakingNow) {
                 setIsSpeaking(true);
@@ -847,13 +846,13 @@ function WatchStream({ schoolname }) {
       studentSharePeer.on("call", (call) => {
         call.answer(studentStream.current);
 
-        call.on("close", () => {
-          console.log("ewe");
-        });
+        call.on("close", () => {});
       });
     });
+    socket.on("blocked", () => {
+      studentSharePeerRef.current.destroy();
+    });
     socket.on("stop student speaking", () => {
-      console.log("stop student speaking");
       handleStopStudentAudio();
     });
     return () => {
@@ -865,133 +864,14 @@ function WatchStream({ schoolname }) {
       }
     };
   }, [roomid, twiloServer]);
-  useEffect(() => {
-    socket.on("student stream", (peerId, audioStat) => {
-      if (!twiloServer || twiloServer.iceServers.length === 0) {
-        // Early return if iceServers is empty
-        return;
-      }
-      const receiveSudentPeer = new Peer({
-        config: {
-          iceServers: twiloServer.iceServers,
-        },
-      });
-
-      receiveSudentPeer.on("open", () => {
-        navigator.mediaDevices
-          .getUserMedia({ video: false, audio: true })
-          .then((newStream) => {
-            let call = receiveSudentPeer.call(peerId, newStream);
-            // const call = peerInstance.call(peerId, fast);
-            call?.on("stream", (remoteStream) => {
-              if (audioRef.current) {
-                audioRef.current.srcObject = remoteStream;
-                audioRef.current.muted = !audioStat;
-                audioRef.current.onloadedmetadata = () => {
-                  // Media has loaded, you can now play it
-                  audioRef.current
-                    .play()
-                    .then(() => {
-                      console.log("Audio playback started successfully");
-                    })
-                    .catch((error) => {
-                      console.error("Audio playback error:", error);
-                    });
-                };
-                audioRef.current.oncanplay = () => {
-                  // Media can be played, but it may not have fully loaded yet
-                };
-
-                // Add an event listener to handle interruptions
-                audioRef.current.onabort = () => {
-                  console.error("Audio load request was interrupted");
-                };
-              } else {
-                console.log("error");
-                console.log(audioRef.current);
-              }
-              function calculateRMS(buffer) {
-                let sum = 0;
-                for (let i = 0; i < buffer.length; i++) {
-                  sum += buffer[i] * buffer[i];
-                }
-                return Math.sqrt(sum / buffer.length);
-              }
-            });
-            call?.on("error", (error) => {
-              console.error("Call error:", error);
-            });
-            // });
-          });
-      });
-    });
-
-    return () => {};
-  }, [roomid, twiloServer]);
 
   useEffect(() => {
-    socket.on("welcome student speaking", (speakingArray) => {
-      // Connect to each speaking student in the array
-      speakingArray.forEach(({ peerId, audioStat }) => {
-        if (!twiloServer || twiloServer.iceServers.length === 0) {
-          // Early return if iceServers is empty
-          return;
-        }
-        const receiveStudentPeer = new Peer({
-          config: {
-            iceServers: twiloServer.iceServers,
-          },
-        });
-
-        receiveStudentPeer.on("open", () => {
-          navigator.mediaDevices
-            .getUserMedia({ video: false, audio: true })
-            .then((newStream) => {
-              const call = receiveStudentPeer.call(peerId, newStream);
-
-              call?.on("stream", (remoteStream) => {
-                if (audioRef.current) {
-                  audioRef.current.srcObject = remoteStream;
-                  audioRef.current.muted = !audioStat;
-
-                  audioRef.current.onloadedmetadata = () => {
-                    // Media has loaded, you can now play it
-                    audioRef.current
-                      .play()
-                      .then(() => {
-                        console.log("Audio playback started successfully");
-                      })
-                      .catch((error) => {
-                        console.error("Audio playback error:", error);
-                      });
-                  };
-
-                  // Add an event listener to handle interruptions
-                  audioRef.current.onabort = () => {
-                    console.error("Audio load request was interrupted");
-                  };
-                } else {
-                  console.log("Error: Audio ref not available");
-                }
-              });
-            });
-        });
-      });
-    });
-
-    return () => {
-      socket.off("welcome student speaking");
-    };
-  }, [audioRef, socket, twiloServer]);
-
-  useEffect(() => {
-    const peers = {}; // Store peers for each speaker
-
     socket.on("student stream", (peerId, audioStat, socketId) => {
       if (!twiloServer || twiloServer.iceServers.length === 0) {
         // Early return if iceServers is empty
         return;
       }
+      setStudentMic(false);
       const receiveStudentPeer = new Peer({
         config: {
           iceServers: twiloServer.iceServers,
@@ -1003,15 +883,12 @@ function WatchStream({ schoolname }) {
           .getUserMedia({ video: false, audio: true })
           .then((newStream) => {
             const call = receiveStudentPeer.call(peerId, newStream);
-
             call?.on("stream", (remoteStream) => {
-              const newAudioRef = createAudioRef(); // Implement your logic to create an audio element
-              newAudioRef.srcObject = remoteStream;
-              newAudioRef.muted = !audioStat;
-              audioRefs.current[socketId] = newAudioRef;
-
-              newAudioRef.onloadedmetadata = () => {
-                newAudioRef
+              let streamAudioRef = studentAudioRef.current;
+              streamAudioRef.srcObject = remoteStream;
+              streamAudioRef.muted = !audioStat;
+              streamAudioRef.onloadedmetadata = () => {
+                streamAudioRef
                   .play()
                   .then(() => {
                     console.log("Audio playback started successfully");
@@ -1020,33 +897,17 @@ function WatchStream({ schoolname }) {
                     console.error("Audio playback error:", error);
                   });
               };
-
-              // Store the peer and audio reference
-              peers[peerId] = {
-                peer: receiveStudentPeer,
-                audioRef: newAudioRef,
-              };
             });
           });
       });
     });
-    const onStudentAudio = (socketId, retryCount = 0) => {
-      console.log("on student audio");
-      const audioRef = audioRefs.current[socketId];
-
+    const onStudentAudio = (socketId) => {
+      const audioRef = studentAudioRef.current;
       if (audioRef) {
-        console.log(audioRef);
-        console.log(audioRef.muted);
-
-        // Try unmuting, and if unsuccessful, retry after a delay
         try {
           audioRef.muted = false;
-          console.log("Attempted to unmute");
-
           // Check if the audio is actually unmuted after the attempt
           if (!audioRef.muted) {
-            console.log("Successfully unmuted");
-
             let newTrackStudentAudioStat = {
               ...trackStudentAudioStat,
               [socketId]: {
@@ -1055,47 +916,24 @@ function WatchStream({ schoolname }) {
                   trackStudentAudioStat[socketId]?.broadcasterMute || false,
               },
             };
-
             // Update the state with the new object
             setTrackStudentAudioStat(newTrackStudentAudioStat);
-            console.log("tck");
           } else {
             console.log("failed to mute");
             audioRef.muted = false;
-
-            // console.error("Unmute attempt unsuccessful");
-            // retryUnmute(socketId, retryCount);
           }
         } catch (error) {
           console.error("Failed to unmute:", error);
-          retryUnmute(socketId, retryCount);
         }
       } else {
-        console.log("no audoREf");
       }
     };
 
-    const retryUnmute = (socketId, retryCount) => {
-      // Set a limit on the number of retries
-      const maxRetries = 3;
-
-      if (retryCount < maxRetries) {
-        // Retry after a delay (e.g., 1 second)
-        setTimeout(() => {
-          onStudentAudio(socketId, retryCount + 1);
-        }, 1000);
-      } else {
-        console.error("Max retries reached. Unable to unmute.");
-      }
-    };
-    const offStudentAudio = (socketId, retryCount = 0) => {
-      const audioRef = audioRefs.current[socketId];
-
+    const offStudentAudio = (socketId) => {
+      const audioRef = studentAudioRef.current;
       if (audioRef) {
-        // Try unmuting, and if unsuccessful, retry after a delay
         try {
           audioRef.muted = true;
-          console.log("Successfully mute");
           let newTrackStudentAudioStat = {
             ...trackStudentAudioStat,
             [socketId]: {
@@ -1104,48 +942,25 @@ function WatchStream({ schoolname }) {
                 trackStudentAudioStat[socketId]?.broadcasterMute || false,
             },
           };
-
-          // Update the state with the new object
           setTrackStudentAudioStat(newTrackStudentAudioStat);
         } catch (error) {
           console.error("Failed to mute:", error);
-
-          // Set a limit on the number of retries
-          const maxRetries = 3;
-
-          if (retryCount < maxRetries) {
-            // Retry after a delay (e.g., 1 second)
-            setTimeout(() => {
-              offStudentAudio(socketId, retryCount + 1);
-            }, 1000);
-          } else {
-            console.error("Max retries reached. Unable to unmute.");
-          }
         }
       }
     };
-
     socket.on("off student audio", offStudentAudio);
-
     socket.on("on student audio", onStudentAudio);
-
     return () => {
       socket.off("on student audio", onStudentAudio);
       socket.off("off student audio", offStudentAudio);
       socket.off("student stream");
-      // Clean up peers when the component is unmounted
-      Object.values(peers).forEach(({ peer }) => {
-        peer.destroy();
-      });
     };
   }, [twiloServer, roomid]);
 
   useEffect(() => {
     socket.on("mute student with socket id", (socketId) => {
-      console.log(socketId);
-      console.log(audioRefs.current);
-      if (audioRefs.current[socketId]) {
-        audioRefs.current[socketId].muted = true;
+      if (studentAudioRef.current) {
+        studentAudioRef.current.muted = true;
       }
       let newTrackStudentAudioStat = {
         ...trackStudentAudioStat,
@@ -1165,7 +980,6 @@ function WatchStream({ schoolname }) {
   }, [roomid]);
   useEffect(() => {
     socket.on("disable student audio", (socketId) => {
-      console.log(socketId);
       setTrackBroadcasterMute(true);
     });
 
@@ -1175,9 +989,8 @@ function WatchStream({ schoolname }) {
   }, [roomid]);
   useEffect(() => {
     socket.on("unmute student with socket id", (socketId) => {
-      console.log(socketId);
-      if (audioRefs.current[socketId]) {
-        audioRefs.current[socketId].muted = false;
+      if (studentAudioRef.current) {
+        studentAudioRef.current.muted = false;
       }
       let newTrackStudentAudioStat = {
         ...trackStudentAudioStat,
@@ -1193,10 +1006,24 @@ function WatchStream({ schoolname }) {
       socket.off("unmute student with socket id");
     };
   }, [roomid]);
+  const simulateDivClick = () => {
+    if (audioWrapperRef.current) {
+      audioWrapperRef.current.click(); // This will trigger the existing onClick handler
+    }
+  };
+  useEffect(() => {
+    socket.on("no-audio-ref", () => {
+      // handleTurnOffStudentAudio();
+      // handleTurnOnStudentAudio();
+      handleRetoggle();
+    });
+
+    return () => {
+      socket.off("no-audio-ref");
+    };
+  }, [roomid]);
   useEffect(() => {
     socket.on("enable student audio", (socketId) => {
-      console.log(socketId);
-
       setTrackBroadcasterMute(false);
     });
 
@@ -1214,7 +1041,7 @@ function WatchStream({ schoolname }) {
 
   return (
     <div className="dashboard-layout">
-      <audio ref={audioRef} />
+      <audio ref={studentAudioRef} />
 
       <Modal isOpen={submitQuizModal}>
         <ModalHeader>
@@ -1502,6 +1329,7 @@ function WatchStream({ schoolname }) {
                           ) : (
                             <div
                               className="audio-wrapper"
+                              ref={audioWrapperRef}
                               onClick={
                                 studentMic
                                   ? studentMicControl

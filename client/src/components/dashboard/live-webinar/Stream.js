@@ -50,6 +50,8 @@ export default function Stream() {
   const audioRef = useRef(null);
 
   const myScreenRef = useRef();
+  const studentAudioRef = useRef(null);
+
   const peerRef = useRef();
   const screenPeerRef = useRef();
   const videoStreamRef = useRef(null);
@@ -1203,7 +1205,7 @@ export default function Stream() {
     }
   };
   const handleMuteStudent = (studentSpeaking) => {
-    audioRefs.current[studentSpeaking.socketId].muted = true;
+    studentAudioRef.current.muted = true;
     let newTrackStudentAudioStat = {
       ...trackStudentAudioStat,
       [studentSpeaking.socketId]: {
@@ -1223,7 +1225,7 @@ export default function Stream() {
     );
   };
   const handleUnMuteStudent = (studentSpeaking) => {
-    audioRefs.current[studentSpeaking.socketId].muted = true;
+    studentAudioRef.current.muted = false;
     let newTrackStudentAudioStat = {
       ...trackStudentAudioStat,
       [studentSpeaking.socketId]: {
@@ -1385,10 +1387,12 @@ export default function Stream() {
             const call = receiveStudentPeer.call(peerId, newStream);
 
             call?.on("stream", (remoteStream) => {
-              const newAudioRef = createAudioRef(); // Implement your logic to create an audio element
+              const newAudioRef = studentAudioRef.current;
+
+              // const newAudioRef = createAudioRef(); // Implement your logic to create an audio element
               newAudioRef.srcObject = remoteStream;
               newAudioRef.muted = !audioStat;
-              audioRefs.current[socketId] = newAudioRef;
+
               newAudioRef.onloadedmetadata = () => {
                 newAudioRef
                   .play()
@@ -1472,41 +1476,34 @@ export default function Stream() {
   };
 
   useEffect(() => {
-    const onStudentAudio = (socketId, retryCount = 0) => {
-      const audioRef = audioRefs.current[socketId];
-
+    const onStudentAudio = (socketId) => {
       if (Object.keys(studentSpeaking).length !== 0) {
         setActiveSpeaker(true);
       }
-
+      const audioRef = studentAudioRef.current;
       if (audioRef) {
-        // Try unmuting, and if unsuccessful, retry after a delay
         try {
           audioRef.muted = false;
-          let newTrackStudentAudioStat = {
-            ...trackStudentAudioStat,
-            [socketId]: {
-              studentMuted: false,
-              broadcasterMute:
-                trackStudentAudioStat[socketId]?.broadcasterMute || false,
-            },
-          };
-
-          // Update the state with the new object
-          setTrackStudentAudioStat(newTrackStudentAudioStat);
-        } catch (error) {
-          // Set a limit on the number of retries
-          const maxRetries = 3;
-
-          if (retryCount < maxRetries) {
-            // Retry after a delay (e.g., 1 second)
-            setTimeout(() => {
-              onStudentAudio(socketId, retryCount + 1);
-            }, 1000);
+          // Check if the audio is actually unmuted after the attempt
+          if (!audioRef.muted) {
+            let newTrackStudentAudioStat = {
+              ...trackStudentAudioStat,
+              [socketId]: {
+                studentMuted: false,
+                broadcasterMute:
+                  trackStudentAudioStat[socketId]?.broadcasterMute || false,
+              },
+            };
+            // Update the state with the new object
+            setTrackStudentAudioStat(newTrackStudentAudioStat);
           } else {
-            console.error("Max retries reached. Unable to unmute.");
+            console.log("failed to mute");
+            audioRef.muted = false;
           }
+        } catch (error) {
+          console.error("Failed to unmute:", error);
         }
+      } else {
       }
     };
 
@@ -1517,11 +1514,9 @@ export default function Stream() {
     };
   }, [roomid, twiloServer]);
   useEffect(() => {
-    const offStudentAudio = (socketId, retryCount = 0) => {
-      const audioRef = audioRefs.current[socketId];
-
+    const offStudentAudio = (socketId) => {
+      const audioRef = studentAudioRef.current;
       if (audioRef) {
-        // Try unmuting, and if unsuccessful, retry after a delay
         try {
           audioRef.muted = true;
           let newTrackStudentAudioStat = {
@@ -1532,23 +1527,9 @@ export default function Stream() {
                 trackStudentAudioStat[socketId]?.broadcasterMute || false,
             },
           };
-
-          // Update the state with the new object
           setTrackStudentAudioStat(newTrackStudentAudioStat);
         } catch (error) {
           console.error("Failed to mute:", error);
-
-          // Set a limit on the number of retries
-          const maxRetries = 3;
-
-          if (retryCount < maxRetries) {
-            // Retry after a delay (e.g., 1 second)
-            setTimeout(() => {
-              offStudentAudio(socketId, retryCount + 1);
-            }, 1000);
-          } else {
-            console.error("Max retries reached. Unable to unmute.");
-          }
         }
       }
     };
@@ -1987,7 +1968,8 @@ export default function Stream() {
   );
   return (
     <div className="dashboard-layout">
-      <audio ref={audioRef} />
+      {/* <audio ref={audioRef} /> */}
+      <audio ref={studentAudioRef} />
 
       <Container fluid>
         <Row>
@@ -3259,7 +3241,7 @@ export default function Stream() {
 
                                   {trackStudentAudioStat[
                                     studentSpeaking.socketId
-                                  ]?.broadcasterMuted ? (
+                                  ]?.broadcasterMute ? (
                                     <p
                                       className="hover"
                                       onClick={() => {
@@ -3476,7 +3458,6 @@ export default function Stream() {
                                             <p
                                               className="hover"
                                               onClick={() => {
-                                                // handleMuteStudent(item);
                                                 console.log(item);
                                               }}
                                             >
