@@ -27,7 +27,11 @@ const setupSocketIO = (app) => {
   io.on("connection", (socket) => {
     // broadcaster
     socket.on("broadcaster", async (roomId, peerId, audioStat) => {
-      broadcasterHolder[roomId] = { peerId, socketId: socket.id };
+      broadcasterHolder[roomId] = {
+        peerId,
+        socketId: socket.id,
+        studentStream: {},
+      };
       audioStatus[roomId] = audioStat;
       socket.join(roomId);
       socket.broadcast
@@ -350,12 +354,6 @@ const setupSocketIO = (app) => {
     socket.on("student stream", (roomId, peerId, audioStat) => {
       // Initialize studentStream as an object if it doesn't exist
       console.log("student Stream");
-      if (
-        broadcasterHolder[roomId] &&
-        !broadcasterHolder[roomId].studentStream
-      ) {
-        broadcasterHolder[roomId].studentStream = {};
-      }
 
       // Check if the request is not a duplicate
       const isUniqueRequest =
@@ -396,20 +394,19 @@ const setupSocketIO = (app) => {
         console.log(roomId, broadcasterHolder[roomId], "after on audio");
       }
     });
-    
+
     socket.on("off student audio", (roomId) => {
       // Check if studentStream exists and is an array
       if (broadcasterHolder[roomId].studentStream) {
         // Find the student based on socket.id and update audioStat
         broadcasterHolder[roomId].studentStream.audioStat = false;
-       
-    socket.broadcast.to(roomId).emit("off student audio", socket.id);
+
+        socket.broadcast.to(roomId).emit("off student audio", socket.id);
 
         console.log(roomId, broadcasterHolder[roomId], "after off audio");
       }
     });
 
-  
     socket.on("block-user", (data) => {
       let { socketId } = data;
 
