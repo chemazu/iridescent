@@ -95,7 +95,7 @@ function WatchStream({ schoolname }) {
   const [trackBroadcasterMute, setTrackBroadcasterMute] = useState(false);
   const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
   const [showMicRetoggle, setShowMicRetoggle] = useState(false);
-  const [studentMicMuteStatus, setStudentMicMuteStatus] = useState(false);
+  // const [studentMicMuteStatus, setStudentMicMuteStatus] = useState(false);
   let [studentMic, setStudentMic] = useState(false);
   let [studentMicControl, setStudentMicControl] = useState(false);
 
@@ -873,7 +873,7 @@ function WatchStream({ schoolname }) {
         return;
       }
       setStudentMic(false);
-      setStudentMicMuteStatus(audioStat || true);
+
       const receiveStudentPeer = new Peer({
         config: {
           iceServers: twiloServer.iceServers,
@@ -888,7 +888,8 @@ function WatchStream({ schoolname }) {
             call?.on("stream", (remoteStream) => {
               let streamAudioRef = studentAudioRef.current;
               streamAudioRef.srcObject = remoteStream;
-              streamAudioRef.muted = !audioStat;
+              setStudentMicControl(audioStat || false);
+           
               streamAudioRef.onloadedmetadata = () => {
                 streamAudioRef
                   .play()
@@ -908,7 +909,7 @@ function WatchStream({ schoolname }) {
       if (audioRef) {
         try {
           // audioRef.muted = false;
-          setStudentMicMuteStatus(false);
+          setStudentMicControl(true);
 
           // Check if the audio is actually unmuted after the attempt
           if (!audioRef.muted) {
@@ -938,7 +939,7 @@ function WatchStream({ schoolname }) {
       if (audioRef) {
         try {
           // audioRef.muted = true;
-          setStudentMicMuteStatus(true);
+          setStudentMicControl(false);
 
           let newTrackStudentAudioStat = {
             ...trackStudentAudioStat,
@@ -1042,7 +1043,7 @@ function WatchStream({ schoolname }) {
 
   return (
     <div className="dashboard-layout">
-      <audio ref={studentAudioRef} muted={!studentMicMuteStatus} />
+      <audio ref={studentAudioRef} muted={!studentMicControl} />
 
       <Modal isOpen={submitQuizModal}>
         <ModalHeader>

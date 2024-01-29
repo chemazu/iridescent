@@ -144,7 +144,7 @@ export default function Stream() {
   const [showAttendance, setShowAttendance] = useState(false);
   const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
   const [studentToBlock, setStudentToBlock] = useState(null);
-  const [studentMicMuteStatus, setStudentMicMuteStatus] = useState(true);
+  const [studentMicMuteStatus, setStudentMicMuteStatus] = useState(false);
 
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
@@ -1394,7 +1394,7 @@ export default function Stream() {
               newAudioRef.srcObject = remoteStream;
               // newAudioRef.muted = !audioStat;
               // setStudentMicMuteStatus(false);
-              setStudentMicMuteStatus(audioStat || true);
+              setStudentMicMuteStatus(audioStat || false);
 
               newAudioRef.onloadedmetadata = () => {
                 newAudioRef
@@ -1487,7 +1487,7 @@ export default function Stream() {
       if (audioRef) {
         try {
           // audioRef.muted = false;
-          setStudentMicMuteStatus(false);
+          setStudentMicMuteStatus(true);
           // Check if the audio is actually unmuted after the attempt
           if (!audioRef.muted) {
             let newTrackStudentAudioStat = {
@@ -1523,7 +1523,7 @@ export default function Stream() {
       if (audioRef) {
         try {
           // audioRef.muted = true;
-          setStudentMicMuteStatus(true);
+          setStudentMicMuteStatus(false);
           let newTrackStudentAudioStat = {
             ...trackStudentAudioStat,
             [socketId]: {
