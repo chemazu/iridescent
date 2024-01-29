@@ -87,8 +87,7 @@ function WatchStream({ schoolname }) {
   const [waiting, setWaiting] = useState(false);
   const [disconnect, setDisconnect] = useState(false);
   const [height, setHeight] = useState("40px");
-  let [studentMic, setStudentMic] = useState(false);
-  let [studentMicControl, setStudentMicControl] = useState(false);
+
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [registeredUser, setRegisteredUser] = useState(false);
   const [attendanceList, setAttendanceList] = useState([]);
@@ -96,6 +95,9 @@ function WatchStream({ schoolname }) {
   const [trackBroadcasterMute, setTrackBroadcasterMute] = useState(false);
   const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
   const [showMicRetoggle, setShowMicRetoggle] = useState(false);
+  const [studentMicMuteStatus, setStudentMicMuteStatus] = useState(false);
+  let [studentMic, setStudentMic] = useState(false);
+  let [studentMicControl, setStudentMicControl] = useState(false);
 
   const getIceServer = async () => {
     let res = await axios.get("/api/v1/livewebinar/iceserver");
@@ -500,7 +502,6 @@ function WatchStream({ schoolname }) {
       peerInstance.disconnect();
       studentSharePeerRef.current.destroy();
       handleExitStream();
-
     };
     const startClass = (peerId, stat, audioStat) => {
       navigator.mediaDevices
@@ -872,6 +873,7 @@ function WatchStream({ schoolname }) {
         return;
       }
       setStudentMic(false);
+      setStudentMicMuteStatus(audioStat || true);
       const receiveStudentPeer = new Peer({
         config: {
           iceServers: twiloServer.iceServers,
@@ -905,7 +907,9 @@ function WatchStream({ schoolname }) {
       const audioRef = studentAudioRef.current;
       if (audioRef) {
         try {
-          audioRef.muted = false;
+          // audioRef.muted = false;
+          setStudentMicMuteStatus(false);
+
           // Check if the audio is actually unmuted after the attempt
           if (!audioRef.muted) {
             let newTrackStudentAudioStat = {
@@ -933,7 +937,9 @@ function WatchStream({ schoolname }) {
       const audioRef = studentAudioRef.current;
       if (audioRef) {
         try {
-          audioRef.muted = true;
+          // audioRef.muted = true;
+          setStudentMicMuteStatus(true);
+
           let newTrackStudentAudioStat = {
             ...trackStudentAudioStat,
             [socketId]: {
@@ -1033,15 +1039,10 @@ function WatchStream({ schoolname }) {
   }, [roomid]);
 
   // Helper function to create an audio element
-  const createAudioRef = () => {
-    const audioElement = document.createElement("audio");
-    document.body.appendChild(audioElement); // Append to the body or another container as needed
-    return audioElement;
-  };
 
   return (
     <div className="dashboard-layout">
-      <audio ref={studentAudioRef} />
+      <audio ref={studentAudioRef} muted={!studentMicMuteStatus} />
 
       <Modal isOpen={submitQuizModal}>
         <ModalHeader>

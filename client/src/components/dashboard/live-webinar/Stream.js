@@ -144,6 +144,7 @@ export default function Stream() {
   const [showAttendance, setShowAttendance] = useState(false);
   const [trackStudentAudioStat, setTrackStudentAudioStat] = useState({});
   const [studentToBlock, setStudentToBlock] = useState(null);
+  const [studentMicMuteStatus, setStudentMicMuteStatus] = useState(true);
 
   const handleBlockStudent = async (type, info) => {
     dispatch(startLoading());
@@ -1391,7 +1392,9 @@ export default function Stream() {
 
               // const newAudioRef = createAudioRef(); // Implement your logic to create an audio element
               newAudioRef.srcObject = remoteStream;
-              newAudioRef.muted = !audioStat;
+              // newAudioRef.muted = !audioStat;
+              // setStudentMicMuteStatus(false);
+              setStudentMicMuteStatus(audioStat || true);
 
               newAudioRef.onloadedmetadata = () => {
                 newAudioRef
@@ -1483,7 +1486,8 @@ export default function Stream() {
       const audioRef = studentAudioRef.current;
       if (audioRef) {
         try {
-          audioRef.muted = false;
+          // audioRef.muted = false;
+          setStudentMicMuteStatus(false);
           // Check if the audio is actually unmuted after the attempt
           if (!audioRef.muted) {
             let newTrackStudentAudioStat = {
@@ -1518,7 +1522,8 @@ export default function Stream() {
       const audioRef = studentAudioRef.current;
       if (audioRef) {
         try {
-          audioRef.muted = true;
+          // audioRef.muted = true;
+          setStudentMicMuteStatus(true);
           let newTrackStudentAudioStat = {
             ...trackStudentAudioStat,
             [socketId]: {
@@ -1969,7 +1974,7 @@ export default function Stream() {
   return (
     <div className="dashboard-layout">
       {/* <audio ref={audioRef} /> */}
-      <audio ref={studentAudioRef} />
+      <audio ref={studentAudioRef} muted={!studentMicMuteStatus} />
 
       <Container fluid>
         <Row>
