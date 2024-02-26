@@ -24,6 +24,8 @@ import Picker from "@emoji-mart/react";
 import uuid from "react-uuid";
 import setAuthToken from "../../../utilities/setAuthToken";
 import wave from "../../../images/wave.svg";
+import tapToSpeakSvg from "../../../images/tapToSpeakSvg.svg";
+import tapToSpeakSvgBlack from "../../../images/tapToSpeakSvgBlack.svg";
 
 import Poll from "./Poll";
 import { useStore } from "react-redux";
@@ -77,6 +79,8 @@ function WatchStream({ schoolname }) {
   const [watcherUsernameInput, setWatcherUsernameInput] = useState("");
   const [disableVideoStream, setDisableVideoStream] = useState(null);
   const [videoFill, setVideoFill] = useState(false);
+  const [requestSpeak, setRequestSpeak] = useState(false);
+
   const [presenterAvatar, setPresenterAvatar] = useState(
     "http://www.gravatar.com/avatar/0a97ede75643b8da8e5174438a9f7a3c?s=250&r=pg&d=mm"
   );
@@ -110,6 +114,7 @@ function WatchStream({ schoolname }) {
   const handleStartStudentAudio = () => {
     // check if a student is speaking and alert them that someone is speaking ,you can use that "hmm something value"
     socket.emit("request audio", roomid);
+    setRequestSpeak(true);
   };
   const handleStopStudentAudio = () => {
     studentSharePeerRef.current.destroy();
@@ -788,6 +793,10 @@ function WatchStream({ schoolname }) {
     scrollToBottom();
   }, [defaultChat]);
   useEffect(() => {
+    socket.on("reject student access", () => {
+      setRequestSpeak(false);
+      alert("Speaking reqeust rejected");
+    });
     socket.on("start streaming", () => {
       console.log("strart");
       if (!twiloServer || twiloServer.iceServers.length === 0) {
@@ -803,6 +812,8 @@ function WatchStream({ schoolname }) {
       studentSharePeerRef.current = studentSharePeer;
 
       setStudentMic(true);
+      setRequestSpeak(false);
+
       studentSharePeerRef.current.on("open", (peerId) => {
         socket.emit("student stream", roomid, peerId, studentMicControl);
 
@@ -889,7 +900,7 @@ function WatchStream({ schoolname }) {
               let streamAudioRef = studentAudioRef.current;
               streamAudioRef.srcObject = remoteStream;
               setStudentMicControl(audioStat || false);
-           
+
               streamAudioRef.onloadedmetadata = () => {
                 streamAudioRef
                   .play()
@@ -1330,7 +1341,15 @@ function WatchStream({ schoolname }) {
                             </div>
                           ) : (
                             <div
-                              className="audio-wrapper"
+                              className={`audio-wrapper ${
+                                requestSpeak ? "requestoSpeak" : ""
+                              } ${
+                                studentMic
+                                  ? studentMicControl
+                                    ? "muted-style"
+                                    : "un-muted-style"
+                                  : ""
+                              }`}
                               ref={audioWrapperRef}
                               onClick={
                                 studentMic
@@ -1343,30 +1362,40 @@ function WatchStream({ schoolname }) {
                               {studentMic ? (
                                 studentMicControl ? (
                                   <i
-                                    className="fa fa-microphone"
+                                    className="fa fa-microphone-slash"
                                     aria-hidden="true"
                                   ></i>
                                 ) : (
                                   <i
-                                    className="fa fa-microphone-slash"
+                                    className="fa fa-microphone"
                                     aria-hidden="true"
                                   ></i>
                                 )
                               ) : (
-                                <i
-                                  className="fa fa-microphone-slash"
-                                  aria-hidden="true"
-                                ></i>
+                                <>
+                                  <img
+                                    src={tapToSpeakSvgBlack}
+                                    alt="taptospeak"
+                                    className="black"
+                                  />
+                                  <img
+                                    src={tapToSpeakSvg}
+                                    alt="taptospeak"
+                                    className="white"
+                                  />
+                                </>
                               )}
 
                               {studentMic ? (
                                 studentMicControl ? (
-                                  <span>Turn mic off</span>
+                                  <span>Mute</span>
                                 ) : (
-                                  <span>Turn mic On</span>
+                                  <span>UnMute</span>
                                 )
+                              ) : requestSpeak ? (
+                                <span>You requested to speak</span>
                               ) : (
-                                <span>Ask to speak</span>
+                                <span>Tap to speak</span>
                               )}
                             </div>
                           )}
@@ -2155,128 +2184,183 @@ function WatchStream({ schoolname }) {
                               </div>
                             </>
                           )}
-                          <div
-                            className="chat-control box-shadow"
-                            style={{
-                              color: theme?.themestyles.navbartextcolor,
-                            }}
-                          >
-                            {showEmojiPicker && (
-                              // <Picker
-                              //
-                              // />
-                              <div
-                                className="emoji-wrapper"
-                                style={{
-                                  position: "absolute",
-                                  bottom: "90px",
-
-                                  width: "100%",
-                                }}
-                              >
-                                <Picker
-                                  previewPosition="none"
-                                  showPreview="false"
-                                  data={data}
-                                  onClickOutside={() => {
-                                    setShowEmojiPicker(false);
-                                  }}
-                                  onEmojiSelect={(emoji) => {
-                                    handleSelectEmoji(emoji);
-                                  }}
-                                  perLine="7"
-                                />
-                              </div>
-                            )}
-                            <div
-                              className="action-wrapper"
-                              style={{ justifyContent: "center" }}
-                              onClick={() => {
-                                handleToggleEmojiPicker();
-                              }}
-                            >
-                              <img src={smiley} alt="emoji" />
-                            </div>
-
-                            {/* 
-                        <textarea
-                          value={chatMessage}
-                          onChange={(e) => {
-                            setChatMessage(e.target.value);
-                          }}
-                          onKeyDown={handleKeyDown}
-                          placeholder="Type a message"
-                          style={{
-                            width: "auto",
-                            marginRight: ".5rem",
-                            marginLeft: ".5rem",
-                          }}
-                        /> */}
-
-                            <CustomTextArea
-                              text={chatMessage}
-                              setText={setChatMessage}
-                              keyDown={handleKeyDown}
-                              height={height}
-                              setHeight={setHeight}
-                            />
+                          <div className="mobile-control mobile-speaking-control">
                             {studentMic ? (
                               studentMicControl ? (
                                 <div
-                                  className="mobile-audio-wrapper mobile-control audio-active"
+                                  className="mobile-speaking-parent"
                                   onClick={handleTurnOffStudentAudio}
                                 >
-                                  {" "}
-                                  <i
-                                    className="fa fa-microphone"
-                                    aria-hidden="true"
-                                  ></i>
+                                  <div
+                                    className="mobile-mute"
+                                    onClick={handleTurnOffStudentAudio}
+                                  >
+                                    <i
+                                      className="fa fa-microphone"
+                                      aria-hidden="true"
+                                    ></i>
+                                  </div>
+                                  <span>
+                                    Speak now. Tap the green button to Mute
+                                  </span>
                                 </div>
                               ) : (
                                 <div
-                                  className="mobile-audio-wrapper mobile-control  audio-active"
+                                  className="mobile-un-mute"
                                   onClick={handleTurnOnStudentAudio}
+                                >
+                                  <i
+                                    className="fa fa-microphone-slash"
+                                    aria-hidden="true"
+                                  ></i>
+                                  <span>
+                                    You have permission to speak. Tap the blue
+                                    button to Unmute
+                                  </span>
+                                </div>
+                              )
+                            ) : requestSpeak ? (
+                              <div className="mobile-speaking-parent">
+                                <div className="requestoSpeak">
+                                  <img
+                                    src={tapToSpeakSvg}
+                                    alt="taptospeak"
+                                    className="white"
+                                  />
+                                </div>
+                                <span>
+                                  You have requested to speak. Wait for the Host
+                                  to give you permission.
+                                </span>{" "}
+                              </div>
+                            ) : (
+                              <div
+                                className="mobile-speaking-parent"
+                                onClick={handleStartStudentAudio}
+                              >
+                                <div
+                                  className="mobile-speaking-icon-wrapper"
+                                  onClick={handleStartStudentAudio}
+                                >
+                                  <img
+                                    src={tapToSpeakSvg}
+                                    alt="taptospeak"
+                                    className="white"
+                                  />
+                                </div>
+                                <span>Tap if you want to speak</span>
+                              </div>
+                            )}
+                          </div>
+                          {!activeAttendance && (
+                            <div
+                              className="chat-control box-shadow"
+                              style={{
+                                color: theme?.themestyles.navbartextcolor,
+                              }}
+                            >
+                              {showEmojiPicker && (
+                                // <Picker
+                                //
+                                // />
+                                <div
+                                  className="emoji-wrapper"
+                                  style={{
+                                    position: "absolute",
+                                    bottom: "90px",
+
+                                    width: "100%",
+                                  }}
+                                >
+                                  <Picker
+                                    previewPosition="none"
+                                    showPreview="false"
+                                    data={data}
+                                    onClickOutside={() => {
+                                      setShowEmojiPicker(false);
+                                    }}
+                                    onEmojiSelect={(emoji) => {
+                                      handleSelectEmoji(emoji);
+                                    }}
+                                    perLine="7"
+                                  />
+                                </div>
+                              )}
+                              <div
+                                className="action-wrapper"
+                                style={{ justifyContent: "center" }}
+                                onClick={() => {
+                                  handleToggleEmojiPicker();
+                                }}
+                              >
+                                <img src={smiley} alt="emoji" />
+                              </div>
+
+                              <CustomTextArea
+                                text={chatMessage}
+                                setText={setChatMessage}
+                                keyDown={handleKeyDown}
+                                height={height}
+                                setHeight={setHeight}
+                              />
+                              {/* {studentMic ? (
+                                studentMicControl ? (
+                                  <div
+                                    className="mobile-audio-wrapper mobile-control audio-active"
+                                    onClick={handleTurnOffStudentAudio}
+                                  >
+                                    {" "}
+                                    <i
+                                      className="fa fa-microphone"
+                                      aria-hidden="true"
+                                    ></i>
+                                  </div>
+                                ) : (
+                                  <div
+                                    className="mobile-audio-wrapper mobile-control  audio-active"
+                                    onClick={handleTurnOnStudentAudio}
+                                  >
+                                    {" "}
+                                    <i
+                                      className="fa fa-microphone-slash"
+                                      // className="fa fa-microphone"
+                                      aria-hidden="true"
+                                    ></i>
+                                  </div>
+                                )
+                              ) : (
+                                <div
+                                  className="mobile-audio-wrapper mobile-control  audio-inactive"
+                                  onClick={handleStartStudentAudio}
                                 >
                                   {" "}
                                   <i
                                     className="fa fa-microphone-slash"
-                                    // className="fa fa-microphone"
                                     aria-hidden="true"
                                   ></i>
                                 </div>
-                              )
-                            ) : (
+                              )} */}
                               <div
-                                className="mobile-audio-wrapper mobile-control  audio-inactive"
-                                onClick={handleStartStudentAudio}
+                                className="expand-wrapper"
+                                onClick={() => {
+                                  setVideoFill(!videoFill);
+                                }}
                               >
-                                {" "}
                                 <i
-                                  className="fa fa-microphone-slash"
+                                  className="fa fa-expand"
                                   aria-hidden="true"
+                                  style={{ color: "#ccc" }}
                                 ></i>
                               </div>
-                            )}
-                            <div
-                              className="expand-wrapper"
-                              onClick={() => {
-                                setVideoFill(!videoFill);
-                              }}
-                            >
-                              <i
-                                className="fa fa-expand"
-                                aria-hidden="true"
-                                style={{ color: "#ccc" }}
-                              ></i>
+                              <Button
+                                onClick={() => {
+                                  sendMessage();
+                                }}
+                              >
+                                Send
+                              </Button>
                             </div>
-                            <Button
-                              onClick={() => {
-                                sendMessage();
-                              }}
-                            >
-                              Send
-                            </Button>
-                          </div>
+                          )}
                         </div>
                       </>
                     )}

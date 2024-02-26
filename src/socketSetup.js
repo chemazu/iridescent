@@ -350,6 +350,9 @@ const setupSocketIO = (app) => {
     socket.on("grant student access", (roomid, studentSocketId) => {
       socket.to(studentSocketId).emit("start streaming");
     });
+    socket.on("reject student access", (roomid, studentSocketId) => {
+      socket.to(studentSocketId).emit("reject student access");
+    });
 
     socket.on("student stream", (roomId, peerId, audioStat) => {
       // Initialize studentStream as an object if it doesn't exist
